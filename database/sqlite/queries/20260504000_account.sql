@@ -1,5 +1,10 @@
--- name: OncesertAccountByEmail :exec
+-- name: OncesertAccountByEmail :one
 INSERT INTO accounts (email)
 VALUES (?)
-ON CONFLICT(email) DO NOTHING
+ON CONFLICT(email) DO UPDATE SET email = excluded.email
 RETURNING sub;
+
+-- name: UpdateAccountEmail :exec
+UPDATE accounts
+SET email = ?
+WHERE sub = ?;
