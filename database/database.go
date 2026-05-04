@@ -13,5 +13,5 @@ type Database interface {
 type Querier interface {
 	// OncesertAccountByEmail creates an account by email if not yet exists.
 	// It returns the email's subject.
-	OncesertAccountByEmail(ctx context.Context, email string) (sub string, err error)
+	OncesertAccountByEmail(ctx context.Context, email string) (sub int64, err error)
 }
