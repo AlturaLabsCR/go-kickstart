@@ -3,6 +3,8 @@ package queries
 
 import (
 	"context"
+
+	"github.com/myrepo/myserver/database/sqlite/db"
 )
 
 func (q *SqliteQuerier) OncesertAccountByEmail(ctx context.Context, email string) (sub int64, err error) {
@@ -12,4 +14,11 @@ func (q *SqliteQuerier) OncesertAccountByEmail(ctx context.Context, email string
 	}
 
 	return accountSub, nil
+}
+
+func (q *SqliteQuerier) UpdateAccountEmail(ctx context.Context, sub int64, email string) error {
+	return q.queries.UpdateAccountEmail(ctx, db.UpdateAccountEmailParams{
+		Email: email,
+		Sub:   sub,
+	})
 }

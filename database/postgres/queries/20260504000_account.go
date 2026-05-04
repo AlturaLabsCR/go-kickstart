@@ -3,6 +3,8 @@ package queries
 
 import (
 	"context"
+
+	"github.com/myrepo/myserver/database/postgres/db"
 )
 
 func (q *PostgresQuerier) OncesertAccountByEmail(ctx context.Context, email string) (sub int64, err error) {
@@ -12,4 +14,11 @@ func (q *PostgresQuerier) OncesertAccountByEmail(ctx context.Context, email stri
 	}
 
 	return accountSub, nil
+}
+
+func (q *PostgresQuerier) UpdateAccountEmail(ctx context.Context, sub int64, email string) error {
+	return q.queries.UpdateAccountEmail(ctx, db.UpdateAccountEmailParams{
+		Sub:   sub,
+		Email: email,
+	})
 }
