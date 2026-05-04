@@ -1,13 +1,4 @@
-database/**/db
-database/.gen
-*_templ.go
-data/
-app
-node_modules
-assets/**/*.js
-assets/**/*.css
-tmp/
-dist/
-*.log
+node_modules/
 
 .env
+.codex

@@ -1,0 +1,281 @@
+openapi: 3.1.0
+info:
+  title: MyServer API
+  version: 0.1.0
+  description: OpenAPI specification of MyServer.
+servers:
+  - url: http://localhost:3080
+    description: Local development server
+tags:
+  - name: Authentication
+  - name: Account
+paths:
+  /auth/login:
+    post:
+      tags:
+        - Authentication
+      operationId: loginOrCreateAccount
+      summary: Trigger login or account creation
+      description: Triggers a confirmation email containing a temporary 6-digit verification code.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginRequest'
+            example:
+              email: john@doe.com
+      responses:
+        '200':
+          description: Verification email sent.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LoginResponse'
+              example:
+                account_exists: false
+        default:
+          $ref: '#/components/responses/Error'
+  /auth/verify:
+    post:
+      tags:
+        - Authentication
+      operationId: verifyAuthenticationCode
+      summary: Verify email code
+      description: Verifies the provided email and 6-digit code, then creates a new session. If no account exists for the email address, a new account is created.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/VerifyRequest'
+            example:
+              email: john@doe.com
+              otp: 123456
+      responses:
+        '200':
+          description: Verified account and created session.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/VerifyResponse'
+              example:
+                accessToken: eyJhbGciOa...
+                refreshToken: X4fFxvY89ypw5f...
+                expiresIn: 900
+                refreshTokenExpiresIn: 5184000
+                account_created: true
+        default:
+          $ref: '#/components/responses/Error'
+  /auth/refresh:
+    post:
+      tags:
+        - Authentication
+      operationId: refreshSession
+      summary: Refresh session tokens
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RefreshRequest'
+            example:
+              refreshToken: X4fFxvY89ypw5f...
+      responses:
+        '200':
+          description: Refreshed tokens.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RefreshResponse'
+              example:
+                accessToken: eyJhbGciOiJIU...
+                refreshToken: eyJhbGciOiJIU...
+                expiresIn: 900
+                refreshTokenExpiresIn: 5184000
+        default:
+          $ref: '#/components/responses/Error'
+  /account:
+    get:
+      tags:
+        - Account
+      operationId: getAccount
+      summary: Get account details
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Account information.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Account'
+              example:
+                email: john@doe.com
+                created: 1777872664
+        default:
+          $ref: '#/components/responses/Error'
+  /account/email/change:
+    patch:
+      tags:
+        - Account
+      operationId: requestEmailChange
+      summary: Request an email address change
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ChangeEmailRequest'
+            example:
+              new_email: new@email.com
+      responses:
+        '200':
+          description: Email change request accepted.
+        default:
+          $ref: '#/components/responses/Error'
+  /account/email/change/confirm:
+    patch:
+      tags:
+        - Account
+      operationId: confirmEmailChange
+      summary: Confirm an email address change
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ChangeEmailConfirmRequest'
+            example:
+              otp: 123456
+      responses:
+        '200':
+          description: Email change confirmed.
+        default:
+          $ref: '#/components/responses/Error'
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  responses:
+    Error:
+      description: Error response.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+  schemas:
+    LoginRequest:
+      type: object
+      additionalProperties: false
+      required:
+        - email
+      properties:
+        email:
+          type: string
+          format: email
+    LoginResponse:
+      type: object
+      additionalProperties: false
+      required:
+        - account_exists
+      properties:
+        account_exists:
+          type: boolean
+    VerifyRequest:
+      type: object
+      additionalProperties: false
+      required:
+        - email
+        - otp
+      properties:
+        email:
+          type: string
+          format: email
+        otp:
+          type: integer
+          description: Six-digit one-time password.
+          minimum: 0
+          maximum: 999999
+    RefreshRequest:
+      type: object
+      additionalProperties: false
+      required:
+        - refreshToken
+      properties:
+        refreshToken:
+          type: string
+    SessionTokens:
+      type: object
+      additionalProperties: false
+      required:
+        - accessToken
+        - refreshToken
+        - expiresIn
+        - refreshTokenExpiresIn
+      properties:
+        accessToken:
+          type: string
+        refreshToken:
+          type: string
+        expiresIn:
+          type: integer
+          minimum: 0
+        refreshTokenExpiresIn:
+          type: integer
+          minimum: 0
+    VerifyResponse:
+      allOf:
+        - $ref: '#/components/schemas/SessionTokens'
+        - type: object
+          additionalProperties: false
+          required:
+            - account_created
+          properties:
+            account_created:
+              type: boolean
+    RefreshResponse:
+      $ref: '#/components/schemas/SessionTokens'
+    Account:
+      type: object
+      additionalProperties: false
+      required:
+        - email
+        - created
+      properties:
+        email:
+          type: string
+          format: email
+        created:
+          type: integer
+          description: Account creation timestamp.
+    ChangeEmailRequest:
+      type: object
+      additionalProperties: false
+      required:
+        - new_email
+      properties:
+        new_email:
+          type: string
+          format: email
+    ChangeEmailConfirmRequest:
+      type: object
+      additionalProperties: false
+      required:
+        - otp
+      properties:
+        otp:
+          type: integer
+          description: Six-digit one-time password.
+          minimum: 0
+          maximum: 999999
+    Error:
+      type: object
+      description: Generic error payload shape when the server returns JSON errors.
+      additionalProperties: true

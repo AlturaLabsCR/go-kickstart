@@ -1,8 +1,0 @@
-services:
-  app:
-    build: .
-    ports:
-      - "${APP_PORT:-8080}:${APP_PORT:-8080}"
-    env_file:
-      - .env
-    restart: on-failure

@@ -1,74 +1,23 @@
+/*
+Copyright © 2026 NAME HERE <EMAIL ADDRESS>
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program. If not, see <http://www.gnu.org/licenses/>.
+*/
 package main
 
-import (
-	"context"
-	"embed"
-	"net/http"
-	"os"
-	"os/signal"
-	"syscall"
-
-	"app/config"
-	"app/handlers"
-	"app/router"
-)
-
-//go:embed database/sqlite/migrations/*.up.sql
-var sqliteMigrations embed.FS
-
-//go:embed database/postgres/migrations/*.up.sql
-var postgresMigrations embed.FS
-
-//go:embed assets/*
-var assetsFS embed.FS
+import "github.com/myrepo/myserver/cmd"
 
 func main() {
-	config.Init()
-
-	logger := config.InitLogger()
-
-	database, sessionStore, objectStore := config.InitDB(config.Migrations{
-		config.SqliteDriver:   sqliteMigrations,
-		config.PostgresDriver: postgresMigrations,
-	})
-
-	handler := handlers.New(&handlers.HandlerParams{
-		Logger:         logger,
-		Database:       database,
-		Storage:        config.InitStorage(objectStore),
-		TranslatorFunc: config.InitTranslator(),
-		Sessions:       config.InitSessions(sessionStore),
-	})
-
-	routes := router.Init(handler, assetsFS)
-
-	stop := make(chan os.Signal, 1)
-	signal.Notify(stop, syscall.SIGINT, syscall.SIGTERM)
-
-	port := config.Config.App.Port
-	go func() {
-		logger.Info(
-			"server starting",
-			"address", ":"+port,
-		)
-
-		if err := http.ListenAndServe(
-			":"+port,
-			routes,
-		); err != nil {
-			logger.Error(
-				"failed to start server",
-				"port", port,
-				"error", err,
-			)
-
-			os.Exit(1)
-		}
-	}()
-
-	defer database.Close(context.Background())
-
-	<-stop
-
-	logger.Info("shutting down...")
+	cmd.Execute()
 }
