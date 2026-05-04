@@ -17,4 +17,7 @@ type Querier interface {
 
 	// UpdateAccountEmail updates the email for the account subject.
 	UpdateAccountEmail(ctx context.Context, sub int64, email string) error
+
+	// DeleteAccount deletes the account for the account subject.
+	DeleteAccount(ctx context.Context, sub int64) error
 }

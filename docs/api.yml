@@ -115,6 +115,19 @@ paths:
                 created: 1777872664
         default:
           $ref: '#/components/responses/Error'
+    delete:
+      tags:
+        - Account
+      operationId: deleteAccount
+      summary: Delete account
+      description: Deletes the authenticated account.
+      security:
+        - bearerAuth: []
+      responses:
+        '204':
+          description: Account deleted.
+        default:
+          $ref: '#/components/responses/Error'
   /account/email/change:
     patch:
       tags:

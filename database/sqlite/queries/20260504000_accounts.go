@@ -22,3 +22,7 @@ func (q *SqliteQuerier) UpdateAccountEmail(ctx context.Context, sub int64, email
 		Sub:   sub,
 	})
 }
+
+func (q *SqliteQuerier) DeleteAccount(ctx context.Context, sub int64) error {
+	return q.queries.DeleteAccount(ctx, sub)
+}

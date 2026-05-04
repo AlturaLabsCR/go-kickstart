@@ -22,3 +22,7 @@ func (q *PostgresQuerier) UpdateAccountEmail(ctx context.Context, sub int64, ema
 		Email: email,
 	})
 }
+
+func (q *PostgresQuerier) DeleteAccount(ctx context.Context, sub int64) error {
+	return q.queries.DeleteAccount(ctx, sub)
+}

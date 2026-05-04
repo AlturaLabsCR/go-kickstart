@@ -8,3 +8,7 @@ RETURNING sub;
 UPDATE accounts
 SET email = ?
 WHERE sub = ?;
+
+-- name: DeleteAccount :exec
+DELETE FROM accounts
+WHERE sub = ?;
