@@ -47,13 +47,17 @@ func NewHandler(opts Options) *Handler {
 }
 
 func (h *Handler) Add(method, path string, fn http.HandlerFunc) {
+	h.AddHandler(method, path, fn)
+}
+
+func (h *Handler) AddHandler(method, path string, handler http.Handler) {
 	pattern := path
 	if method != "" {
 		pattern = method + " " + path
 	}
 
 	h.paths = append(h.paths, path)
-	h.mux.HandleFunc(pattern, fn)
+	h.mux.Handle(pattern, handler)
 }
 
 func (h *Handler) Mux() *http.ServeMux {
@@ -66,4 +70,5 @@ func (h *Handler) Mux() *http.ServeMux {
 
 func (h *Handler) registerRoutes() {
 	h.registerRootRoutes()
+	h.registerStaticRoutes()
 }
