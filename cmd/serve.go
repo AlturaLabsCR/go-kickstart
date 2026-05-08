@@ -33,6 +33,7 @@ to quickly create a Cobra application.`,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		return runServer(
 			viper.GetBool("serve.dev"),
+			viper.GetString("serve.loglvl"),
 			viper.GetString("serve.logfmt"),
 			viper.GetString("serve.host"),
 			viper.GetInt("serve.port"),
@@ -47,21 +48,24 @@ func init() {
 	viper.SetDefault("serve.host", "")
 	viper.SetDefault("serve.port", 3080)
 	viper.SetDefault("serve.logfmt", "json")
+	viper.SetDefault("serve.loglvl", "info")
 
 	flags := serveCmd.Flags()
 	flags.Bool("dev", false, "enable development logging")
 	flags.String("host", "", "host interface to bind")
 	flags.Int("port", 3080, "port to listen on")
 	flags.String("logfmt", "json", "log format: text or json")
+	flags.String("loglvl", "info", "log level: debug, info, warn, or error")
 
 	mustBindFlag("serve.dev", serveCmd, "dev")
 	mustBindFlag("serve.host", serveCmd, "host")
 	mustBindFlag("serve.port", serveCmd, "port")
 	mustBindFlag("serve.logfmt", serveCmd, "logfmt")
+	mustBindFlag("serve.loglvl", serveCmd, "loglvl")
 }
 
-func runServer(dev bool, logFmt string, host string, port int) error {
-	logger, err := newLogger(dev, logFmt)
+func runServer(dev bool, logLvl string, logFmt string, host string, port int) error {
+	logger, err := newLogger(dev, logLvl, logFmt)
 	if err != nil {
 		return err
 	}
@@ -99,11 +103,17 @@ func runServer(dev bool, logFmt string, host string, port int) error {
 	return nil
 }
 
-func newLogger(dev bool, logFmt string) (*slog.Logger, error) {
-	opts := &slog.HandlerOptions{}
+func newLogger(dev bool, logLvl string, logFmt string) (*slog.Logger, error) {
+	level, err := parseLogLevel(logLvl)
+	if err != nil {
+		return nil, err
+	}
+
+	opts := &slog.HandlerOptions{
+		Level: level,
+	}
 	if dev {
 		opts.AddSource = true
-		opts.Level = slog.LevelDebug
 	}
 
 	switch strings.ToLower(logFmt) {
@@ -113,5 +123,20 @@ func newLogger(dev bool, logFmt string) (*slog.Logger, error) {
 		return slog.New(slog.NewTextHandler(os.Stdout, opts)), nil
 	default:
 		return nil, fmt.Errorf("invalid --logfmt %q: expected text or json", logFmt)
+	}
+}
+
+func parseLogLevel(logLvl string) (slog.Level, error) {
+	switch strings.ToLower(logLvl) {
+	case "debug":
+		return slog.LevelDebug, nil
+	case "info":
+		return slog.LevelInfo, nil
+	case "warn", "warning":
+		return slog.LevelWarn, nil
+	case "error":
+		return slog.LevelError, nil
+	default:
+		return 0, fmt.Errorf("invalid --loglvl %q: expected debug, info, warn, or error", logLvl)
 	}
 }
