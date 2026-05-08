@@ -15,6 +15,7 @@ type Logger interface {
 
 type Handler struct {
 	logger Logger
+	dev    bool
 	paths  []string
 }
 
@@ -39,6 +40,10 @@ func Add(method, path string, fn http.HandlerFunc) {
 
 func SetLogger(logger Logger) {
 	handler.logger = logger
+}
+
+func SetDev(dev bool) {
+	handler.dev = dev
 }
 
 func Mux() *http.ServeMux {
