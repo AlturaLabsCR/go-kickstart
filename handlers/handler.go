@@ -1,4 +1,4 @@
-package handler
+package handlers
 
 import (
 	"log/slog"
@@ -17,10 +17,10 @@ type Handler struct {
 	initialized bool
 	dev         bool
 
-	logger      Logger
+	logger Logger
 
-	mux         *http.ServeMux
-	paths       []string
+	mux   *http.ServeMux
+	paths []string
 }
 
 type Options struct {

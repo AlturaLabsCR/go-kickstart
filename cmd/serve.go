@@ -16,7 +16,7 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/myrepo/myserver/handler"
+	"github.com/myrepo/myserver/handlers"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
@@ -66,7 +66,7 @@ func runServer(dev bool, logFmt string, host string, port int) error {
 		return err
 	}
 
-	h := handler.NewHandler(handler.Options{
+	h := handlers.NewHandler(handlers.Options{
 		Logger: logger,
 		Dev:    dev,
 	})
