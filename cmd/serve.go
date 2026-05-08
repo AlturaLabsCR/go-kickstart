@@ -7,9 +7,11 @@ import (
 	"context"
 	"fmt"
 	"log/slog"
+	"net"
 	"net/http"
 	"os"
 	"os/signal"
+	"strconv"
 	"strings"
 	"syscall"
 	"time"
@@ -19,6 +21,8 @@ import (
 )
 
 var serveDev bool
+var serveHost string
+var servePort int
 var serveLogFmt string
 
 var serveCmd = &cobra.Command{
@@ -31,7 +35,7 @@ Cobra is a CLI library for Go that empowers applications.
 This application is a tool to generate the needed files
 to quickly create a Cobra application.`,
 	RunE: func(cmd *cobra.Command, args []string) error {
-		return runServer(serveDev, serveLogFmt)
+		return runServer(serveDev, serveLogFmt, serveHost, servePort)
 	},
 }
 
@@ -39,10 +43,12 @@ func init() {
 	rootCmd.AddCommand(serveCmd)
 
 	serveCmd.Flags().BoolVar(&serveDev, "dev", false, "enable development logging")
+	serveCmd.Flags().StringVar(&serveHost, "host", "", "host interface to bind")
+	serveCmd.Flags().IntVar(&servePort, "port", 3080, "port to listen on")
 	serveCmd.Flags().StringVar(&serveLogFmt, "logfmt", "json", "log format: text or json")
 }
 
-func runServer(dev bool, logFmt string) error {
+func runServer(dev bool, logFmt string, host string, port int) error {
 	logger, err := newLogger(dev, logFmt)
 	if err != nil {
 		return err
@@ -54,7 +60,7 @@ func runServer(dev bool, logFmt string) error {
 	})
 
 	srv := &http.Server{
-		Addr:    ":8080",
+		Addr:    net.JoinHostPort(host, strconv.Itoa(port)),
 		Handler: handler.Mux(),
 	}
 
