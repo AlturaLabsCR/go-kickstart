@@ -14,9 +14,12 @@ type Logger interface {
 }
 
 type Handler struct {
-	logger      Logger
-	dev         bool
 	initialized bool
+	dev         bool
+
+	logger      Logger
+
+	mux         *http.ServeMux
 	paths       []string
 }
 
@@ -32,37 +35,35 @@ func NewHandler(opts Options) *Handler {
 	}
 
 	next := &Handler{
-		logger:      logger,
-		dev:         opts.Dev,
 		initialized: true,
+		dev:         opts.Dev,
+		logger:      logger,
+		mux:         http.NewServeMux(),
 	}
 
-	if handler != nil {
-		next.paths = append(next.paths, handler.paths...)
-	}
-
-	handler = next
+	next.registerRoutes()
 
 	return next
 }
 
-var handler = &Handler{}
-var rootMux = http.NewServeMux()
-
-func Add(method, path string, fn http.HandlerFunc) {
+func (h *Handler) Add(method, path string, fn http.HandlerFunc) {
 	pattern := path
 	if method != "" {
 		pattern = method + " " + path
 	}
 
-	handler.paths = append(handler.paths, path)
-	rootMux.HandleFunc(pattern, fn)
+	h.paths = append(h.paths, path)
+	h.mux.HandleFunc(pattern, fn)
 }
 
-func Mux() *http.ServeMux {
-	if handler == nil || !handler.initialized {
+func (h *Handler) Mux() *http.ServeMux {
+	if h == nil || !h.initialized {
 		panic("handler not initialized")
 	}
 
-	return rootMux
+	return h.mux
+}
+
+func (h *Handler) registerRoutes() {
+	h.registerRootRoutes()
 }

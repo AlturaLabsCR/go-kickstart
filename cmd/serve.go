@@ -66,14 +66,14 @@ func runServer(dev bool, logFmt string, host string, port int) error {
 		return err
 	}
 
-	handler.NewHandler(handler.Options{
+	h := handler.NewHandler(handler.Options{
 		Logger: logger,
 		Dev:    dev,
 	})
 
 	srv := &http.Server{
 		Addr:    net.JoinHostPort(host, strconv.Itoa(port)),
-		Handler: handler.Mux(),
+		Handler: h.Mux(),
 	}
 
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)

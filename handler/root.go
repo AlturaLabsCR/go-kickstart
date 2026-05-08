@@ -2,13 +2,13 @@ package handler
 
 import "net/http"
 
-func init() {
-	Add(http.MethodGet, "/", Root)
+func (h *Handler) registerRootRoutes() {
+	h.Add(http.MethodGet, "/", h.Root)
 }
 
-func Root(w http.ResponseWriter, r *http.Request) {
-	handler.logger.Info("hit root")
-	if handler.dev {
+func (h *Handler) Root(w http.ResponseWriter, r *http.Request) {
+	h.logger.Info("hit root")
+	if h.dev {
 		_, _ = w.Write([]byte("ok (dev)\n"))
 		return
 	}
