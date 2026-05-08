@@ -37,6 +37,10 @@ func Add(method, path string, fn http.HandlerFunc) {
 	rootMux.HandleFunc(pattern, fn)
 }
 
+func SetLogger(logger Logger) {
+	handler.logger = logger
+}
+
 func Mux() *http.ServeMux {
 	return rootMux
 }
