@@ -4,6 +4,8 @@ import (
 	"log/slog"
 	"net/http"
 	"os"
+
+	"github.com/myrepo/myserver/middleware"
 )
 
 type Logger interface {
@@ -57,7 +59,7 @@ func (h *Handler) AddHandler(method, path string, handler http.Handler) {
 	}
 
 	h.paths = append(h.paths, path)
-	h.mux.Handle(pattern, handler)
+	h.mux.Handle(pattern, middleware.RequestLogger(h.logger, pattern, handler))
 }
 
 func (h *Handler) Mux() *http.ServeMux {
