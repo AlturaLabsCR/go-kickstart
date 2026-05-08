@@ -17,6 +17,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 package cmd
 
 import (
+	"errors"
 	"os"
 	"path/filepath"
 	"slices"
@@ -68,7 +69,10 @@ func initConfig() {
 	viper.AutomaticEnv()
 
 	err := viper.ReadInConfig()
-	cobra.CheckErr(err)
+	var notFound viper.ConfigFileNotFoundError
+	if err != nil && !errors.As(err, &notFound) {
+		cobra.CheckErr(err)
+	}
 }
 
 func findConfigDirs() []string {
