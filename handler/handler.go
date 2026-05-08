@@ -14,18 +14,39 @@ type Logger interface {
 }
 
 type Handler struct {
-	logger Logger
-	dev    bool
-	paths  []string
+	logger      Logger
+	dev         bool
+	initialized bool
+	paths       []string
 }
 
-func NewHandler() *Handler {
-	return &Handler{
-		logger: slog.New(slog.NewTextHandler(os.Stdout, nil)),
+type Options struct {
+	Logger Logger
+	Dev    bool
+}
+
+func NewHandler(opts Options) *Handler {
+	logger := opts.Logger
+	if logger == nil {
+		logger = slog.New(slog.NewTextHandler(os.Stdout, nil))
 	}
+
+	next := &Handler{
+		logger:      logger,
+		dev:         opts.Dev,
+		initialized: true,
+	}
+
+	if handler != nil {
+		next.paths = append(next.paths, handler.paths...)
+	}
+
+	handler = next
+
+	return next
 }
 
-var handler = NewHandler()
+var handler = &Handler{}
 var rootMux = http.NewServeMux()
 
 func Add(method, path string, fn http.HandlerFunc) {
@@ -38,14 +59,10 @@ func Add(method, path string, fn http.HandlerFunc) {
 	rootMux.HandleFunc(pattern, fn)
 }
 
-func SetLogger(logger Logger) {
-	handler.logger = logger
-}
-
-func SetDev(dev bool) {
-	handler.dev = dev
-}
-
 func Mux() *http.ServeMux {
+	if handler == nil || !handler.initialized {
+		panic("handler not initialized")
+	}
+
 	return rootMux
 }

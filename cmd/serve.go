@@ -48,8 +48,10 @@ func runServer(dev bool, logFmt string) error {
 		return err
 	}
 
-	handler.SetLogger(logger)
-	handler.SetDev(dev)
+	handler.NewHandler(handler.Options{
+		Logger: logger,
+		Dev:    dev,
+	})
 
 	srv := &http.Server{
 		Addr:    ":8080",
