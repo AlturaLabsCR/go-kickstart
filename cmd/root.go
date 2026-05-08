@@ -21,6 +21,7 @@ import (
 	"os"
 	"path/filepath"
 	"slices"
+	"strings"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -66,6 +67,8 @@ func initConfig() {
 		viper.SetConfigName("myserver")
 	}
 
+	viper.SetEnvPrefix("MYSERVER")
+	viper.SetEnvKeyReplacer(strings.NewReplacer(".", "_"))
 	viper.AutomaticEnv()
 
 	err := viper.ReadInConfig()
@@ -78,8 +81,14 @@ func initConfig() {
 func findConfigDirs() []string {
 	dirs := []string{}
 
+	if wd, err := os.Getwd(); err == nil && wd != "" {
+		dirs = append(dirs, wd)
+	}
+
 	if xdgCfgDir := os.Getenv("XDG_CONFIG_HOME"); xdgCfgDir != "" {
-		dirs = append(dirs, xdgCfgDir)
+		if !slices.Contains(dirs, xdgCfgDir) {
+			dirs = append(dirs, xdgCfgDir)
+		}
 	}
 
 	if home, err := os.UserHomeDir(); err == nil && home != "" {
@@ -92,4 +101,13 @@ func findConfigDirs() []string {
 	dirs = append(dirs, "/usr/local/etc", "/etc")
 
 	return dirs
+}
+
+func mustBindFlag(key string, cmd *cobra.Command, name string) {
+	flag := cmd.Flags().Lookup(name)
+	if flag == nil {
+		panic("missing flag: " + name)
+	}
+
+	cobra.CheckErr(viper.BindPFlag(key, flag))
 }
