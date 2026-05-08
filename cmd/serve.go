@@ -18,12 +18,8 @@ import (
 
 	"github.com/myrepo/myserver/handler"
 	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
 )
-
-var serveDev bool
-var serveHost string
-var servePort int
-var serveLogFmt string
 
 var serveCmd = &cobra.Command{
 	Use:   "serve",
@@ -35,17 +31,33 @@ Cobra is a CLI library for Go that empowers applications.
 This application is a tool to generate the needed files
 to quickly create a Cobra application.`,
 	RunE: func(cmd *cobra.Command, args []string) error {
-		return runServer(serveDev, serveLogFmt, serveHost, servePort)
+		return runServer(
+			viper.GetBool("serve.dev"),
+			viper.GetString("serve.logfmt"),
+			viper.GetString("serve.host"),
+			viper.GetInt("serve.port"),
+		)
 	},
 }
 
 func init() {
 	rootCmd.AddCommand(serveCmd)
 
-	serveCmd.Flags().BoolVar(&serveDev, "dev", false, "enable development logging")
-	serveCmd.Flags().StringVar(&serveHost, "host", "", "host interface to bind")
-	serveCmd.Flags().IntVar(&servePort, "port", 3080, "port to listen on")
-	serveCmd.Flags().StringVar(&serveLogFmt, "logfmt", "json", "log format: text or json")
+	viper.SetDefault("serve.dev", false)
+	viper.SetDefault("serve.host", "")
+	viper.SetDefault("serve.port", 3080)
+	viper.SetDefault("serve.logfmt", "json")
+
+	flags := serveCmd.Flags()
+	flags.Bool("dev", false, "enable development logging")
+	flags.String("host", "", "host interface to bind")
+	flags.Int("port", 3080, "port to listen on")
+	flags.String("logfmt", "json", "log format: text or json")
+
+	mustBindFlag("serve.dev", serveCmd, "dev")
+	mustBindFlag("serve.host", serveCmd, "host")
+	mustBindFlag("serve.port", serveCmd, "port")
+	mustBindFlag("serve.logfmt", serveCmd, "logfmt")
 }
 
 func runServer(dev bool, logFmt string, host string, port int) error {
