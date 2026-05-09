@@ -50,7 +50,7 @@ func init() {
 
 	flags := serveCmd.Flags()
 	flags.String("db", "data/myserver.sqlite", "database DSN")
-	flags.Bool("dev", false, "dev mode, also sets --loglvl=debug")
+	flags.Bool("dev", false, "enable dev logging")
 	flags.String("host", "", "bind host")
 	flags.Int("port", 3080, "bind port")
 	flags.String("logfmt", "json", "log format")

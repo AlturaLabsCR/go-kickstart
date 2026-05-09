@@ -1,12 +1,41 @@
-# Overrides:
+# Example overrides:
 #   MYSERVER_PORT=8080 myserver serve
 #   myserver serve --port 8080
-
+#
 # Default values are:
 
+# Enable development features like source locations in logs.
+# Override with:
+#   MYSERVER_DEV=true myserver serve
+#   myserver serve --dev
 dev: false
+
+# Host or interface to bind to. Empty means the default bind behavior.
+# Override with:
+#   MYSERVER_HOST=127.0.0.1 myserver serve
+#   myserver serve --host 127.0.0.1
 host: ""
+
+# TCP port to listen on.
+# Override with:
+#   MYSERVER_PORT=8080 myserver serve
+#   myserver serve --port 8080
 port: 3080
+
+# Log output format. Valid values: json, text.
+# Override with:
+#   MYSERVER_LOGFMT=text myserver serve
+#   myserver serve --logfmt text
 logfmt: json
+
+# Minimum log level. Valid values: debug, info, warn, error.
+# Override with:
+#   MYSERVER_LOGLVL=debug myserver serve
+#   myserver serve --loglvl debug
 loglvl: info
+
+# Database connection string or path.
+# Override with:
+#   MYSERVER_DB=data/custom.sqlite myserver serve
+#   myserver serve --db data/custom.sqlite
 db: data/myserver.sqlite
