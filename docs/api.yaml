@@ -33,7 +33,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/LoginResponse'
               example:
-                account_exists: false
+                sent_otp: true
         default:
           $ref: '#/components/responses/Error'
   /auth/verify:
@@ -197,9 +197,9 @@ components:
       type: object
       additionalProperties: false
       required:
-        - account_exists
+        - sent_otp
       properties:
-        account_exists:
+        sent_otp:
           type: boolean
     VerifyRequest:
       type: object
