@@ -16,6 +16,8 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/myrepo/myserver/database"
+	"github.com/myrepo/myserver/database/provider"
 	"github.com/myrepo/myserver/handlers"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -32,6 +34,7 @@ This application is a tool to generate the needed files
 to quickly create a Cobra application.`,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		return runServer(
+			viper.GetString("serve.db"),
 			viper.GetBool("serve.dev"),
 			viper.GetString("serve.loglvl"),
 			viper.GetString("serve.logfmt"),
@@ -49,14 +52,17 @@ func init() {
 	viper.SetDefault("serve.port", 3080)
 	viper.SetDefault("serve.logfmt", "json")
 	viper.SetDefault("serve.loglvl", "info")
+	viper.SetDefault("serve.db", "myserver.sqlite")
 
 	flags := serveCmd.Flags()
+	flags.String("db", "myserver.sqlite", "database connection string")
 	flags.Bool("dev", false, "enable development logging")
 	flags.String("host", "", "host interface to bind")
 	flags.Int("port", 3080, "port to listen on")
 	flags.String("logfmt", "json", "log format: text or json")
 	flags.String("loglvl", "info", "log level: debug, info, warn, or error")
 
+	mustBindFlag("serve.db", serveCmd, "db")
 	mustBindFlag("serve.dev", serveCmd, "dev")
 	mustBindFlag("serve.host", serveCmd, "host")
 	mustBindFlag("serve.port", serveCmd, "port")
@@ -64,15 +70,29 @@ func init() {
 	mustBindFlag("serve.loglvl", serveCmd, "loglvl")
 }
 
-func runServer(dev bool, logLvl string, logFmt string, host string, port int) error {
+func runServer(connStr string, dev bool, logLvl string, logFmt string, host string, port int) error {
 	logger, err := newLogger(dev, logLvl, logFmt)
 	if err != nil {
 		return err
 	}
 
+	var dbConn database.Database
+	if connStr != "" {
+		dbConn, err = provider.Open(context.Background(), connStr)
+		if err != nil {
+			return err
+		}
+		defer func() {
+			if err := dbConn.Close(context.Background()); err != nil {
+				logger.Error("database close error", "error", err)
+			}
+		}()
+	}
+
 	h := handlers.NewHandler(handlers.Options{
 		Logger: logger,
 		Dev:    dev,
+		DB:     dbConn,
 	})
 
 	srv := &http.Server{

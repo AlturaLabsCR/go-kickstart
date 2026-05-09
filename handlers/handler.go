@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"os"
 
+	"github.com/myrepo/myserver/database"
 	"github.com/myrepo/myserver/middleware"
 )
 
@@ -20,6 +21,7 @@ type Handler struct {
 	dev         bool
 
 	logger Logger
+	db     database.Database
 
 	mux   *http.ServeMux
 	paths []string
@@ -28,6 +30,7 @@ type Handler struct {
 type Options struct {
 	Logger Logger
 	Dev    bool
+	DB     database.Database
 }
 
 func NewHandler(opts Options) *Handler {
@@ -40,6 +43,7 @@ func NewHandler(opts Options) *Handler {
 		initialized: true,
 		dev:         opts.Dev,
 		logger:      logger,
+		db:          opts.DB,
 		mux:         http.NewServeMux(),
 	}
 
