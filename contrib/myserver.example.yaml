@@ -1,8 +1,7 @@
-# Example overrides:
-#   MYSERVER_PORT=8080 myserver serve
-#   myserver serve --port 8080
+# myserver.yaml - Configuration for myserver
 #
-# Default values are:
+# All options here are set to the default values. If no configuration file is
+# found, then these values will be used.
 
 # Enable development features like source locations in logs.
 # Override with:
