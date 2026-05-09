@@ -3,6 +3,7 @@ node_modules/
 db/
 
 myserver
+myserver.sqlite
 
 .env
 .codex
