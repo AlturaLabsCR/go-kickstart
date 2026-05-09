@@ -5,6 +5,7 @@ db/
 myserver
 data/
 *.html
+*_templ.go
 
 .env
 .codex
