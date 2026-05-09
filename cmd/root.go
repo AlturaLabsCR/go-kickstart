@@ -1,4 +1,6 @@
 /*
+Package cmd implements commands and flags CLI usage
+
 Copyright © 2026 NAME HERE <EMAIL ADDRESS>
 
 This program is free software: you can redistribute it and/or modify
