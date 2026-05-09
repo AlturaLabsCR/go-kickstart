@@ -1,6 +1,6 @@
 -- name: OncesertAccountByEmail :one
-INSERT INTO accounts (email)
-VALUES (?)
+INSERT INTO accounts (email, created_at)
+VALUES (?, ?)
 ON CONFLICT(email) DO UPDATE SET email = excluded.email
 RETURNING sub;
 

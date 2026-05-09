@@ -3,6 +3,12 @@ package database
 
 import "context"
 
+type AccountLoginRequest struct {
+	Email     string
+	Otp       int64
+	ExpiresAt int64
+}
+
 type Database interface {
 	Querier() Querier
 	WithTx(ctx context.Context, fn func(q Querier) error) (err error)
@@ -13,11 +19,20 @@ type Database interface {
 type Querier interface {
 	// OncesertAccountByEmail creates an account by email if not yet exists.
 	// It returns the email's subject.
-	OncesertAccountByEmail(ctx context.Context, email string) (sub int64, err error)
+	OncesertAccountByEmail(ctx context.Context, email string, createdAt int64) (sub int64, err error)
 
 	// UpdateAccountEmail updates the email for the account subject.
 	UpdateAccountEmail(ctx context.Context, sub int64, email string) error
 
 	// DeleteAccount deletes the account for the account subject.
 	DeleteAccount(ctx context.Context, sub int64) error
+
+	// UpsertAccountLoginRequest creates or updates the login request for an email.
+	UpsertAccountLoginRequest(ctx context.Context, email string, otp int64, expiresAt int64) error
+
+	// SelectAccountLoginRequest returns the login request for an email.
+	SelectAccountLoginRequest(ctx context.Context, email string) (*AccountLoginRequest, error)
+
+	// DeleteAccountLoginRequest deletes the login request for an email.
+	DeleteAccountLoginRequest(ctx context.Context, email string) error
 }

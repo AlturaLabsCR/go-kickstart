@@ -6,8 +6,11 @@ import (
 	"github.com/myrepo/myserver/database/postgres/db"
 )
 
-func (q *PostgresQuerier) OncesertAccountByEmail(ctx context.Context, email string) (sub int64, err error) {
-	accountSub, err := q.queries.OncesertAccountByEmail(ctx, email)
+func (q *PostgresQuerier) OncesertAccountByEmail(ctx context.Context, email string, createdAt int64) (sub int64, err error) {
+	accountSub, err := q.queries.OncesertAccountByEmail(ctx, db.OncesertAccountByEmailParams{
+		Email:     email,
+		CreatedAt: createdAt,
+	})
 	if err != nil {
 		return 0, err
 	}
