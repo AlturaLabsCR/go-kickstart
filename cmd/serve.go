@@ -1,6 +1,5 @@
-/*
-Copyright © 2026 NAME HERE <EMAIL ADDRESS>
-*/
+// Copyright © 2026 NAME HERE <EMAIL ADDRESS>
+
 package cmd
 
 import (
@@ -19,8 +18,10 @@ import (
 	"github.com/myrepo/myserver/database"
 	"github.com/myrepo/myserver/database/provider"
 	"github.com/myrepo/myserver/handlers"
+	locales "github.com/myrepo/myserver/i18n"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
+	"github.com/tavocg/go-i18n"
 )
 
 var serveCmd = &cobra.Command{
@@ -83,10 +84,16 @@ func runServer(connStr string, dev bool, logLvl string, logFmt string, host stri
 		}()
 	}
 
+	localizer, err := i18n.NewLocalizer(locales.Locales())
+	if err != nil {
+		return err
+	}
+
 	h := handlers.NewHandler(handlers.Options{
-		Logger: logger,
-		Dev:    dev,
-		DB:     db,
+		Logger:    logger,
+		Dev:       dev,
+		DB:        db,
+		Localizer: localizer,
 	})
 
 	srv := &http.Server{
