@@ -1,8 +1,9 @@
-# overrides:
+# Overrides:
 #   MYSERVER_PORT=8080 myserver serve
 #   myserver serve --port 8080
-#
-# default values are:
+
+# Default values are:
+
 dev: false
 host: ""
 port: 3080
