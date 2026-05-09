@@ -4,6 +4,8 @@ package sqlite
 import (
 	"context"
 	"database/sql"
+	"os"
+	"path/filepath"
 
 	"github.com/myrepo/myserver/database"
 	"github.com/myrepo/myserver/database/sqlite/db"
@@ -22,6 +24,13 @@ type SqliteOption func(*Sqlite)
 var _ database.Database = (*Sqlite)(nil)
 
 func NewSqlite(connStr string, opts ...SqliteOption) (*Sqlite, error) {
+	dir := filepath.Dir(connStr)
+	if dir != "." {
+		if err := os.MkdirAll(dir, 0o755); err != nil {
+			return nil, err
+		}
+	}
+
 	conn, err := sql.Open("sqlite", connStr)
 	if err != nil {
 		return nil, err
