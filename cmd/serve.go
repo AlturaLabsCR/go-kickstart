@@ -34,12 +34,12 @@ This application is a tool to generate the needed files
 to quickly create a Cobra application.`,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		return runServer(
-			viper.GetString("serve.db"),
-			viper.GetBool("serve.dev"),
-			viper.GetString("serve.loglvl"),
-			viper.GetString("serve.logfmt"),
-			viper.GetString("serve.host"),
-			viper.GetInt("serve.port"),
+			viper.GetString("db"),
+			viper.GetBool("dev"),
+			viper.GetString("loglvl"),
+			viper.GetString("logfmt"),
+			viper.GetString("host"),
+			viper.GetInt("port"),
 		)
 	},
 }
@@ -47,12 +47,12 @@ to quickly create a Cobra application.`,
 func init() {
 	rootCmd.AddCommand(serveCmd)
 
-	viper.SetDefault("serve.dev", false)
-	viper.SetDefault("serve.host", "")
-	viper.SetDefault("serve.port", 3080)
-	viper.SetDefault("serve.logfmt", "json")
-	viper.SetDefault("serve.loglvl", "info")
-	viper.SetDefault("serve.db", "data/myserver.sqlite")
+	viper.SetDefault("dev", false)
+	viper.SetDefault("host", "")
+	viper.SetDefault("port", 3080)
+	viper.SetDefault("logfmt", "json")
+	viper.SetDefault("loglvl", "info")
+	viper.SetDefault("db", "data/myserver.sqlite")
 
 	flags := serveCmd.Flags()
 	flags.String("db", "data/myserver.sqlite", "database connection string")
@@ -62,12 +62,12 @@ func init() {
 	flags.String("logfmt", "json", "log format: text or json")
 	flags.String("loglvl", "info", "log level: debug, info, warn, or error")
 
-	mustBindFlag("serve.db", serveCmd, "db")
-	mustBindFlag("serve.dev", serveCmd, "dev")
-	mustBindFlag("serve.host", serveCmd, "host")
-	mustBindFlag("serve.port", serveCmd, "port")
-	mustBindFlag("serve.logfmt", serveCmd, "logfmt")
-	mustBindFlag("serve.loglvl", serveCmd, "loglvl")
+	mustBindFlag("db", serveCmd, "db")
+	mustBindFlag("dev", serveCmd, "dev")
+	mustBindFlag("host", serveCmd, "host")
+	mustBindFlag("port", serveCmd, "port")
+	mustBindFlag("logfmt", serveCmd, "logfmt")
+	mustBindFlag("loglvl", serveCmd, "loglvl")
 }
 
 func runServer(connStr string, dev bool, logLvl string, logFmt string, host string, port int) error {
@@ -76,14 +76,14 @@ func runServer(connStr string, dev bool, logLvl string, logFmt string, host stri
 		return err
 	}
 
-	var dbConn database.Database
+	var db database.Database
 	if connStr != "" {
-		dbConn, err = provider.Open(context.Background(), connStr)
+		db, err = provider.Open(context.Background(), connStr)
 		if err != nil {
 			return err
 		}
 		defer func() {
-			if err := dbConn.Close(context.Background()); err != nil {
+			if err := db.Close(context.Background()); err != nil {
 				logger.Error("database close error", "error", err)
 			}
 		}()
@@ -92,7 +92,7 @@ func runServer(connStr string, dev bool, logLvl string, logFmt string, host stri
 	h := handlers.NewHandler(handlers.Options{
 		Logger: logger,
 		Dev:    dev,
-		DB:     dbConn,
+		DB:     db,
 	})
 
 	srv := &http.Server{
