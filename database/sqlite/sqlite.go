@@ -1,4 +1,4 @@
-// Package sqlite
+// Package sqlite implements the database interface with SQLite.
 package sqlite
 
 import (

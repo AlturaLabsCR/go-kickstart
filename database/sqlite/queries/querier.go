@@ -1,4 +1,4 @@
-// Package queries
+// Package queries adapts generated SQLite queries to the database interface.
 package queries
 
 import (

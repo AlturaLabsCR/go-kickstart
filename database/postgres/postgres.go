@@ -1,4 +1,4 @@
-// Package postgres
+// Package postgres implements the database interface with PostgreSQL.
 package postgres
 
 import (

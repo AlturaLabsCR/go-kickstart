@@ -1,3 +1,4 @@
+// Package provider opens database backends from connection strings.
 package provider
 
 import (

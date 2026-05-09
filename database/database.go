@@ -1,4 +1,4 @@
-// Package database
+// Package database defines the application's database interfaces.
 package database
 
 import "context"

@@ -1,3 +1,4 @@
+// Package handlers registers the application's HTTP handlers.
 package handlers
 
 import (
