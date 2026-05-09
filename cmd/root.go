@@ -1,6 +1,4 @@
 /*
-Package cmd implements commands and flags CLI usage
-
 Copyright © 2026 NAME HERE <EMAIL ADDRESS>
 
 This program is free software: you can redistribute it and/or modify
@@ -16,6 +14,8 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program. If not, see <http://www.gnu.org/licenses/>.
 */
+
+// Package cmd implements commands and flags CLI usage
 package cmd
 
 import (
