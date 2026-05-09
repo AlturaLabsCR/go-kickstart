@@ -6,7 +6,7 @@ type BodyParams struct {
 	Active  string
 }
 
-templ body(tr func(string) string, params BodyParams) {
+templ body(tr func(string, ...any) string, params BodyParams) {
 	<body>
 		<div class="hidden" id={ RedirectID }></div>
 		@h(tr, params.Active)
@@ -15,7 +15,7 @@ templ body(tr func(string) string, params BodyParams) {
 	</body>
 }
 
-templ h(tr func(string) string, active string) {
+templ h(tr func(string, ...any) string, active string) {
 	<header>
 		<nav>
 			<span>MyServer</span>

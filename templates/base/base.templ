@@ -5,7 +5,7 @@ type PageParams struct {
 	Body BodyParams
 }
 
-templ Page(tr func(string) string, page PageParams) {
+templ Page(tr func(string, ...any) string, page PageParams) {
 	<!DOCTYPE html>
 	<html>
 		@head(page.Head)
