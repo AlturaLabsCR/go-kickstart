@@ -4,6 +4,7 @@ db/
 
 myserver
 data/
+*.html
 
 .env
 .codex
