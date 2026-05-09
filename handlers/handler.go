@@ -8,6 +8,7 @@ import (
 
 	"github.com/myrepo/myserver/database"
 	"github.com/myrepo/myserver/middleware"
+	"github.com/tavocg/go-i18n"
 )
 
 type Logger interface {
@@ -21,17 +22,19 @@ type Handler struct {
 	initialized bool
 	dev         bool
 
-	logger Logger
-	db     database.Database
+	logger    Logger
+	db        database.Database
+	localizer *i18n.Localizer
 
 	mux   *http.ServeMux
 	paths []string
 }
 
 type Options struct {
-	Logger Logger
-	Dev    bool
-	DB     database.Database
+	Logger    Logger
+	Dev       bool
+	DB        database.Database
+	Localizer *i18n.Localizer
 }
 
 func NewHandler(opts Options) *Handler {
@@ -40,11 +43,17 @@ func NewHandler(opts Options) *Handler {
 		logger = slog.New(slog.NewTextHandler(os.Stdout, nil))
 	}
 
+	localizer := opts.Localizer
+	if localizer == nil {
+		panic("handler localizer is required")
+	}
+
 	next := &Handler{
 		initialized: true,
 		dev:         opts.Dev,
 		logger:      logger,
 		db:          opts.DB,
+		localizer:   localizer,
 		mux:         http.NewServeMux(),
 	}
 
