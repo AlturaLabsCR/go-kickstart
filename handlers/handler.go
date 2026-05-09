@@ -5,6 +5,7 @@ import (
 	"log/slog"
 	"net/http"
 	"os"
+	"strings"
 
 	"github.com/myrepo/myserver/database"
 	"github.com/myrepo/myserver/middleware"
@@ -25,6 +26,7 @@ type Handler struct {
 	logger    Logger
 	db        database.Database
 	localizer *i18n.Localizer
+	rootPath  string
 
 	mux   *http.ServeMux
 	paths []string
@@ -35,6 +37,7 @@ type Options struct {
 	Dev       bool
 	DB        database.Database
 	Localizer *i18n.Localizer
+	RootPath  string
 }
 
 func NewHandler(opts Options) *Handler {
@@ -48,12 +51,15 @@ func NewHandler(opts Options) *Handler {
 		panic("handler localizer is required")
 	}
 
+	rootPath := normalizeRootPath(opts.RootPath)
+
 	next := &Handler{
 		initialized: true,
 		dev:         opts.Dev,
 		logger:      logger,
 		db:          opts.DB,
 		localizer:   localizer,
+		rootPath:    rootPath,
 		mux:         http.NewServeMux(),
 	}
 
@@ -87,4 +93,22 @@ func (h *Handler) Mux() *http.ServeMux {
 func (h *Handler) registerRoutes() {
 	h.registerRootRoutes()
 	h.registerStaticRoutes()
+}
+
+func normalizeRootPath(path string) string {
+	path = strings.TrimSpace(path)
+	if path == "" || path == "/" {
+		return "/"
+	}
+
+	if !strings.HasPrefix(path, "/") {
+		path = "/" + path
+	}
+
+	path = strings.TrimRight(path, "/")
+	if path == "" {
+		return "/"
+	}
+
+	return path
 }
