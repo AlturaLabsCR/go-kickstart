@@ -11,7 +11,7 @@ import (
 )
 
 func (h *Handler) registerRootRoutes() {
-	h.Add(http.MethodGet, "/", h.Root)
+	h.Add(http.MethodGet, h.rootPath, h.Root)
 }
 
 func (h *Handler) Root(w http.ResponseWriter, r *http.Request) {
@@ -21,13 +21,13 @@ func (h *Handler) Root(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "text/html; charset=utf-8")
 		page := base.Page(L, base.PageParams{
 			Head: base.HeadParams{
-				Title:                 meta.AppTitle,
-				Subtitle:              L("root.greeting"),
-				RobotsIndex:           true,
+				Title:       meta.AppTitle,
+				Subtitle:    L("root.greeting"),
+				RobotsIndex: true,
 			},
 			Body: base.BodyParams{
 				Content: rootpage.RootMain(L),
-				Active:  "/",
+				Active:  h.rootPath,
 			},
 		})
 
