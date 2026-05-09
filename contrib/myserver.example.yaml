@@ -1,0 +1,11 @@
+# overrides:
+#   MYSERVER_PORT=8080 myserver serve
+#   myserver serve --port 8080
+#
+# default values are:
+dev: false
+host: ""
+port: 3080
+logfmt: json
+loglvl: info
+db: data/myserver.sqlite

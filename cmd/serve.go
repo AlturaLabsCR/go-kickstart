@@ -25,13 +25,7 @@ import (
 
 var serveCmd = &cobra.Command{
 	Use:   "serve",
-	Short: "A brief description of your command",
-	Long: `A longer description that spans multiple lines and likely contains examples
-and usage of using your command. For example:
-
-Cobra is a CLI library for Go that empowers applications.
-This application is a tool to generate the needed files
-to quickly create a Cobra application.`,
+	Short: "Run the HTTP server",
 	RunE: func(cmd *cobra.Command, args []string) error {
 		return runServer(
 			viper.GetString("db"),
@@ -55,12 +49,12 @@ func init() {
 	viper.SetDefault("db", "data/myserver.sqlite")
 
 	flags := serveCmd.Flags()
-	flags.String("db", "data/myserver.sqlite", "database connection string")
-	flags.Bool("dev", false, "enable development logging")
-	flags.String("host", "", "host interface to bind")
-	flags.Int("port", 3080, "port to listen on")
-	flags.String("logfmt", "json", "log format: text or json")
-	flags.String("loglvl", "info", "log level: debug, info, warn, or error")
+	flags.String("db", "data/myserver.sqlite", "database DSN")
+	flags.Bool("dev", false, "dev mode, also sets --loglvl=debug")
+	flags.String("host", "", "bind host")
+	flags.Int("port", 3080, "bind port")
+	flags.String("logfmt", "json", "log format")
+	flags.String("loglvl", "info", "log level")
 
 	mustBindFlag("db", serveCmd, "db")
 	mustBindFlag("dev", serveCmd, "dev")
