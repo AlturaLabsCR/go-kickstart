@@ -52,10 +52,10 @@ func init() {
 	viper.SetDefault("serve.port", 3080)
 	viper.SetDefault("serve.logfmt", "json")
 	viper.SetDefault("serve.loglvl", "info")
-	viper.SetDefault("serve.db", "myserver.sqlite")
+	viper.SetDefault("serve.db", "data/myserver.sqlite")
 
 	flags := serveCmd.Flags()
-	flags.String("db", "myserver.sqlite", "database connection string")
+	flags.String("db", "data/myserver.sqlite", "database connection string")
 	flags.Bool("dev", false, "enable development logging")
 	flags.String("host", "", "host interface to bind")
 	flags.Int("port", 3080, "port to listen on")
