@@ -33,6 +33,7 @@ var serveCmd = &cobra.Command{
 			viper.GetBool("dev"),
 			viper.GetString("loglvl"),
 			viper.GetString("logfmt"),
+			viper.GetString("root"),
 			viper.GetString("host"),
 			viper.GetInt("port"),
 		)
@@ -47,6 +48,7 @@ func init() {
 	viper.SetDefault("port", 3080)
 	viper.SetDefault("logfmt", "json")
 	viper.SetDefault("loglvl", "info")
+	viper.SetDefault("root", "/")
 	viper.SetDefault("db", "data/myserver.sqlite")
 
 	flags := serveCmd.Flags()
@@ -56,6 +58,7 @@ func init() {
 	flags.Int("port", 3080, "bind port")
 	flags.String("logfmt", "json", "log format")
 	flags.String("loglvl", "info", "log level")
+	flags.String("root", "/", "root route path")
 
 	mustBindFlag("db", serveCmd, "db")
 	mustBindFlag("dev", serveCmd, "dev")
@@ -63,9 +66,10 @@ func init() {
 	mustBindFlag("port", serveCmd, "port")
 	mustBindFlag("logfmt", serveCmd, "logfmt")
 	mustBindFlag("loglvl", serveCmd, "loglvl")
+	mustBindFlag("root", serveCmd, "root")
 }
 
-func runServer(connStr string, dev bool, logLvl string, logFmt string, host string, port int) error {
+func runServer(connStr string, dev bool, logLvl string, logFmt string, root string, host string, port int) error {
 	logger, err := newLogger(dev, logLvl, logFmt)
 	if err != nil {
 		return err
@@ -94,6 +98,7 @@ func runServer(connStr string, dev bool, logLvl string, logFmt string, host stri
 		Dev:       dev,
 		DB:        db,
 		Localizer: localizer,
+		RootPath:  root,
 	})
 
 	srv := &http.Server{
