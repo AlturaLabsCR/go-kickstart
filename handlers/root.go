@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/myrepo/myserver/templates/base"
+	"github.com/myrepo/myserver/templates/meta"
 	rootpage "github.com/myrepo/myserver/templates/root"
 )
 
@@ -20,11 +21,9 @@ func (h *Handler) Root(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "text/html; charset=utf-8")
 		page := base.Page(L, base.PageParams{
 			Head: base.HeadParams{
-				Title:                 "MyServer",
+				Title:                 meta.AppTitle,
 				Subtitle:              L("root.greeting"),
-				Description:           L("root.greeting"),
 				RobotsIndex:           true,
-				RobotsGoogleTranslate: true,
 			},
 			Body: base.BodyParams{
 				Content: rootpage.RootMain(L),

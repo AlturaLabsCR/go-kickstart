@@ -1,5 +1,7 @@
 package base
 
+import "github.com/myrepo/myserver/templates/meta"
+
 type BodyParams struct {
 	Content templ.Component
 	Aside   templ.Component
@@ -18,7 +20,7 @@ templ body(tr func(string, ...any) string, params BodyParams) {
 templ h(tr func(string, ...any) string, active string) {
 	<header>
 		<nav>
-			<span>MyServer</span>
+			<span>{ meta.AppTitle }</span>
 		</nav>
 	</header>
 }
@@ -38,6 +40,6 @@ templ m(content, aside templ.Component) {
 
 templ f() {
 	<footer>
-		© 2026 MyServer
+		© { meta.Year } { meta.AppTitle }
 	</footer>
 }
