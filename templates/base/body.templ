@@ -1,0 +1,43 @@
+package base
+
+type BodyParams struct {
+	Content templ.Component
+	Aside   templ.Component
+	Active  string
+}
+
+templ body(tr func(string) string, params BodyParams) {
+	<body>
+		<div class="hidden" id={ RedirectID }></div>
+		@h(tr, params.Active)
+		@m(params.Content, params.Aside)
+		@f()
+	</body>
+}
+
+templ h(tr func(string) string, active string) {
+	<header>
+		<nav>
+			<span>MyServer</span>
+		</nav>
+	</header>
+}
+
+templ m(content, aside templ.Component) {
+	<main>
+		if aside != nil {
+			<aside>
+				@aside
+			</aside>
+		}
+		<div class="content">
+			@content
+		</div>
+	</main>
+}
+
+templ f() {
+	<footer>
+		© 2026 MyServer
+	</footer>
+}
