@@ -7,7 +7,7 @@ import (
 
 	"github.com/myrepo/myserver/templates/base"
 	"github.com/myrepo/myserver/templates/meta"
-	rootpage "github.com/myrepo/myserver/templates/root"
+	"github.com/myrepo/myserver/templates/root"
 )
 
 func (h *Handler) registerRootRoutes() {
@@ -26,7 +26,7 @@ func (h *Handler) Root(w http.ResponseWriter, r *http.Request) {
 				RobotsIndex: true,
 			},
 			Body: base.BodyParams{
-				Content: rootpage.RootMain(L),
+				Content: root.RootMain(L),
 				Active:  h.rootPath,
 			},
 		})
