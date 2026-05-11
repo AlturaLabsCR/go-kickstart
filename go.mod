@@ -1,6 +1,6 @@
 module github.com/myrepo/myserver
 
-go 1.26.1
+go 1.26.2
 
 require (
 	github.com/a-h/templ v0.3.1020
@@ -56,6 +56,7 @@ require (
 	github.com/sqlc-dev/doubleclick v1.0.0 // indirect
 	github.com/sqlc-dev/sqlc v1.31.1 // indirect
 	github.com/subosito/gotenv v1.6.0 // indirect
+	github.com/tavocg/go-auth v0.0.0-20260511052523-badca57d5e15 // indirect
 	github.com/tetratelabs/wazero v1.11.0 // indirect
 	github.com/wasilibs/go-pgquery v0.0.0-20250409022910-10ac41983c07 // indirect
 	github.com/wasilibs/wazero-helpers v0.0.0-20240620070341-3dff1577cd52 // indirect
