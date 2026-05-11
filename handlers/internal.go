@@ -63,15 +63,6 @@ func normalizeEmail(original string) string {
 	return email
 }
 
-func bearerToken(header string) (string, bool) {
-	parts := strings.Fields(strings.TrimSpace(header))
-	if len(parts) != 2 || !strings.EqualFold(parts[0], "Bearer") || parts[1] == "" {
-		return "", false
-	}
-
-	return parts[1], true
-}
-
 func randomOTP() (int64, error) {
 	max := big.NewInt(1_000_000)
 	value, err := rand.Int(rand.Reader, max)
