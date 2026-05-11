@@ -122,20 +122,18 @@ func (h *Handler) VerifyAuthenticationCode(w http.ResponseWriter, r *http.Reques
 		RefreshTokenExpiresIn int64  `json:"refreshTokenExpiresIn"`
 	}
 
+	expiresIn := func(expiresAt int64) int64 {
+		if expiresAt == 0 {
+			return 0
+		}
+		now := time.Now().Unix()
+		return expiresAt - now
+	}
+
 	writeJSON(w, http.StatusOK, sessionResponse{
 		AccessToken:           tokens.Access.Value,
 		RefreshToken:          tokens.Refresh.Value,
 		ExpiresIn:             expiresIn(tokens.Access.ExpiresAt),
 		RefreshTokenExpiresIn: expiresIn(tokens.Refresh.ExpiresAt),
 	})
-}
-
-func expiresIn(expiresAt int64) int64 {
-	if expiresAt == 0 {
-		return 0
-	}
-
-	now := time.Now().Unix()
-
-	return expiresAt - now
 }
