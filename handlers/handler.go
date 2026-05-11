@@ -35,11 +35,12 @@ type Handler struct {
 }
 
 type Options struct {
-	Logger     Logger
-	Dev        bool
-	DB         database.Database
-	Localizer  *i18n.Localizer
-	RootPrefix string
+	Logger        Logger
+	Dev           bool
+	DB            database.Database
+	Authenticator auth.Authenticator[AccountIdentity]
+	Localizer     *i18n.Localizer
+	RootPrefix    string
 }
 
 func NewHandler(opts Options) *Handler {
@@ -53,16 +54,22 @@ func NewHandler(opts Options) *Handler {
 		panic("handler localizer is required")
 	}
 
+	authenticator := opts.Authenticator
+	if authenticator == nil {
+		panic("handler authenticator is required")
+	}
+
 	rootPrefix := normalizeRootPrefix(opts.RootPrefix)
 
 	next := &Handler{
-		initialized: true,
-		dev:         opts.Dev,
-		logger:      logger,
-		db:          opts.DB,
-		localizer:   localizer,
-		rootPrefix:  rootPrefix,
-		mux:         http.NewServeMux(),
+		initialized:   true,
+		dev:           opts.Dev,
+		logger:        logger,
+		db:            opts.DB,
+		authenticator: authenticator,
+		localizer:     localizer,
+		rootPrefix:    rootPrefix,
+		mux:           http.NewServeMux(),
 	}
 
 	next.registerRoutes()
