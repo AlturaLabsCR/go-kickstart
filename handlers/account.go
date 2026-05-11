@@ -167,11 +167,11 @@ func (h *Handler) ConfirmEmailChange(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err := h.db.WithTx(r.Context(), func(q database.Querier) error {
-		if err := q.UpdateAccountEmail(r.Context(), identity.Sub, saved.Email); err != nil {
+		if err := q.DeleteAccountEmailChangeRequest(r.Context(), identity.Sub); err != nil {
 			return err
 		}
 
-		return q.DeleteAccountEmailChangeRequest(r.Context(), identity.Sub)
+		return q.UpdateAccountEmail(r.Context(), identity.Sub, saved.Email)
 	}); err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		return
