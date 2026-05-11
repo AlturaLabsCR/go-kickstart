@@ -7,7 +7,7 @@ require (
 	github.com/jackc/pgx/v5 v5.9.2
 	github.com/spf13/cobra v1.10.2
 	github.com/spf13/viper v1.21.0
-	github.com/tavocg/go-auth v0.0.0-20260511052523-badca57d5e15
+	github.com/tavocg/go-auth v0.0.0-20260511075900-18c077548ac6
 	github.com/tavocg/go-i18n v1.0.0
 	modernc.org/sqlite v1.50.0
 )
