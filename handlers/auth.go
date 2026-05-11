@@ -1,17 +1,21 @@
 package handlers
 
 import (
+	"errors"
 	"fmt"
 	"net/http"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/myrepo/myserver/database"
+	auth "github.com/tavocg/go-auth"
 )
 
 func (h *Handler) registerAuthRoutes() {
 	h.Add(http.MethodPost, h.routePath("/auth/login"), h.LoginOrCreateAccount)
 	h.Add(http.MethodPost, h.routePath("/auth/verify"), h.VerifyAuthenticationCode)
+	h.Add(http.MethodPost, h.routePath("/auth/refresh"), h.RefreshSession)
 }
 
 func (h *Handler) LoginOrCreateAccount(w http.ResponseWriter, r *http.Request) {
@@ -56,6 +60,13 @@ type AccountIdentity struct {
 
 func (i AccountIdentity) Subject() string {
 	return strconv.FormatInt(i.Sub, 10)
+}
+
+type sessionResponse struct {
+	AccessToken           string `json:"access_token"`
+	RefreshToken          string `json:"refresh_token"`
+	ExpiresIn             int64  `json:"expires_in"`
+	RefreshTokenExpiresIn int64  `json:"refresh_token_expires_in"`
 }
 
 func (h *Handler) VerifyAuthenticationCode(w http.ResponseWriter, r *http.Request) {
@@ -116,25 +127,54 @@ func (h *Handler) VerifyAuthenticationCode(w http.ResponseWriter, r *http.Reques
 		return
 	}
 
-	type sessionResponse struct {
-		AccessToken           string `json:"access_token"`
-		RefreshToken          string `json:"refresh_token"`
-		ExpiresIn             int64  `json:"expires_in"`
-		RefreshTokenExpiresIn int64  `json:"refresh_token_expires_in"`
+	writeJSON(w, http.StatusOK, newSessionResponse(tokens))
+}
+
+func (h *Handler) RefreshSession(w http.ResponseWriter, r *http.Request) {
+	type refreshRequest struct {
+		RefreshToken string `json:"refresh_token"`
 	}
 
-	expiresIn := func(expiresAt int64) int64 {
-		if expiresAt == 0 {
-			return 0
+	var req refreshRequest
+	if err := decodeJSON(r.Body, &req); err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+
+	req.RefreshToken = strings.TrimSpace(req.RefreshToken)
+	if req.RefreshToken == "" {
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+
+	tokens, err := h.authenticator.Refresh(r.Context(), req.RefreshToken)
+	if err != nil {
+		if errors.Is(err, auth.ErrInvalidToken) || errors.Is(err, auth.ErrExpiredToken) || errors.Is(err, auth.ErrRevokedToken) {
+			w.WriteHeader(http.StatusUnauthorized)
+			return
 		}
-		now := time.Now().Unix()
-		return expiresAt - now
+
+		w.WriteHeader(http.StatusInternalServerError)
+		return
 	}
 
-	writeJSON(w, http.StatusOK, sessionResponse{
+	writeJSON(w, http.StatusOK, newSessionResponse(tokens))
+}
+
+func newSessionResponse(tokens *auth.Tokens) sessionResponse {
+	return sessionResponse{
 		AccessToken:           tokens.Access.Value,
 		RefreshToken:          tokens.Refresh.Value,
 		ExpiresIn:             expiresIn(tokens.Access.ExpiresAt),
 		RefreshTokenExpiresIn: expiresIn(tokens.Refresh.ExpiresAt),
-	})
+	}
+}
+
+func expiresIn(expiresAt int64) int64 {
+	if expiresAt == 0 {
+		return 0
+	}
+
+	now := time.Now().Unix()
+	return expiresAt - now
 }
