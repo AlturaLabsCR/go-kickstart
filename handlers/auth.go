@@ -24,25 +24,25 @@ func (h *Handler) LoginOrCreateAccount(w http.ResponseWriter, r *http.Request) {
 	}
 	var req loginRequest
 	if err := decodeJSON(r.Body, &req); err != nil {
-		w.WriteHeader(http.StatusBadRequest)
+		h.writeError(w, r, http.StatusBadRequest, err, "invalid login request body")
 		return
 	}
 
 	email := normalizeEmail(req.Email)
 	if email == "" {
-		w.WriteHeader(http.StatusBadRequest)
+		h.writeStatus(w, r, http.StatusBadRequest, "invalid login email", "email", req.Email)
 		return
 	}
 
 	otp, err := randomOTP()
 	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
+		h.writeError(w, r, http.StatusInternalServerError, err, "failed to generate login otp")
 		return
 	}
 
 	expiresAt := time.Now().UTC().Add(10 * time.Minute).Unix()
 	if err := h.db.Querier().UpsertAccountLoginRequest(r.Context(), email, otp, expiresAt); err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
+		h.writeError(w, r, http.StatusInternalServerError, err, "failed to upsert login request", "email", email)
 		return
 	}
 
@@ -69,24 +69,24 @@ func (h *Handler) VerifyAuthenticationCode(w http.ResponseWriter, r *http.Reques
 
 	var req verifyRequest
 	if err := decodeJSON(r.Body, &req); err != nil {
-		w.WriteHeader(http.StatusBadRequest)
+		h.writeError(w, r, http.StatusBadRequest, err, "invalid verify request body")
 		return
 	}
 
 	email := normalizeEmail(req.Email)
 	if email == "" {
-		w.WriteHeader(http.StatusBadRequest)
+		h.writeStatus(w, r, http.StatusBadRequest, "invalid verify email", "email", req.Email)
 		return
 	}
 
 	saved, err := h.db.Querier().SelectAccountLoginRequest(r.Context(), email)
 	if err != nil {
 		if h.db.IsErrNotFound(err) {
-			w.WriteHeader(http.StatusUnauthorized)
+			h.writeError(w, r, http.StatusUnauthorized, err, "missing login request", "email", email)
 			return
 		}
 
-		w.WriteHeader(http.StatusInternalServerError)
+		h.writeError(w, r, http.StatusInternalServerError, err, "failed to select login request", "email", email)
 		return
 	}
 
@@ -94,7 +94,7 @@ func (h *Handler) VerifyAuthenticationCode(w http.ResponseWriter, r *http.Reques
 		if saved.ExpiresAt < time.Now().UTC().Unix() {
 			_ = h.db.Querier().DeleteAccountLoginRequest(r.Context(), email)
 		}
-		w.WriteHeader(http.StatusUnauthorized)
+		h.writeStatus(w, r, http.StatusUnauthorized, "invalid login verification code", "email", email)
 		return
 	}
 
@@ -109,13 +109,13 @@ func (h *Handler) VerifyAuthenticationCode(w http.ResponseWriter, r *http.Reques
 
 		return q.DeleteAccountLoginRequest(r.Context(), email)
 	}); err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
+		h.writeError(w, r, http.StatusInternalServerError, err, "failed to finalize login verification", "email", email)
 		return
 	}
 
 	tokens, err := h.authenticator.Issue(r.Context(), &appauth.Claims{Sub: fmt.Sprintf("%d", subject)})
 	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
+		h.writeError(w, r, http.StatusInternalServerError, err, "failed to issue session tokens", "sub", subject)
 		return
 	}
 
@@ -129,24 +129,24 @@ func (h *Handler) RefreshSession(w http.ResponseWriter, r *http.Request) {
 
 	var req refreshRequest
 	if err := decodeJSON(r.Body, &req); err != nil {
-		w.WriteHeader(http.StatusBadRequest)
+		h.writeError(w, r, http.StatusBadRequest, err, "invalid refresh request body")
 		return
 	}
 
 	req.RefreshToken = strings.TrimSpace(req.RefreshToken)
 	if req.RefreshToken == "" {
-		w.WriteHeader(http.StatusBadRequest)
+		h.writeStatus(w, r, http.StatusBadRequest, "missing refresh token")
 		return
 	}
 
 	tokens, err := h.authenticator.Refresh(r.Context(), req.RefreshToken)
 	if err != nil {
 		if errors.Is(err, auth.ErrInvalidToken) || errors.Is(err, auth.ErrExpiredToken) || errors.Is(err, auth.ErrRevokedToken) {
-			w.WriteHeader(http.StatusUnauthorized)
+			h.writeError(w, r, http.StatusUnauthorized, err, "failed to refresh session")
 			return
 		}
 
-		w.WriteHeader(http.StatusInternalServerError)
+		h.writeError(w, r, http.StatusInternalServerError, err, "failed to refresh session")
 		return
 	}
 

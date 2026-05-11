@@ -47,7 +47,7 @@ func RequestLogger(logger Logger, pattern string, next http.Handler) http.Handle
 			"took", time.Since(start),
 		}
 
-		if sw.status >= http.StatusBadRequest {
+		if sw.status >= http.StatusInternalServerError {
 			logger.Error("hit", args...)
 			return
 		}

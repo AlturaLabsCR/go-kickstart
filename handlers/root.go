@@ -32,7 +32,7 @@ func (h *Handler) Root(w http.ResponseWriter, r *http.Request) {
 		})
 
 		if err := page.Render(r.Context(), w); err != nil {
-			http.Error(w, "failed to render root page", http.StatusInternalServerError)
+			h.writeError(w, r, http.StatusInternalServerError, err, "failed to render root page")
 		}
 		return
 	}

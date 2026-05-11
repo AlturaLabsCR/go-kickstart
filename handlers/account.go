@@ -10,7 +10,7 @@ import (
 
 func (h *Handler) registerAccountRoutes() {
 	authenticated := func(fn http.HandlerFunc) http.Handler {
-		return middleware.AuthenticateBearer(h.authenticator, http.HandlerFunc(fn))
+		return middleware.AuthenticateBearer(h.logger, h.authenticator, http.HandlerFunc(fn))
 	}
 
 	h.AddHandler(http.MethodGet, h.routePath("/account"), authenticated(h.GetAccount))
@@ -22,18 +22,18 @@ func (h *Handler) registerAccountRoutes() {
 func (h *Handler) GetAccount(w http.ResponseWriter, r *http.Request) {
 	_, sub, status, ok := authenticatedAccountClaimsAndSubject(r)
 	if !ok {
-		w.WriteHeader(status)
+		h.writeStatus(w, r, status, "missing authenticated account subject")
 		return
 	}
 
 	account, err := h.db.Querier().SelectAccountBySub(r.Context(), sub)
 	if err != nil {
 		if h.db.IsErrNotFound(err) {
-			w.WriteHeader(http.StatusNotFound)
+			h.writeError(w, r, http.StatusNotFound, err, "account not found", "sub", sub)
 			return
 		}
 
-		w.WriteHeader(http.StatusInternalServerError)
+		h.writeError(w, r, http.StatusInternalServerError, err, "failed to select account", "sub", sub)
 		return
 	}
 
@@ -51,12 +51,12 @@ func (h *Handler) GetAccount(w http.ResponseWriter, r *http.Request) {
 func (h *Handler) DeleteAccount(w http.ResponseWriter, r *http.Request) {
 	identity, sub, status, ok := authenticatedAccountClaimsAndSubject(r)
 	if !ok {
-		w.WriteHeader(status)
+		h.writeStatus(w, r, status, "missing authenticated account subject")
 		return
 	}
 
 	if err := h.authenticator.RevokeAll(r.Context(), identity); err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
+		h.writeError(w, r, http.StatusInternalServerError, err, "failed to revoke account sessions", "sub", sub)
 		return
 	}
 
@@ -67,7 +67,7 @@ func (h *Handler) DeleteAccount(w http.ResponseWriter, r *http.Request) {
 
 		return q.DeleteAccount(r.Context(), sub)
 	}); err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
+		h.writeError(w, r, http.StatusInternalServerError, err, "failed to delete account", "sub", sub)
 		return
 	}
 
@@ -77,7 +77,7 @@ func (h *Handler) DeleteAccount(w http.ResponseWriter, r *http.Request) {
 func (h *Handler) RequestEmailChange(w http.ResponseWriter, r *http.Request) {
 	_, sub, status, ok := authenticatedAccountClaimsAndSubject(r)
 	if !ok {
-		w.WriteHeader(status)
+		h.writeStatus(w, r, status, "missing authenticated account subject")
 		return
 	}
 
@@ -87,41 +87,41 @@ func (h *Handler) RequestEmailChange(w http.ResponseWriter, r *http.Request) {
 
 	var req changeEmailRequest
 	if err := decodeJSON(r.Body, &req); err != nil {
-		w.WriteHeader(http.StatusBadRequest)
+		h.writeError(w, r, http.StatusBadRequest, err, "invalid account email change request body")
 		return
 	}
 
 	newEmail := normalizeEmail(req.NewEmail)
 	if newEmail == "" {
-		w.WriteHeader(http.StatusBadRequest)
+		h.writeStatus(w, r, http.StatusBadRequest, "invalid account email change target", "email", req.NewEmail, "sub", sub)
 		return
 	}
 
 	account, err := h.db.Querier().SelectAccountBySub(r.Context(), sub)
 	if err != nil {
 		if h.db.IsErrNotFound(err) {
-			w.WriteHeader(http.StatusNotFound)
+			h.writeError(w, r, http.StatusNotFound, err, "account not found", "sub", sub)
 			return
 		}
 
-		w.WriteHeader(http.StatusInternalServerError)
+		h.writeError(w, r, http.StatusInternalServerError, err, "failed to select account", "sub", sub)
 		return
 	}
 
 	if account.Email == newEmail {
-		w.WriteHeader(http.StatusBadRequest)
+		h.writeStatus(w, r, http.StatusBadRequest, "account email change target matches current email", "sub", sub, "email", newEmail)
 		return
 	}
 
 	otp, err := randomOTP()
 	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
+		h.writeError(w, r, http.StatusInternalServerError, err, "failed to generate account email change otp", "sub", sub)
 		return
 	}
 
 	expiresAt := time.Now().UTC().Add(10 * time.Minute).Unix()
 	if err := h.db.Querier().UpsertAccountEmailChangeRequest(r.Context(), sub, newEmail, otp, expiresAt); err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
+		h.writeError(w, r, http.StatusInternalServerError, err, "failed to upsert account email change request", "sub", sub, "email", newEmail)
 		return
 	}
 
@@ -132,7 +132,7 @@ func (h *Handler) RequestEmailChange(w http.ResponseWriter, r *http.Request) {
 func (h *Handler) ConfirmEmailChange(w http.ResponseWriter, r *http.Request) {
 	_, sub, status, ok := authenticatedAccountClaimsAndSubject(r)
 	if !ok {
-		w.WriteHeader(status)
+		h.writeStatus(w, r, status, "missing authenticated account subject")
 		return
 	}
 
@@ -142,18 +142,18 @@ func (h *Handler) ConfirmEmailChange(w http.ResponseWriter, r *http.Request) {
 
 	var req changeEmailConfirmRequest
 	if err := decodeJSON(r.Body, &req); err != nil {
-		w.WriteHeader(http.StatusBadRequest)
+		h.writeError(w, r, http.StatusBadRequest, err, "invalid account email confirm request body")
 		return
 	}
 
 	saved, err := h.db.Querier().SelectAccountEmailChangeRequestBySub(r.Context(), sub)
 	if err != nil {
 		if h.db.IsErrNotFound(err) {
-			w.WriteHeader(http.StatusUnauthorized)
+			h.writeError(w, r, http.StatusUnauthorized, err, "missing account email change request", "sub", sub)
 			return
 		}
 
-		w.WriteHeader(http.StatusInternalServerError)
+		h.writeError(w, r, http.StatusInternalServerError, err, "failed to select account email change request", "sub", sub)
 		return
 	}
 
@@ -162,7 +162,7 @@ func (h *Handler) ConfirmEmailChange(w http.ResponseWriter, r *http.Request) {
 			_ = h.db.Querier().DeleteAccountEmailChangeRequest(r.Context(), sub)
 		}
 
-		w.WriteHeader(http.StatusUnauthorized)
+		h.writeStatus(w, r, http.StatusUnauthorized, "invalid account email change verification code", "sub", sub)
 		return
 	}
 
@@ -173,7 +173,7 @@ func (h *Handler) ConfirmEmailChange(w http.ResponseWriter, r *http.Request) {
 
 		return q.UpdateAccountEmail(r.Context(), sub, saved.Email)
 	}); err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
+		h.writeError(w, r, http.StatusInternalServerError, err, "failed to confirm account email change", "sub", sub, "email", saved.Email)
 		return
 	}
 

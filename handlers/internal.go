@@ -40,6 +40,43 @@ func writeJSON(w http.ResponseWriter, status int, payload any) {
 	}
 }
 
+func (h *Handler) writeStatus(w http.ResponseWriter, r *http.Request, status int, msg string, args ...any) {
+	logArgs := []any{
+		"status", status,
+		"method", r.Method,
+		"path", r.URL.Path,
+	}
+	logArgs = append(logArgs, args...)
+
+	if status >= http.StatusInternalServerError {
+		h.logger.Error(msg, logArgs...)
+	} else if status >= http.StatusBadRequest {
+		h.logger.Debug(msg, logArgs...)
+	}
+
+	w.WriteHeader(status)
+}
+
+func (h *Handler) writeError(w http.ResponseWriter, r *http.Request, status int, err error, msg string, args ...any) {
+	logArgs := []any{
+		"status", status,
+		"method", r.Method,
+		"path", r.URL.Path,
+	}
+	if err != nil {
+		logArgs = append(logArgs, "error", err)
+	}
+	logArgs = append(logArgs, args...)
+
+	if status >= http.StatusInternalServerError {
+		h.logger.Error(msg, logArgs...)
+	} else if status >= http.StatusBadRequest {
+		h.logger.Debug(msg, logArgs...)
+	}
+
+	w.WriteHeader(status)
+}
+
 var validEmail = regexp.MustCompile(`^[a-z0-9](?:[a-z0-9+-]*[a-z0-9]|\.[a-z0-9+-]*[a-z0-9])*@(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.)+[a-z]{2,}$`)
 
 // normalizeEmail returns normalized email address if it meets strict rules.
