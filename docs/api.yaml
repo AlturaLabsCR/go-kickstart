@@ -64,7 +64,6 @@ paths:
                 refreshToken: X4fFxvY89ypw5f...
                 expiresIn: 900
                 refreshTokenExpiresIn: 5184000
-                account_created: true
         default:
           $ref: '#/components/responses/Error'
   /auth/refresh:
@@ -244,15 +243,7 @@ components:
           type: integer
           minimum: 0
     VerifyResponse:
-      allOf:
-        - $ref: '#/components/schemas/SessionTokens'
-        - type: object
-          additionalProperties: false
-          required:
-            - account_created
-          properties:
-            account_created:
-              type: boolean
+      $ref: '#/components/schemas/SessionTokens'
     RefreshResponse:
       $ref: '#/components/schemas/SessionTokens'
     Account:
