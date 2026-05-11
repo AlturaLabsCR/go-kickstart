@@ -105,7 +105,7 @@ func runServer(connStr string, dev bool, logLvl string, logFmt string, authSecre
 		}
 	}()
 
-	localizer, err := i18n.NewLocalizer(locales.Locales())
+	localizer, err := i18n.NewLocalizer(locales.Locales)
 	if err != nil {
 		return err
 	}

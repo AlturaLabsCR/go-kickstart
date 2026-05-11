@@ -1,7 +1,7 @@
 package i18n
 
 func init() {
-	locales["es"] = es
+	Locales["es"] = es
 }
 
 var es = map[string]string{
