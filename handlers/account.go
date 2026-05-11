@@ -126,7 +126,7 @@ func (h *Handler) RequestEmailChange(w http.ResponseWriter, r *http.Request) {
 	}
 
 	h.logger.Debug("generated account email change otp", "sub", sub, "email", newEmail, "otp", otp, "expires_at", expiresAt)
-	w.WriteHeader(http.StatusOK)
+	w.WriteHeader(http.StatusNoContent)
 }
 
 func (h *Handler) ConfirmEmailChange(w http.ResponseWriter, r *http.Request) {
@@ -177,5 +177,5 @@ func (h *Handler) ConfirmEmailChange(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	w.WriteHeader(http.StatusOK)
+	w.WriteHeader(http.StatusNoContent)
 }

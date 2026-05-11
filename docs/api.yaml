@@ -26,14 +26,8 @@ paths:
             example:
               email: john@doe.com
       responses:
-        '200':
+        '204':
           description: Verification email sent.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/LoginResponse'
-              example:
-                sent_otp: true
         default:
           $ref: '#/components/responses/Error'
   /auth/verify:
@@ -144,7 +138,7 @@ paths:
             example:
               new_email: new@email.com
       responses:
-        '200':
+        '204':
           description: Email change request accepted.
         default:
           $ref: '#/components/responses/Error'
@@ -165,7 +159,7 @@ paths:
             example:
               otp: 123456
       responses:
-        '200':
+        '204':
           description: Email change confirmed.
         default:
           $ref: '#/components/responses/Error'
@@ -192,14 +186,6 @@ components:
         email:
           type: string
           format: email
-    LoginResponse:
-      type: object
-      additionalProperties: false
-      required:
-        - sent_otp
-      properties:
-        sent_otp:
-          type: boolean
     VerifyRequest:
       type: object
       additionalProperties: false

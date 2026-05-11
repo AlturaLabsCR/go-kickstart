@@ -46,12 +46,8 @@ func (h *Handler) LoginOrCreateAccount(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	type loginResponse struct {
-		SentOTP bool `json:"sent_otp"`
-	}
-
 	h.logger.Debug("generated login otp", "email", email, "otp", fmt.Sprintf("%06d", otp), "expires_at", expiresAt)
-	writeJSON(w, http.StatusOK, loginResponse{SentOTP: true})
+	w.WriteHeader(http.StatusNoContent)
 }
 
 type sessionResponse struct {
