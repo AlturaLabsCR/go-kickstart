@@ -4,6 +4,7 @@ package cmd
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"log/slog"
 	"net"
@@ -75,18 +76,20 @@ func runServer(connStr string, dev bool, logLvl string, logFmt string, rootPrefi
 		return err
 	}
 
-	var db database.Database
-	if connStr != "" {
-		db, err = provider.Open(context.Background(), connStr)
-		if err != nil {
-			return err
-		}
-		defer func() {
-			if err := db.Close(context.Background()); err != nil {
-				logger.Error("database close error", "error", err)
-			}
-		}()
+	if connStr == "" {
+		return errors.New("database DSN is required")
 	}
+
+	var db database.Database
+	db, err = provider.Open(context.Background(), connStr)
+	if err != nil {
+		return err
+	}
+	defer func() {
+		if err := db.Close(context.Background()); err != nil {
+			logger.Error("database close error", "error", err)
+		}
+	}()
 
 	localizer, err := i18n.NewLocalizer(locales.Locales())
 	if err != nil {
