@@ -7,9 +7,9 @@ import (
 	"os"
 	"strings"
 
-	appauth "github.com/myrepo/myserver/auth"
-	"github.com/myrepo/myserver/database"
-	"github.com/myrepo/myserver/middleware"
+	appauth "app/auth"
+	"app/database"
+	"app/middleware"
 	"github.com/tavocg/go-auth"
 	"github.com/tavocg/go-i18n"
 )

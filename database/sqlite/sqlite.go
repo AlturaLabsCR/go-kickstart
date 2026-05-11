@@ -8,9 +8,9 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/myrepo/myserver/database"
-	"github.com/myrepo/myserver/database/sqlite/db"
-	"github.com/myrepo/myserver/database/sqlite/queries"
+	"app/database"
+	"app/database/sqlite/db"
+	"app/database/sqlite/queries"
 
 	_ "modernc.org/sqlite"
 )

@@ -2,8 +2,8 @@
 package queries
 
 import (
-	"github.com/myrepo/myserver/database"
-	"github.com/myrepo/myserver/database/sqlite/db"
+	"app/database"
+	"app/database/sqlite/db"
 )
 
 type SqliteQuerier struct {

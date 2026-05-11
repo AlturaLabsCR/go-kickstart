@@ -3,8 +3,8 @@ package queries
 import (
 	"context"
 
-	"github.com/myrepo/myserver/database"
-	"github.com/myrepo/myserver/database/postgres/db"
+	"app/database"
+	"app/database/postgres/db"
 )
 
 func (q *PostgresQuerier) OncesertAccountByEmail(ctx context.Context, email string, createdAt int64) (sub int64, err error) {

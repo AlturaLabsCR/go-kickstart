@@ -11,8 +11,8 @@ import (
 	"strconv"
 	"strings"
 
-	appauth "github.com/myrepo/myserver/auth"
-	"github.com/myrepo/myserver/middleware"
+	appauth "app/auth"
+	"app/middleware"
 )
 
 func decodeJSON(body io.Reader, dst any) error {

@@ -7,8 +7,8 @@ import (
 	"strings"
 	"time"
 
-	appauth "github.com/myrepo/myserver/auth"
-	"github.com/myrepo/myserver/database"
+	appauth "app/auth"
+	"app/database"
 	auth "github.com/tavocg/go-auth"
 )
 

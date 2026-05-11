@@ -6,9 +6,9 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/myrepo/myserver/database"
-	"github.com/myrepo/myserver/database/postgres"
-	"github.com/myrepo/myserver/database/sqlite"
+	"app/database"
+	"app/database/postgres"
+	"app/database/sqlite"
 )
 
 func Open(ctx context.Context, connStr string) (database.Database, error) {

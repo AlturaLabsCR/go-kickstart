@@ -5,9 +5,9 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/myrepo/myserver/templates/base"
-	"github.com/myrepo/myserver/templates/meta"
-	"github.com/myrepo/myserver/templates/root"
+	"app/templates/base"
+	"app/templates/meta"
+	"app/templates/root"
 )
 
 func (h *Handler) registerRootRoutes() {

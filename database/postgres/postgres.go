@@ -7,9 +7,9 @@ import (
 
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
-	"github.com/myrepo/myserver/database"
-	"github.com/myrepo/myserver/database/postgres/db"
-	"github.com/myrepo/myserver/database/postgres/queries"
+	"app/database"
+	"app/database/postgres/db"
+	"app/database/postgres/queries"
 )
 
 type Postgres struct {

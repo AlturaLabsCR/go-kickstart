@@ -3,8 +3,8 @@ package queries
 import (
 	"context"
 
-	"github.com/myrepo/myserver/database"
-	"github.com/myrepo/myserver/database/postgres/db"
+	"app/database"
+	"app/database/postgres/db"
 )
 
 func (q *PostgresQuerier) UpsertAccountLoginRequest(ctx context.Context, email string, otp int64, expiresAt int64) error {

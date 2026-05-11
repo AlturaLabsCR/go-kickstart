@@ -3,8 +3,8 @@ package queries
 import (
 	"context"
 
-	"github.com/myrepo/myserver/database"
-	"github.com/myrepo/myserver/database/sqlite/db"
+	"app/database"
+	"app/database/sqlite/db"
 )
 
 func (q *SqliteQuerier) OncesertAccountByEmail(ctx context.Context, email string, createdAt int64) (sub int64, err error) {

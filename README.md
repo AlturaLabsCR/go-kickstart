@@ -18,4 +18,3 @@ There are several places where placeholder strings are used,
 update with your preferred details.
 
 - [ ] Copyright notices: `NAME HERE`, `EMAIL ADDRESS`.
-- [ ] Placeholders: `myrepo`, `myserver`, `MYSERVER`, and `MyServer`.

@@ -2,8 +2,8 @@
 package queries
 
 import (
-	"github.com/myrepo/myserver/database"
-	"github.com/myrepo/myserver/database/postgres/db"
+	"app/database"
+	"app/database/postgres/db"
 )
 
 type PostgresQuerier struct {

@@ -7,7 +7,7 @@ import (
 	"net/http"
 	"strings"
 
-	appauth "github.com/myrepo/myserver/auth"
+	appauth "app/auth"
 	goauth "github.com/tavocg/go-auth"
 )
 

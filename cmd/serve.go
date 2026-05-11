@@ -16,11 +16,11 @@ import (
 	"syscall"
 	"time"
 
-	appauth "github.com/myrepo/myserver/auth"
-	"github.com/myrepo/myserver/database"
-	"github.com/myrepo/myserver/database/provider"
-	"github.com/myrepo/myserver/handlers"
-	locales "github.com/myrepo/myserver/i18n"
+	appauth "app/auth"
+	"app/database"
+	"app/database/provider"
+	"app/handlers"
+	locales "app/i18n"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 	"github.com/tavocg/go-auth/authenticators"
@@ -58,10 +58,10 @@ func init() {
 	viper.SetDefault("auth.access-token-ttl", 15*time.Minute)
 	viper.SetDefault("auth.refresh-token-ttl", 30*24*time.Hour)
 	viper.SetDefault("root", "")
-	viper.SetDefault("db", "data/myserver.sqlite")
+	viper.SetDefault("db", "data/app.sqlite")
 
 	flags := serveCmd.Flags()
-	flags.String("db", "data/myserver.sqlite", "database DSN")
+	flags.String("db", "data/app.sqlite", "database DSN")
 	flags.Bool("dev", false, "enable dev mode")
 	flags.String("host", "", "bind host")
 	flags.Int("port", 3080, "bind port")

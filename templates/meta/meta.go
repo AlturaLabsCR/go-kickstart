@@ -4,7 +4,7 @@ package meta
 import "time"
 
 const (
-	AppTitle = "MyServer"
+	AppTitle = "App"
 )
 
 var (

@@ -18,7 +18,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 */
 package main
 
-import "github.com/myrepo/myserver/cmd"
+import "app/cmd"
 
 func main() {
 	cmd.Execute()

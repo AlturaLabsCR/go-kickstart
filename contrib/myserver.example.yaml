@@ -1,34 +1,34 @@
-# myserver.yaml - Configuration for myserver
+# app.yaml - Configuration for app
 #
 # All options here are set to the default values. If no configuration file is
 # found, then these values will be used.
 
 # Enable development features like source locations in logs.
 # Override with:
-#   MYSERVER_DEV=true myserver serve
-#   myserver serve --dev
+#   APP_DEV=true app serve
+#   app serve --dev
 dev: false
 
 # Host or interface to bind to. Empty means the default bind behavior.
 # Override with:
-#   MYSERVER_HOST=127.0.0.1 myserver serve
-#   myserver serve --host 127.0.0.1
+#   APP_HOST=127.0.0.1 app serve
+#   app serve --host 127.0.0.1
 host: ""
 
 # TCP port to listen on.
 # Override with:
-#   MYSERVER_PORT=8080 myserver serve
-#   myserver serve --port 8080
+#   APP_PORT=8080 app serve
+#   app serve --port 8080
 port: 3080
 
 # Auth settings.
 # Override with:
-#   MYSERVER_AUTH_SECRET=change-me myserver serve
-#   myserver serve --auth-secret change-me
-#   MYSERVER_AUTH_ACCESS_TOKEN_TTL=15m myserver serve
-#   myserver serve --auth-access-ttl 15m
-#   MYSERVER_AUTH_REFRESH_TOKEN_TTL=720h myserver serve
-#   myserver serve --auth-refresh-ttl 720h
+#   APP_AUTH_SECRET=change-me app serve
+#   app serve --auth-secret change-me
+#   APP_AUTH_ACCESS_TOKEN_TTL=15m app serve
+#   app serve --auth-access-ttl 15m
+#   APP_AUTH_REFRESH_TOKEN_TTL=720h app serve
+#   app serve --auth-refresh-ttl 720h
 auth:
   secret: ""
   access-token-ttl: 15m
@@ -36,24 +36,24 @@ auth:
 
 # Route prefix to mount the app under.
 # Override with:
-#   MYSERVER_ROOT=/app myserver serve
-#   myserver serve --root /app
+#   APP_ROOT=/app app serve
+#   app serve --root /prefix
 root: ""
 
 # Log output format. Valid values: json, text.
 # Override with:
-#   MYSERVER_LOGFMT=text myserver serve
-#   myserver serve --logfmt text
+#   APP_LOGFMT=text app serve
+#   app serve --logfmt text
 logfmt: json
 
 # Minimum log level. Valid values: debug, info, warn, error.
 # Override with:
-#   MYSERVER_LOGLVL=debug myserver serve
-#   myserver serve --loglvl debug
+#   APP_LOGLVL=debug app serve
+#   app serve --loglvl debug
 loglvl: info
 
 # Database connection string or path.
 # Override with:
-#   MYSERVER_DB=data/custom.sqlite myserver serve
-#   myserver serve --db data/custom.sqlite
-db: data/myserver.sqlite
+#   APP_DB=data/custom.sqlite app serve
+#   app serve --db data/custom.sqlite
+db: data/app.sqlite

@@ -4,8 +4,8 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/myrepo/myserver/database"
-	"github.com/myrepo/myserver/middleware"
+	"app/database"
+	"app/middleware"
 )
 
 func (h *Handler) registerAccountRoutes() {

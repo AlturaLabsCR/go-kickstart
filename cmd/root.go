@@ -33,7 +33,7 @@ import (
 var cfgFile string
 
 var rootCmd = &cobra.Command{
-	Use:   "myserver",
+	Use:   "app",
 	Short: "A brief description of your application",
 	Long: `A longer description that spans multiple lines and likely contains
 examples and usage of using your application. For example:
@@ -69,10 +69,10 @@ func initConfig() {
 		}
 
 		viper.SetConfigType("yaml")
-		viper.SetConfigName("myserver")
+		viper.SetConfigName("app")
 	}
 
-	viper.SetEnvPrefix("MYSERVER")
+	viper.SetEnvPrefix("APP")
 	viper.SetEnvKeyReplacer(strings.NewReplacer(".", "_"))
 	viper.AutomaticEnv()
 

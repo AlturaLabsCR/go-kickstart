@@ -3,8 +3,8 @@ package queries
 import (
 	"context"
 
-	"github.com/myrepo/myserver/database"
-	"github.com/myrepo/myserver/database/sqlite/db"
+	"app/database"
+	"app/database/sqlite/db"
 )
 
 func (q *SqliteQuerier) UpsertAccountEmailChangeRequest(ctx context.Context, sub int64, email string, otp int64, expiresAt int64) error {
