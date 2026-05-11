@@ -12,3 +12,8 @@ WHERE sub = $1;
 -- name: DeleteAccount :exec
 DELETE FROM accounts
 WHERE sub = $1;
+
+-- name: SelectAccountBySub :one
+SELECT sub, email, created_at
+FROM accounts_meta
+WHERE sub = $1;

@@ -28,6 +28,9 @@ type Querier interface {
 	// DeleteAccount deletes the account for the account subject.
 	DeleteAccount(ctx context.Context, sub int64) error
 
+	// SelectAccountBySub returns the account for the account subject.
+	SelectAccountBySub(ctx context.Context, sub int64) (*Account, error)
+
 	// UpsertAccountLoginRequest creates or updates the login request for an email.
 	UpsertAccountLoginRequest(ctx context.Context, email string, otp int64, expiresAt int64) error
 

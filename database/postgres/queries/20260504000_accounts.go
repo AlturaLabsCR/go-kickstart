@@ -3,6 +3,7 @@ package queries
 import (
 	"context"
 
+	"github.com/myrepo/myserver/database"
 	"github.com/myrepo/myserver/database/postgres/db"
 )
 
@@ -27,4 +28,17 @@ func (q *PostgresQuerier) UpdateAccountEmail(ctx context.Context, sub int64, ema
 
 func (q *PostgresQuerier) DeleteAccount(ctx context.Context, sub int64) error {
 	return q.queries.DeleteAccount(ctx, sub)
+}
+
+func (q *PostgresQuerier) SelectAccountBySub(ctx context.Context, sub int64) (*database.Account, error) {
+	account, err := q.queries.SelectAccountBySub(ctx, sub)
+	if err != nil {
+		return nil, err
+	}
+
+	return &database.Account{
+		Sub:       account.Sub,
+		Email:     account.Email,
+		CreatedAt: account.CreatedAt,
+	}, nil
 }
