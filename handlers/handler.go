@@ -9,6 +9,7 @@ import (
 
 	"github.com/myrepo/myserver/database"
 	"github.com/myrepo/myserver/middleware"
+	"github.com/tavocg/go-auth"
 	"github.com/tavocg/go-i18n"
 )
 
@@ -23,10 +24,11 @@ type Handler struct {
 	initialized bool
 	dev         bool
 
-	logger    Logger
-	db        database.Database
-	localizer *i18n.Localizer
-	rootPath  string
+	logger        Logger
+	db            database.Database
+	authenticator auth.Authenticator[AccountIdentity]
+	localizer     *i18n.Localizer
+	rootPath      string
 
 	mux   *http.ServeMux
 	paths []string
@@ -91,6 +93,7 @@ func (h *Handler) Mux() *http.ServeMux {
 }
 
 func (h *Handler) registerRoutes() {
+	h.registerAuthRoutes()
 	h.registerRootRoutes()
 	h.registerStaticRoutes()
 }

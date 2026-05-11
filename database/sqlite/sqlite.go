@@ -4,6 +4,7 @@ package sqlite
 import (
 	"context"
 	"database/sql"
+	"errors"
 	"os"
 	"path/filepath"
 
@@ -74,6 +75,10 @@ func (s *Sqlite) WithTx(ctx context.Context, fn func(q database.Querier) error) 
 func (s *Sqlite) Exec(ctx context.Context, statement string) (err error) {
 	_, err = s.db.ExecContext(ctx, statement)
 	return err
+}
+
+func (s *Sqlite) IsErrNotFound(err error) bool {
+	return errors.Is(err, sql.ErrNoRows)
 }
 
 func (s *Sqlite) Close(context.Context) (err error) {
