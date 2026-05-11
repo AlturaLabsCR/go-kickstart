@@ -31,6 +31,15 @@ type Querier interface {
 	// SelectAccountBySub returns the account for the account subject.
 	SelectAccountBySub(ctx context.Context, sub int64) (*Account, error)
 
+	// UpsertAccountEmailChangeRequest creates or updates the pending email change request for an account.
+	UpsertAccountEmailChangeRequest(ctx context.Context, sub int64, email string, otp int64, expiresAt int64) error
+
+	// SelectAccountEmailChangeRequestBySub returns the pending email change request for an account.
+	SelectAccountEmailChangeRequestBySub(ctx context.Context, sub int64) (*AccountEmailChangeRequest, error)
+
+	// DeleteAccountEmailChangeRequest deletes the pending email change request for an account.
+	DeleteAccountEmailChangeRequest(ctx context.Context, sub int64) error
+
 	// UpsertAccountLoginRequest creates or updates the login request for an email.
 	UpsertAccountLoginRequest(ctx context.Context, email string, otp int64, expiresAt int64) error
 
