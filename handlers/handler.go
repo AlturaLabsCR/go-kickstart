@@ -7,6 +7,7 @@ import (
 	"os"
 	"strings"
 
+	appauth "github.com/myrepo/myserver/auth"
 	"github.com/myrepo/myserver/database"
 	"github.com/myrepo/myserver/middleware"
 	"github.com/tavocg/go-auth"
@@ -26,7 +27,7 @@ type Handler struct {
 
 	logger        Logger
 	db            database.Database
-	authenticator auth.Authenticator[AccountIdentity]
+	authenticator auth.Authenticator[*appauth.Claims]
 	localizer     *i18n.Localizer
 	rootPrefix    string
 
@@ -38,7 +39,7 @@ type Options struct {
 	Logger        Logger
 	Dev           bool
 	DB            database.Database
-	Authenticator auth.Authenticator[AccountIdentity]
+	Authenticator auth.Authenticator[*appauth.Claims]
 	Localizer     *i18n.Localizer
 	RootPrefix    string
 }

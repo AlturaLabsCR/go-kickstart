@@ -20,13 +20,13 @@ func (h *Handler) registerAccountRoutes() {
 }
 
 func (h *Handler) GetAccount(w http.ResponseWriter, r *http.Request) {
-	identity, ok := middleware.AuthenticatedIdentity[AccountIdentity](r.Context())
+	_, sub, status, ok := authenticatedAccountClaimsAndSubject(r)
 	if !ok {
-		w.WriteHeader(http.StatusInternalServerError)
+		w.WriteHeader(status)
 		return
 	}
 
-	account, err := h.db.Querier().SelectAccountBySub(r.Context(), identity.Sub)
+	account, err := h.db.Querier().SelectAccountBySub(r.Context(), sub)
 	if err != nil {
 		if h.db.IsErrNotFound(err) {
 			w.WriteHeader(http.StatusNotFound)
@@ -49,9 +49,9 @@ func (h *Handler) GetAccount(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handler) DeleteAccount(w http.ResponseWriter, r *http.Request) {
-	identity, ok := middleware.AuthenticatedIdentity[AccountIdentity](r.Context())
+	identity, sub, status, ok := authenticatedAccountClaimsAndSubject(r)
 	if !ok {
-		w.WriteHeader(http.StatusInternalServerError)
+		w.WriteHeader(status)
 		return
 	}
 
@@ -61,11 +61,11 @@ func (h *Handler) DeleteAccount(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err := h.db.WithTx(r.Context(), func(q database.Querier) error {
-		if err := q.DeleteAccountEmailChangeRequest(r.Context(), identity.Sub); err != nil {
+		if err := q.DeleteAccountEmailChangeRequest(r.Context(), sub); err != nil {
 			return err
 		}
 
-		return q.DeleteAccount(r.Context(), identity.Sub)
+		return q.DeleteAccount(r.Context(), sub)
 	}); err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		return
@@ -75,9 +75,9 @@ func (h *Handler) DeleteAccount(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handler) RequestEmailChange(w http.ResponseWriter, r *http.Request) {
-	identity, ok := middleware.AuthenticatedIdentity[AccountIdentity](r.Context())
+	_, sub, status, ok := authenticatedAccountClaimsAndSubject(r)
 	if !ok {
-		w.WriteHeader(http.StatusInternalServerError)
+		w.WriteHeader(status)
 		return
 	}
 
@@ -97,7 +97,7 @@ func (h *Handler) RequestEmailChange(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	account, err := h.db.Querier().SelectAccountBySub(r.Context(), identity.Sub)
+	account, err := h.db.Querier().SelectAccountBySub(r.Context(), sub)
 	if err != nil {
 		if h.db.IsErrNotFound(err) {
 			w.WriteHeader(http.StatusNotFound)
@@ -120,19 +120,19 @@ func (h *Handler) RequestEmailChange(w http.ResponseWriter, r *http.Request) {
 	}
 
 	expiresAt := time.Now().UTC().Add(10 * time.Minute).Unix()
-	if err := h.db.Querier().UpsertAccountEmailChangeRequest(r.Context(), identity.Sub, newEmail, otp, expiresAt); err != nil {
+	if err := h.db.Querier().UpsertAccountEmailChangeRequest(r.Context(), sub, newEmail, otp, expiresAt); err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
 
-	h.logger.Debug("generated account email change otp", "sub", identity.Sub, "email", newEmail, "otp", otp, "expires_at", expiresAt)
+	h.logger.Debug("generated account email change otp", "sub", sub, "email", newEmail, "otp", otp, "expires_at", expiresAt)
 	w.WriteHeader(http.StatusOK)
 }
 
 func (h *Handler) ConfirmEmailChange(w http.ResponseWriter, r *http.Request) {
-	identity, ok := middleware.AuthenticatedIdentity[AccountIdentity](r.Context())
+	_, sub, status, ok := authenticatedAccountClaimsAndSubject(r)
 	if !ok {
-		w.WriteHeader(http.StatusInternalServerError)
+		w.WriteHeader(status)
 		return
 	}
 
@@ -146,7 +146,7 @@ func (h *Handler) ConfirmEmailChange(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	saved, err := h.db.Querier().SelectAccountEmailChangeRequestBySub(r.Context(), identity.Sub)
+	saved, err := h.db.Querier().SelectAccountEmailChangeRequestBySub(r.Context(), sub)
 	if err != nil {
 		if h.db.IsErrNotFound(err) {
 			w.WriteHeader(http.StatusUnauthorized)
@@ -159,7 +159,7 @@ func (h *Handler) ConfirmEmailChange(w http.ResponseWriter, r *http.Request) {
 
 	if saved.Otp != req.OTP || saved.ExpiresAt < time.Now().UTC().Unix() {
 		if saved.ExpiresAt < time.Now().UTC().Unix() {
-			_ = h.db.Querier().DeleteAccountEmailChangeRequest(r.Context(), identity.Sub)
+			_ = h.db.Querier().DeleteAccountEmailChangeRequest(r.Context(), sub)
 		}
 
 		w.WriteHeader(http.StatusUnauthorized)
@@ -167,11 +167,11 @@ func (h *Handler) ConfirmEmailChange(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err := h.db.WithTx(r.Context(), func(q database.Querier) error {
-		if err := q.DeleteAccountEmailChangeRequest(r.Context(), identity.Sub); err != nil {
+		if err := q.DeleteAccountEmailChangeRequest(r.Context(), sub); err != nil {
 			return err
 		}
 
-		return q.UpdateAccountEmail(r.Context(), identity.Sub, saved.Email)
+		return q.UpdateAccountEmail(r.Context(), sub, saved.Email)
 	}); err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		return

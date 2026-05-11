@@ -8,7 +8,11 @@ import (
 	"math/big"
 	"net/http"
 	"regexp"
+	"strconv"
 	"strings"
+
+	appauth "github.com/myrepo/myserver/auth"
+	"github.com/myrepo/myserver/middleware"
 )
 
 func decodeJSON(body io.Reader, dst any) error {
@@ -61,6 +65,24 @@ func normalizeEmail(original string) string {
 	}
 
 	return email
+}
+
+func authenticatedAccountClaimsAndSubject(r *http.Request) (*appauth.Claims, int64, int, bool) {
+	identity, ok := middleware.AuthenticatedClaims(r.Context())
+	if !ok {
+		return nil, 0, http.StatusInternalServerError, false
+	}
+
+	if identity == nil || identity.Sub == "" {
+		return nil, 0, http.StatusUnauthorized, false
+	}
+
+	sub, err := strconv.ParseInt(identity.Sub, 10, 64)
+	if err != nil || sub <= 0 {
+		return nil, 0, http.StatusUnauthorized, false
+	}
+
+	return identity, sub, http.StatusOK, true
 }
 
 func randomOTP() (int64, error) {

@@ -21,6 +21,19 @@ host: ""
 #   myserver serve --port 8080
 port: 3080
 
+# Auth settings.
+# Override with:
+#   MYSERVER_AUTH_SECRET=change-me myserver serve
+#   myserver serve --auth-secret change-me
+#   MYSERVER_AUTH_ACCESS_TOKEN_TTL=15m myserver serve
+#   myserver serve --auth-access-ttl 15m
+#   MYSERVER_AUTH_REFRESH_TOKEN_TTL=720h myserver serve
+#   myserver serve --auth-refresh-ttl 720h
+auth:
+  secret: ""
+  access-token-ttl: 15m
+  refresh-token-ttl: 720h
+
 # Route prefix to mount the app under.
 # Override with:
 #   MYSERVER_ROOT=/app myserver serve

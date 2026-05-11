@@ -16,6 +16,7 @@ import (
 	"syscall"
 	"time"
 
+	appauth "github.com/myrepo/myserver/auth"
 	"github.com/myrepo/myserver/database"
 	"github.com/myrepo/myserver/database/provider"
 	"github.com/myrepo/myserver/handlers"
@@ -34,6 +35,9 @@ var serveCmd = &cobra.Command{
 			viper.GetBool("dev"),
 			viper.GetString("loglvl"),
 			viper.GetString("logfmt"),
+			viper.GetString("auth.secret"),
+			viper.GetDuration("auth.access-token-ttl"),
+			viper.GetDuration("auth.refresh-token-ttl"),
 			viper.GetString("root"),
 			viper.GetString("host"),
 			viper.GetInt("port"),
@@ -49,6 +53,9 @@ func init() {
 	viper.SetDefault("port", 3080)
 	viper.SetDefault("logfmt", "json")
 	viper.SetDefault("loglvl", "info")
+	viper.SetDefault("auth.secret", "")
+	viper.SetDefault("auth.access-token-ttl", 15*time.Minute)
+	viper.SetDefault("auth.refresh-token-ttl", 30*24*time.Hour)
 	viper.SetDefault("root", "")
 	viper.SetDefault("db", "data/myserver.sqlite")
 
@@ -59,6 +66,9 @@ func init() {
 	flags.Int("port", 3080, "bind port")
 	flags.String("logfmt", "json", "log format")
 	flags.String("loglvl", "info", "log level")
+	flags.String("auth-secret", "", "JWT signing secret")
+	flags.Duration("auth-access-ttl", 15*time.Minute, "access token TTL")
+	flags.Duration("auth-refresh-ttl", 30*24*time.Hour, "refresh token TTL")
 	flags.String("root", "", "route prefix to mount the app under")
 
 	mustBindFlag("db", serveCmd, "db")
@@ -67,10 +77,13 @@ func init() {
 	mustBindFlag("port", serveCmd, "port")
 	mustBindFlag("logfmt", serveCmd, "logfmt")
 	mustBindFlag("loglvl", serveCmd, "loglvl")
+	mustBindFlag("auth.secret", serveCmd, "auth-secret")
+	mustBindFlag("auth.access-token-ttl", serveCmd, "auth-access-ttl")
+	mustBindFlag("auth.refresh-token-ttl", serveCmd, "auth-refresh-ttl")
 	mustBindFlag("root", serveCmd, "root")
 }
 
-func runServer(connStr string, dev bool, logLvl string, logFmt string, rootPrefix string, host string, port int) error {
+func runServer(connStr string, dev bool, logLvl string, logFmt string, authSecret string, authAccessTTL time.Duration, authRefreshTTL time.Duration, rootPrefix string, host string, port int) error {
 	logger, err := newLogger(dev, logLvl, logFmt)
 	if err != nil {
 		return err
@@ -96,12 +109,18 @@ func runServer(connStr string, dev bool, logLvl string, logFmt string, rootPrefi
 		return err
 	}
 
+	authenticator, err := appauth.NewAuthenticator(authSecret, authAccessTTL, authRefreshTTL)
+	if err != nil {
+		return err
+	}
+
 	h := handlers.NewHandler(handlers.Options{
-		Logger:     logger,
-		Dev:        dev,
-		DB:         db,
-		Localizer:  localizer,
-		RootPrefix: rootPrefix,
+		Logger:        logger,
+		Dev:           dev,
+		DB:            db,
+		Authenticator: authenticator,
+		Localizer:     localizer,
+		RootPrefix:    rootPrefix,
 	})
 
 	srv := &http.Server{

@@ -7,12 +7,15 @@ import (
 	"net/http"
 	"strings"
 
-	auth "github.com/tavocg/go-auth"
+	appauth "github.com/myrepo/myserver/auth"
+	goauth "github.com/tavocg/go-auth"
 )
 
-type authenticatedIdentityKey[T any] struct{}
+type authenticatedClaimsContextKey struct{}
 
-func AuthenticateBearer[T auth.Identifier](authenticator auth.Authenticator[T], next http.Handler) http.Handler {
+var AuthenticatedClaimsContextKey = authenticatedClaimsContextKey{}
+
+func AuthenticateBearer(authenticator goauth.Authenticator[*appauth.Claims], next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		parts := strings.Fields(strings.TrimSpace(r.Header.Get("Authorization")))
 		if len(parts) != 2 || !strings.EqualFold(parts[0], "Bearer") || parts[1] == "" {
@@ -22,7 +25,7 @@ func AuthenticateBearer[T auth.Identifier](authenticator auth.Authenticator[T], 
 
 		identity, err := authenticator.Verify(r.Context(), parts[1])
 		if err != nil {
-			if errors.Is(err, auth.ErrInvalidToken) || errors.Is(err, auth.ErrExpiredToken) {
+			if errors.Is(err, goauth.ErrInvalidToken) || errors.Is(err, goauth.ErrExpiredToken) {
 				w.WriteHeader(http.StatusUnauthorized)
 				return
 			}
@@ -31,12 +34,12 @@ func AuthenticateBearer[T auth.Identifier](authenticator auth.Authenticator[T], 
 			return
 		}
 
-		ctx := context.WithValue(r.Context(), authenticatedIdentityKey[T]{}, identity)
+		ctx := context.WithValue(r.Context(), AuthenticatedClaimsContextKey, identity)
 		next.ServeHTTP(w, r.WithContext(ctx))
 	})
 }
 
-func AuthenticatedIdentity[T any](ctx context.Context) (identity T, ok bool) {
-	identity, ok = ctx.Value(authenticatedIdentityKey[T]{}).(T)
+func AuthenticatedClaims(ctx context.Context) (*appauth.Claims, bool) {
+	identity, ok := ctx.Value(AuthenticatedClaimsContextKey).(*appauth.Claims)
 	return identity, ok
 }

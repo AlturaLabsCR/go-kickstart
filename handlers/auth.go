@@ -4,10 +4,10 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
-	"strconv"
 	"strings"
 	"time"
 
+	appauth "github.com/myrepo/myserver/auth"
 	"github.com/myrepo/myserver/database"
 	auth "github.com/tavocg/go-auth"
 )
@@ -52,14 +52,6 @@ func (h *Handler) LoginOrCreateAccount(w http.ResponseWriter, r *http.Request) {
 
 	h.logger.Debug("generated login otp", "email", email, "otp", fmt.Sprintf("%06d", otp), "expires_at", expiresAt)
 	writeJSON(w, http.StatusOK, loginResponse{SentOTP: true})
-}
-
-type AccountIdentity struct {
-	Sub int64
-}
-
-func (i AccountIdentity) Subject() string {
-	return strconv.FormatInt(i.Sub, 10)
 }
 
 type sessionResponse struct {
@@ -121,7 +113,7 @@ func (h *Handler) VerifyAuthenticationCode(w http.ResponseWriter, r *http.Reques
 		return
 	}
 
-	tokens, err := h.authenticator.Issue(r.Context(), AccountIdentity{Sub: subject})
+	tokens, err := h.authenticator.Issue(r.Context(), &appauth.Claims{Sub: fmt.Sprintf("%d", subject)})
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		return
