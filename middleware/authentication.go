@@ -2,6 +2,7 @@
 package middleware
 
 import (
+	"context"
 	"errors"
 	"net/http"
 	"strings"
@@ -9,20 +10,33 @@ import (
 	auth "github.com/tavocg/go-auth"
 )
 
-func AuthenticateBearer[T auth.Identifier](r *http.Request, authenticator auth.Authenticator[T]) (identity T, status int, err error) {
-	parts := strings.Fields(strings.TrimSpace(r.Header.Get("Authorization")))
-	if len(parts) != 2 || !strings.EqualFold(parts[0], "Bearer") || parts[1] == "" {
-		return identity, http.StatusUnauthorized, auth.ErrInvalidToken
-	}
+type authenticatedIdentityKey[T any] struct{}
 
-	identity, err = authenticator.Verify(r.Context(), parts[1])
-	if err != nil {
-		if errors.Is(err, auth.ErrInvalidToken) || errors.Is(err, auth.ErrExpiredToken) {
-			return identity, http.StatusUnauthorized, err
+func AuthenticateBearer[T auth.Identifier](authenticator auth.Authenticator[T], next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		parts := strings.Fields(strings.TrimSpace(r.Header.Get("Authorization")))
+		if len(parts) != 2 || !strings.EqualFold(parts[0], "Bearer") || parts[1] == "" {
+			w.WriteHeader(http.StatusUnauthorized)
+			return
 		}
 
-		return identity, http.StatusInternalServerError, err
-	}
+		identity, err := authenticator.Verify(r.Context(), parts[1])
+		if err != nil {
+			if errors.Is(err, auth.ErrInvalidToken) || errors.Is(err, auth.ErrExpiredToken) {
+				w.WriteHeader(http.StatusUnauthorized)
+				return
+			}
 
-	return identity, http.StatusOK, nil
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+
+		ctx := context.WithValue(r.Context(), authenticatedIdentityKey[T]{}, identity)
+		next.ServeHTTP(w, r.WithContext(ctx))
+	})
+}
+
+func AuthenticatedIdentity[T any](ctx context.Context) (identity T, ok bool) {
+	identity, ok = ctx.Value(authenticatedIdentityKey[T]{}).(T)
+	return identity, ok
 }

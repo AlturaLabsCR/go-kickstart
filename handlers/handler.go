@@ -94,6 +94,7 @@ func (h *Handler) Mux() *http.ServeMux {
 
 func (h *Handler) registerRoutes() {
 	h.registerAuthRoutes()
+	h.registerAccountRoutes()
 	h.registerRootRoutes()
 	h.registerStaticRoutes()
 }
