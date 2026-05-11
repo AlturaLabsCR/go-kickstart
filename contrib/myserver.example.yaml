@@ -21,11 +21,11 @@ host: ""
 #   myserver serve --port 8080
 port: 3080
 
-# Root route path.
+# Route prefix to mount the app under.
 # Override with:
 #   MYSERVER_ROOT=/app myserver serve
 #   myserver serve --root /app
-root: /
+root: ""
 
 # Log output format. Valid values: json, text.
 # Override with:

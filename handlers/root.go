@@ -11,7 +11,7 @@ import (
 )
 
 func (h *Handler) registerRootRoutes() {
-	h.Add(http.MethodGet, h.rootPath, h.Root)
+	h.Add(http.MethodGet, h.routePath("/"), h.Root)
 }
 
 func (h *Handler) Root(w http.ResponseWriter, r *http.Request) {
@@ -27,7 +27,7 @@ func (h *Handler) Root(w http.ResponseWriter, r *http.Request) {
 			},
 			Body: base.BodyParams{
 				Content: root.RootMain(L),
-				Active:  h.rootPath,
+				Active:  h.rootPrefix,
 			},
 		})
 

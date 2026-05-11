@@ -48,7 +48,7 @@ func init() {
 	viper.SetDefault("port", 3080)
 	viper.SetDefault("logfmt", "json")
 	viper.SetDefault("loglvl", "info")
-	viper.SetDefault("root", "/")
+	viper.SetDefault("root", "")
 	viper.SetDefault("db", "data/myserver.sqlite")
 
 	flags := serveCmd.Flags()
@@ -58,7 +58,7 @@ func init() {
 	flags.Int("port", 3080, "bind port")
 	flags.String("logfmt", "json", "log format")
 	flags.String("loglvl", "info", "log level")
-	flags.String("root", "/", "root route path")
+	flags.String("root", "", "route prefix to mount the app under")
 
 	mustBindFlag("db", serveCmd, "db")
 	mustBindFlag("dev", serveCmd, "dev")
@@ -69,7 +69,7 @@ func init() {
 	mustBindFlag("root", serveCmd, "root")
 }
 
-func runServer(connStr string, dev bool, logLvl string, logFmt string, root string, host string, port int) error {
+func runServer(connStr string, dev bool, logLvl string, logFmt string, rootPrefix string, host string, port int) error {
 	logger, err := newLogger(dev, logLvl, logFmt)
 	if err != nil {
 		return err
@@ -94,11 +94,11 @@ func runServer(connStr string, dev bool, logLvl string, logFmt string, root stri
 	}
 
 	h := handlers.NewHandler(handlers.Options{
-		Logger:    logger,
-		Dev:       dev,
-		DB:        db,
-		Localizer: localizer,
-		RootPath:  root,
+		Logger:     logger,
+		Dev:        dev,
+		DB:         db,
+		Localizer:  localizer,
+		RootPrefix: rootPrefix,
 	})
 
 	srv := &http.Server{

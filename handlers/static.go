@@ -15,5 +15,6 @@ func (h *Handler) registerStaticRoutes() {
 		panic("failed to mount embedded static files")
 	}
 
-	h.AddHandler(http.MethodGet, "/s/", http.StripPrefix("/s/", http.FileServerFS(files)))
+	prefix := h.routePath("/s/")
+	h.AddHandler(http.MethodGet, prefix, http.StripPrefix(prefix, http.FileServerFS(files)))
 }

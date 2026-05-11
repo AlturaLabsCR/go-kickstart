@@ -28,18 +28,18 @@ type Handler struct {
 	db            database.Database
 	authenticator auth.Authenticator[AccountIdentity]
 	localizer     *i18n.Localizer
-	rootPath      string
+	rootPrefix    string
 
 	mux   *http.ServeMux
 	paths []string
 }
 
 type Options struct {
-	Logger    Logger
-	Dev       bool
-	DB        database.Database
-	Localizer *i18n.Localizer
-	RootPath  string
+	Logger     Logger
+	Dev        bool
+	DB         database.Database
+	Localizer  *i18n.Localizer
+	RootPrefix string
 }
 
 func NewHandler(opts Options) *Handler {
@@ -53,7 +53,7 @@ func NewHandler(opts Options) *Handler {
 		panic("handler localizer is required")
 	}
 
-	rootPath := normalizeRootPath(opts.RootPath)
+	rootPrefix := normalizeRootPrefix(opts.RootPrefix)
 
 	next := &Handler{
 		initialized: true,
@@ -61,7 +61,7 @@ func NewHandler(opts Options) *Handler {
 		logger:      logger,
 		db:          opts.DB,
 		localizer:   localizer,
-		rootPath:    rootPath,
+		rootPrefix:  rootPrefix,
 		mux:         http.NewServeMux(),
 	}
 
@@ -98,20 +98,32 @@ func (h *Handler) registerRoutes() {
 	h.registerStaticRoutes()
 }
 
-func normalizeRootPath(path string) string {
-	path = strings.TrimSpace(path)
-	if path == "" || path == "/" {
-		return "/"
+func (h *Handler) routePath(route string) string {
+	route = strings.TrimSpace(route)
+	if route == "" || route == "/" {
+		if h.rootPrefix == "" {
+			return "/"
+		}
+
+		return h.rootPrefix
 	}
 
-	if !strings.HasPrefix(path, "/") {
-		path = "/" + path
+	if !strings.HasPrefix(route, "/") {
+		route = "/" + route
 	}
 
-	path = strings.TrimRight(path, "/")
-	if path == "" {
-		return "/"
+	return h.rootPrefix + route
+}
+
+func normalizeRootPrefix(prefix string) string {
+	prefix = strings.TrimSpace(prefix)
+	if prefix == "" || prefix == "/" {
+		return ""
 	}
 
-	return path
+	if !strings.HasPrefix(prefix, "/") {
+		prefix = "/" + prefix
+	}
+
+	return strings.TrimRight(prefix, "/")
 }

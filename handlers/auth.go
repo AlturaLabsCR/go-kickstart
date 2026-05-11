@@ -10,7 +10,7 @@ import (
 )
 
 func (h *Handler) registerAuthRoutes() {
-	h.Add(http.MethodPost, h.rootPath+"/auth/login", h.LoginOrCreateAccount)
+	h.Add(http.MethodPost, h.routePath("/auth/login"), h.LoginOrCreateAccount)
 }
 
 func (h *Handler) LoginOrCreateAccount(w http.ResponseWriter, r *http.Request) {
