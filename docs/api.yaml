@@ -60,10 +60,10 @@ paths:
               schema:
                 $ref: '#/components/schemas/VerifyResponse'
               example:
-                accessToken: eyJhbGciOa...
-                refreshToken: X4fFxvY89ypw5f...
-                expiresIn: 900
-                refreshTokenExpiresIn: 5184000
+                access_token: eyJhbGciOa...
+                refresh_token: X4fFxvY89ypw5f...
+                expires_in: 900
+                refresh_token_expires_in: 5184000
         default:
           $ref: '#/components/responses/Error'
   /auth/refresh:
@@ -79,7 +79,7 @@ paths:
             schema:
               $ref: '#/components/schemas/RefreshRequest'
             example:
-              refreshToken: X4fFxvY89ypw5f...
+              refresh_token: X4fFxvY89ypw5f...
       responses:
         '200':
           description: Refreshed tokens.
@@ -88,10 +88,10 @@ paths:
               schema:
                 $ref: '#/components/schemas/RefreshResponse'
               example:
-                accessToken: eyJhbGciOiJIU...
-                refreshToken: eyJhbGciOiJIU...
-                expiresIn: 900
-                refreshTokenExpiresIn: 5184000
+                access_token: eyJhbGciOiJIU...
+                refresh_token: eyJhbGciOiJIU...
+                expires_in: 900
+                refresh_token_expires_in: 5184000
         default:
           $ref: '#/components/responses/Error'
   /account:
@@ -219,27 +219,27 @@ components:
       type: object
       additionalProperties: false
       required:
-        - refreshToken
+        - refresh_token
       properties:
-        refreshToken:
+        refresh_token:
           type: string
     SessionTokens:
       type: object
       additionalProperties: false
       required:
-        - accessToken
-        - refreshToken
-        - expiresIn
-        - refreshTokenExpiresIn
+        - access_token
+        - refresh_token
+        - expires_in
+        - refresh_token_expires_in
       properties:
-        accessToken:
+        access_token:
           type: string
-        refreshToken:
+        refresh_token:
           type: string
-        expiresIn:
+        expires_in:
           type: integer
           minimum: 0
-        refreshTokenExpiresIn:
+        refresh_token_expires_in:
           type: integer
           minimum: 0
     VerifyResponse:

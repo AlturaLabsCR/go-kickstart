@@ -11,6 +11,7 @@ import (
 
 func (h *Handler) registerAuthRoutes() {
 	h.Add(http.MethodPost, h.routePath("/auth/login"), h.LoginOrCreateAccount)
+	h.Add(http.MethodPost, h.routePath("/auth/verify"), h.VerifyAuthenticationCode)
 }
 
 func (h *Handler) LoginOrCreateAccount(w http.ResponseWriter, r *http.Request) {
@@ -116,10 +117,10 @@ func (h *Handler) VerifyAuthenticationCode(w http.ResponseWriter, r *http.Reques
 	}
 
 	type sessionResponse struct {
-		AccessToken           string `json:"accessToken"`
-		RefreshToken          string `json:"refreshToken"`
-		ExpiresIn             int64  `json:"expiresIn"`
-		RefreshTokenExpiresIn int64  `json:"refreshTokenExpiresIn"`
+		AccessToken           string `json:"access_token"`
+		RefreshToken          string `json:"refresh_token"`
+		ExpiresIn             int64  `json:"expires_in"`
+		RefreshTokenExpiresIn int64  `json:"refresh_token_expires_in"`
 	}
 
 	expiresIn := func(expiresAt int64) int64 {
