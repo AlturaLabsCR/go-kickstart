@@ -25,6 +25,7 @@ import (
 	"slices"
 	"strings"
 
+	"github.com/joho/godotenv"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
@@ -58,6 +59,8 @@ func init() {
 }
 
 func initConfig() {
+	_ = godotenv.Load()
+
 	if cfgFile != "" {
 		viper.SetConfigFile(cfgFile)
 	} else {
