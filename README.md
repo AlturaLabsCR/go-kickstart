@@ -1,4 +1,4 @@
-# kickstart-go
+# go-kickstart
 
 Golang web server template repository,
 intented for applications and REST APIs.
