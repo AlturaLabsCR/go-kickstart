@@ -10,7 +10,7 @@ require (
 	github.com/spf13/viper v1.21.0
 	github.com/tavocg/go-auth v0.0.0-20260511075900-18c077548ac6
 	github.com/tavocg/go-i18n v1.0.0
-	modernc.org/sqlite v1.50.0
+	modernc.org/sqlite v1.50.1
 )
 
 require (

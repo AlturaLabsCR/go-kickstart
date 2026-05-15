@@ -1,4 +1,4 @@
 #!/bin/sh
 
 set -x
-npm update
+npm -s update
