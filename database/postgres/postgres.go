@@ -5,11 +5,11 @@ import (
 	"context"
 	"errors"
 
-	"github.com/jackc/pgx/v5"
-	"github.com/jackc/pgx/v5/pgxpool"
 	"app/database"
 	"app/database/postgres/db"
 	"app/database/postgres/queries"
+	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgxpool"
 )
 
 type Postgres struct {
@@ -28,6 +28,11 @@ func NewPostgres(ctx context.Context, connStr string, opts ...PostgresOption) (*
 	}
 
 	if err := pool.Ping(ctx); err != nil {
+		pool.Close()
+		return nil, err
+	}
+
+	if err := applyMigrations(ctx, pool); err != nil {
 		pool.Close()
 		return nil, err
 	}

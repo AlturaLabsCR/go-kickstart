@@ -17,9 +17,13 @@ func Open(ctx context.Context, connStr string) (database.Database, error) {
 	}
 
 	switch {
-	case strings.HasPrefix(connStr, "postgres://"), strings.HasPrefix(connStr, "postgresql://"):
+	case isPostgresConnStr(connStr):
 		return postgres.NewPostgres(ctx, connStr)
 	default:
-		return sqlite.NewSqlite(connStr)
+		return sqlite.NewSqlite(ctx, connStr)
 	}
+}
+
+func isPostgresConnStr(connStr string) bool {
+	return strings.HasPrefix(connStr, "postgres://") || strings.HasPrefix(connStr, "postgresql://")
 }

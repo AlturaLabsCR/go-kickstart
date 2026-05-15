@@ -24,7 +24,7 @@ type SqliteOption func(*Sqlite)
 
 var _ database.Database = (*Sqlite)(nil)
 
-func NewSqlite(connStr string, opts ...SqliteOption) (*Sqlite, error) {
+func NewSqlite(ctx context.Context, connStr string, opts ...SqliteOption) (*Sqlite, error) {
 	dir := filepath.Dir(connStr)
 	if dir != "." {
 		if err := os.MkdirAll(dir, 0o755); err != nil {
@@ -38,6 +38,11 @@ func NewSqlite(connStr string, opts ...SqliteOption) (*Sqlite, error) {
 	}
 
 	if err := conn.Ping(); err != nil {
+		return nil, err
+	}
+
+	if err := applyMigrations(ctx, conn); err != nil {
+		_ = conn.Close()
 		return nil, err
 	}
 
