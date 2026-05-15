@@ -133,12 +133,17 @@ func runServer(connStr string, dev bool, logLvl string, logFmt string, authSecre
 		Handler: h.Mux(),
 	}
 
+	listener, err := net.Listen("tcp", srv.Addr)
+	if err != nil {
+		return err
+	}
+
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer stop()
 
 	go func() {
-		logger.Info("listening", "addr", srv.Addr)
-		if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+		logger.Info("listening", "addr", listener.Addr().String())
+		if err := srv.Serve(listener); err != nil && err != http.ErrServerClosed {
 			logger.Error("server error", "error", err)
 			os.Exit(1)
 		}
