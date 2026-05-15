@@ -41,6 +41,9 @@ examples and usage of using your application. For example:
 Cobra is a CLI library for Go that empowers applications.
 This application is a tool to generate the needed files
 to quickly create a Cobra application.`,
+	RunE: func(cmd *cobra.Command, args []string) error {
+		return runServerFromConfig()
+	},
 }
 
 func Execute() {
@@ -54,8 +57,6 @@ func init() {
 	cobra.OnInitialize(initConfig)
 
 	rootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "config file path")
-
-	rootCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
 }
 
 func initConfig() {
@@ -112,6 +113,15 @@ func mustBindFlag(key string, cmd *cobra.Command, name string) {
 	flag := cmd.Flags().Lookup(name)
 	if flag == nil {
 		panic("missing flag: " + name)
+	}
+
+	cobra.CheckErr(viper.BindPFlag(key, flag))
+}
+
+func mustBindPersistentFlag(key string, cmd *cobra.Command, name string) {
+	flag := cmd.PersistentFlags().Lookup(name)
+	if flag == nil {
+		panic("missing persistent flag: " + name)
 	}
 
 	cobra.CheckErr(viper.BindPFlag(key, flag))

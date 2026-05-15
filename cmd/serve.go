@@ -31,18 +31,7 @@ var serveCmd = &cobra.Command{
 	Use:   "serve",
 	Short: "Run the HTTP server",
 	RunE: func(cmd *cobra.Command, args []string) error {
-		return runServer(
-			viper.GetString("db"),
-			viper.GetBool("dev"),
-			viper.GetString("loglvl"),
-			viper.GetString("logfmt"),
-			viper.GetString("auth.secret"),
-			viper.GetDuration("auth.access-token-ttl"),
-			viper.GetDuration("auth.refresh-token-ttl"),
-			viper.GetString("root"),
-			viper.GetString("host"),
-			viper.GetInt("port"),
-		)
+		return runServerFromConfig()
 	},
 }
 
@@ -60,7 +49,7 @@ func init() {
 	viper.SetDefault("root", "")
 	viper.SetDefault("db", "data/app.sqlite")
 
-	flags := serveCmd.Flags()
+	flags := rootCmd.PersistentFlags()
 	flags.String("db", "data/app.sqlite", "database DSN")
 	flags.Bool("dev", false, "enable dev mode")
 	flags.String("host", "", "bind host")
@@ -72,16 +61,31 @@ func init() {
 	flags.Duration("auth-refresh-ttl", 30*24*time.Hour, "refresh token TTL")
 	flags.String("root", "", "route prefix to mount the app under")
 
-	mustBindFlag("db", serveCmd, "db")
-	mustBindFlag("dev", serveCmd, "dev")
-	mustBindFlag("host", serveCmd, "host")
-	mustBindFlag("port", serveCmd, "port")
-	mustBindFlag("logfmt", serveCmd, "logfmt")
-	mustBindFlag("loglvl", serveCmd, "loglvl")
-	mustBindFlag("auth.secret", serveCmd, "auth-secret")
-	mustBindFlag("auth.access-token-ttl", serveCmd, "auth-access-ttl")
-	mustBindFlag("auth.refresh-token-ttl", serveCmd, "auth-refresh-ttl")
-	mustBindFlag("root", serveCmd, "root")
+	mustBindPersistentFlag("db", rootCmd, "db")
+	mustBindPersistentFlag("dev", rootCmd, "dev")
+	mustBindPersistentFlag("host", rootCmd, "host")
+	mustBindPersistentFlag("port", rootCmd, "port")
+	mustBindPersistentFlag("logfmt", rootCmd, "logfmt")
+	mustBindPersistentFlag("loglvl", rootCmd, "loglvl")
+	mustBindPersistentFlag("auth.secret", rootCmd, "auth-secret")
+	mustBindPersistentFlag("auth.access-token-ttl", rootCmd, "auth-access-ttl")
+	mustBindPersistentFlag("auth.refresh-token-ttl", rootCmd, "auth-refresh-ttl")
+	mustBindPersistentFlag("root", rootCmd, "root")
+}
+
+func runServerFromConfig() error {
+	return runServer(
+		viper.GetString("db"),
+		viper.GetBool("dev"),
+		viper.GetString("loglvl"),
+		viper.GetString("logfmt"),
+		viper.GetString("auth.secret"),
+		viper.GetDuration("auth.access-token-ttl"),
+		viper.GetDuration("auth.refresh-token-ttl"),
+		viper.GetString("root"),
+		viper.GetString("host"),
+		viper.GetInt("port"),
+	)
 }
 
 func runServer(connStr string, dev bool, logLvl string, logFmt string, authSecret string, authAccessTTL time.Duration, authRefreshTTL time.Duration, rootPrefix string, host string, port int) error {
