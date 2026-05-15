@@ -16,7 +16,7 @@ import (
 	"syscall"
 	"time"
 
-	appauth "app/auth"
+	"app/auth"
 	"app/database"
 	"app/database/provider"
 	"app/handlers"
@@ -114,7 +114,7 @@ func runServer(connStr string, dev bool, logLvl string, logFmt string, authSecre
 		return err
 	}
 
-	authenticator, err := authenticators.NewMemoryAuthenticator[*appauth.Claims](authSecret, authAccessTTL, authRefreshTTL)
+	authenticator, err := authenticators.NewMemoryAuthenticator[*auth.Claims](authSecret, authAccessTTL, authRefreshTTL)
 	if err != nil {
 		return err
 	}
