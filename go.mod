@@ -1,6 +1,6 @@
 module app
 
-go 1.26.2
+go 1.26.3
 
 require (
 	github.com/a-h/templ v0.3.1020
@@ -9,7 +9,7 @@ require (
 	github.com/spf13/cobra v1.10.2
 	github.com/spf13/viper v1.21.0
 	github.com/tavocg/go-auth v0.0.0-20260511075900-18c077548ac6
-	github.com/tavocg/go-i18n v1.0.0
+	github.com/tavocg/go-i18n v1.0.1
 	modernc.org/sqlite v1.50.1
 )
 
@@ -70,7 +70,7 @@ require (
 	golang.org/x/mod v0.35.0 // indirect
 	golang.org/x/net v0.53.0 // indirect
 	golang.org/x/sync v0.20.0 // indirect
-	golang.org/x/sys v0.44.0 // indirect
+	golang.org/x/sys v0.45.0 // indirect
 	golang.org/x/text v0.37.0 // indirect
 	golang.org/x/tools v0.44.0 // indirect
 	google.golang.org/genproto/googleapis/api v0.0.0-20260120221211-b8f7ae30c516 // indirect

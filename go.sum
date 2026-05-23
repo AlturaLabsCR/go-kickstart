@@ -144,6 +144,8 @@ github.com/tavocg/go-auth v0.0.0-20260511075900-18c077548ac6 h1:DIasT5w9MkNoG21U
 github.com/tavocg/go-auth v0.0.0-20260511075900-18c077548ac6/go.mod h1:x2TSpJiLH2I4i7mupiL4PcfgPs1t+WlX2EP68lnrhH8=
 github.com/tavocg/go-i18n v1.0.0 h1:PE9xbkjstXUn2Y7h0qtS3KR66GbAujl06fP/tyOwLik=
 github.com/tavocg/go-i18n v1.0.0/go.mod h1:gnc5AU7Dx/Ul3Pt2ubRIUTknbHjC66AwWGfAzBxitrE=
+github.com/tavocg/go-i18n v1.0.1 h1:z6b52jwQf44HWXaeNfp0EbFOTnBDLofIDY48ff6XMnY=
+github.com/tavocg/go-i18n v1.0.1/go.mod h1:AUyOEg6y696AN7bI3kzGglSSfSh9yWwbzCAV2/hKw04=
 github.com/tetratelabs/wazero v1.11.0 h1:+gKemEuKCTevU4d7ZTzlsvgd1uaToIDtlQlmNbwqYhA=
 github.com/tetratelabs/wazero v1.11.0/go.mod h1:eV28rsN8Q+xwjogd7f4/Pp4xFxO7uOGbLcD/LzB1wiU=
 github.com/wasilibs/go-pgquery v0.0.0-20250409022910-10ac41983c07 h1:mJdDDPblDfPe7z7go8Dvv1AJQDI3eQ/5xith3q2mFlo=
@@ -196,6 +198,8 @@ golang.org/x/sys v0.0.0-20190215142949-d0b11bdaac8a/go.mod h1:STP8DvDyc/dI5b8T5h
 golang.org/x/sys v0.0.0-20220811171246-fbc7d0a398ab/go.mod h1:oPkhp1MJrh7nUepCBck5+mAzfO9JrbApNNgaTdGDITg=
 golang.org/x/sys v0.44.0 h1:ildZl3J4uzeKP07r2F++Op7E9B29JRUy+a27EibtBTQ=
 golang.org/x/sys v0.44.0/go.mod h1:4GL1E5IUh+htKOUEOaiffhrAeqysfVGipDYzABqnCmw=
+golang.org/x/sys v0.45.0 h1:dO4czNzziLiiXplLQgBCEpCvXQ3dnkn0SdaZSYdQ+FY=
+golang.org/x/sys v0.45.0/go.mod h1:4GL1E5IUh+htKOUEOaiffhrAeqysfVGipDYzABqnCmw=
 golang.org/x/text v0.3.0/go.mod h1:NqM8EUOU14njkJ3fqMW+pc6Ldnwhi/IjpwHt7yyuwOQ=
 golang.org/x/text v0.37.0 h1:Cqjiwd9eSg8e0QAkyCaQTNHFIIzWtidPahFWR83rTrc=
 golang.org/x/text v0.37.0/go.mod h1:a5sjxXGs9hsn/AJVwuElvCAo9v8QYLzvavO5z2PiM38=
