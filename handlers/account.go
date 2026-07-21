@@ -6,6 +6,7 @@ import (
 
 	"app/database"
 	"app/middleware"
+	"app/perms"
 	secrets "github.com/tavocg/go-secrets"
 )
 
@@ -13,11 +14,18 @@ func (h *Handler) registerAccountRoutes() {
 	authenticated := func(fn http.HandlerFunc) http.Handler {
 		return middleware.AuthenticateBearer(h.logger, h.authenticator, http.HandlerFunc(fn))
 	}
+	defaultRole := func(fn http.HandlerFunc) http.Handler {
+		return middleware.AuthenticateBearer(
+			h.logger,
+			h.authenticator,
+			middleware.RequirePermission(h.logger, h.db, perms.PermissionChangeEmail, http.HandlerFunc(fn)),
+		)
+	}
 
 	h.AddHandler(http.MethodGet, h.routePath("/account"), authenticated(h.GetAccount))
 	h.AddHandler(http.MethodDelete, h.routePath("/account"), authenticated(h.DeleteAccount))
-	h.AddHandler(http.MethodPatch, h.routePath("/account/email/change"), authenticated(h.RequestEmailChange))
-	h.AddHandler(http.MethodPatch, h.routePath("/account/email/change/confirm"), authenticated(h.ConfirmEmailChange))
+	h.AddHandler(http.MethodPatch, h.routePath("/account/email/change"), defaultRole(h.RequestEmailChange))
+	h.AddHandler(http.MethodPatch, h.routePath("/account/email/change/confirm"), defaultRole(h.ConfirmEmailChange))
 }
 
 func (h *Handler) GetAccount(w http.ResponseWriter, r *http.Request) {

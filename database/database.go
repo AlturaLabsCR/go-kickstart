@@ -31,6 +31,15 @@ type Querier interface {
 	// SelectAccountBySub returns the account for the account subject.
 	SelectAccountBySub(ctx context.Context, sub int64) (*Account, error)
 
+	// AssignRoleToAccount assigns a role key to an account.
+	AssignRoleToAccount(ctx context.Context, sub int64, roleKey string) error
+
+	// SelectAccountRolesBySub returns role keys assigned to an account.
+	SelectAccountRolesBySub(ctx context.Context, sub int64) ([]string, error)
+
+	// RoleHasPermission reports whether a role includes a permission.
+	RoleHasPermission(ctx context.Context, roleKey string, permissionKey string) (bool, error)
+
 	// UpsertAccountEmailChangeRequest creates or updates the pending email change request for an account.
 	UpsertAccountEmailChangeRequest(ctx context.Context, sub int64, email string, otp string, expiresAt int64) error
 

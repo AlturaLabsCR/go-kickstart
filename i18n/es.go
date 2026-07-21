@@ -5,5 +5,7 @@ func init() {
 }
 
 var es = map[string]string{
-	"root.greeting": "Hola, mundo!",
+	"perm.change_email": "Cambiar correo de cuenta",
+	"role.default":      "Usuario predeterminado",
+	"root.greeting":     "Hola, mundo!",
 }

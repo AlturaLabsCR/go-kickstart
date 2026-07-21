@@ -1,8 +1,9 @@
 package auth
 
 type Claims struct {
-	Sub string `json:"sub"`
-	Exp int64  `json:"exp,omitempty"`
+	Sub   string   `json:"sub"`
+	Roles []string `json:"roles,omitempty"`
+	Exp   int64    `json:"exp,omitempty"`
 }
 
 func (c *Claims) ExpiresAt() int64 {
