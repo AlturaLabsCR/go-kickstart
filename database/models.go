@@ -9,6 +9,6 @@ type Account struct {
 type AccountEmailChangeRequest struct {
 	Sub       int64
 	Email     string
-	Otp       int64
+	Otp       string
 	ExpiresAt int64
 }

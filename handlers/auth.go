@@ -10,6 +10,7 @@ import (
 	appauth "app/auth"
 	"app/database"
 	auth "github.com/tavocg/go-auth"
+	secrets "github.com/tavocg/go-secrets"
 )
 
 func (h *Handler) registerAuthRoutes() {
@@ -34,7 +35,7 @@ func (h *Handler) LoginOrCreateAccount(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	otp, err := randomOTP()
+	otp, err := secrets.RandOTP()
 	if err != nil {
 		h.writeError(w, r, http.StatusInternalServerError, err, "failed to generate login otp")
 		return
@@ -46,7 +47,7 @@ func (h *Handler) LoginOrCreateAccount(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	h.logger.Debug("generated login otp", "email", email, "otp", fmt.Sprintf("%06d", otp), "expires_at", expiresAt)
+	h.logger.Debug("generated login otp", "email", email, "otp", otp, "expires_at", expiresAt)
 	w.WriteHeader(http.StatusNoContent)
 }
 
@@ -60,7 +61,7 @@ type sessionResponse struct {
 func (h *Handler) VerifyAuthenticationCode(w http.ResponseWriter, r *http.Request) {
 	type verifyRequest struct {
 		Email string `json:"email"`
-		OTP   int64  `json:"otp"`
+		OTP   string `json:"otp"`
 	}
 
 	var req verifyRequest
@@ -109,13 +110,13 @@ func (h *Handler) VerifyAuthenticationCode(w http.ResponseWriter, r *http.Reques
 		return
 	}
 
-	tokens, err := h.authenticator.Issue(r.Context(), &appauth.Claims{Sub: fmt.Sprintf("%d", subject)})
+	accessToken, refreshToken, err := h.authenticator.Issue(r.Context(), &appauth.Claims{Sub: fmt.Sprintf("%d", subject)})
 	if err != nil {
 		h.writeError(w, r, http.StatusInternalServerError, err, "failed to issue session tokens", "sub", subject)
 		return
 	}
 
-	writeJSON(w, http.StatusOK, newSessionResponse(tokens))
+	writeJSON(w, http.StatusOK, newSessionResponse(accessToken, refreshToken))
 }
 
 func (h *Handler) RefreshSession(w http.ResponseWriter, r *http.Request) {
@@ -135,9 +136,9 @@ func (h *Handler) RefreshSession(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	tokens, err := h.authenticator.Refresh(r.Context(), req.RefreshToken)
+	accessToken, refreshToken, err := h.authenticator.Refresh(r.Context(), req.RefreshToken)
 	if err != nil {
-		if errors.Is(err, auth.ErrInvalidToken) || errors.Is(err, auth.ErrExpiredToken) || errors.Is(err, auth.ErrRevokedToken) {
+		if errors.Is(err, auth.ErrInvalidToken) || errors.Is(err, auth.ErrExpiredToken) {
 			h.writeError(w, r, http.StatusUnauthorized, err, "failed to refresh session")
 			return
 		}
@@ -146,15 +147,15 @@ func (h *Handler) RefreshSession(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	writeJSON(w, http.StatusOK, newSessionResponse(tokens))
+	writeJSON(w, http.StatusOK, newSessionResponse(accessToken, refreshToken))
 }
 
-func newSessionResponse(tokens *auth.Tokens) sessionResponse {
+func newSessionResponse(accessToken *auth.Token, refreshToken *auth.Token) sessionResponse {
 	return sessionResponse{
-		AccessToken:           tokens.Access.Value,
-		RefreshToken:          tokens.Refresh.Value,
-		ExpiresIn:             expiresIn(tokens.Access.ExpiresAt),
-		RefreshTokenExpiresIn: expiresIn(tokens.Refresh.ExpiresAt),
+		AccessToken:           accessToken.Value,
+		RefreshToken:          refreshToken.Value,
+		ExpiresIn:             expiresIn(accessToken.ExpiresAt),
+		RefreshTokenExpiresIn: expiresIn(refreshToken.ExpiresAt),
 	}
 }
 

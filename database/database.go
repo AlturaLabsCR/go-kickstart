@@ -5,7 +5,7 @@ import "context"
 
 type AccountLoginRequest struct {
 	Email     string
-	Otp       int64
+	Otp       string
 	ExpiresAt int64
 }
 
@@ -32,7 +32,7 @@ type Querier interface {
 	SelectAccountBySub(ctx context.Context, sub int64) (*Account, error)
 
 	// UpsertAccountEmailChangeRequest creates or updates the pending email change request for an account.
-	UpsertAccountEmailChangeRequest(ctx context.Context, sub int64, email string, otp int64, expiresAt int64) error
+	UpsertAccountEmailChangeRequest(ctx context.Context, sub int64, email string, otp string, expiresAt int64) error
 
 	// SelectAccountEmailChangeRequestBySub returns the pending email change request for an account.
 	SelectAccountEmailChangeRequestBySub(ctx context.Context, sub int64) (*AccountEmailChangeRequest, error)
@@ -41,7 +41,7 @@ type Querier interface {
 	DeleteAccountEmailChangeRequest(ctx context.Context, sub int64) error
 
 	// UpsertAccountLoginRequest creates or updates the login request for an email.
-	UpsertAccountLoginRequest(ctx context.Context, email string, otp int64, expiresAt int64) error
+	UpsertAccountLoginRequest(ctx context.Context, email string, otp string, expiresAt int64) error
 
 	// SelectAccountLoginRequest returns the login request for an email.
 	SelectAccountLoginRequest(ctx context.Context, email string) (*AccountLoginRequest, error)

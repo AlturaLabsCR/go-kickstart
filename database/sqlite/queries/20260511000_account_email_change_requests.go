@@ -7,7 +7,7 @@ import (
 	"app/database/sqlite/db"
 )
 
-func (q *SqliteQuerier) UpsertAccountEmailChangeRequest(ctx context.Context, sub int64, email string, otp int64, expiresAt int64) error {
+func (q *SqliteQuerier) UpsertAccountEmailChangeRequest(ctx context.Context, sub int64, email string, otp string, expiresAt int64) error {
 	return q.queries.UpsertAccountEmailChangeRequest(ctx, db.UpsertAccountEmailChangeRequestParams{
 		Sub:       sub,
 		Email:     email,

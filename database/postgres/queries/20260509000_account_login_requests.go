@@ -7,7 +7,7 @@ import (
 	"app/database/postgres/db"
 )
 
-func (q *PostgresQuerier) UpsertAccountLoginRequest(ctx context.Context, email string, otp int64, expiresAt int64) error {
+func (q *PostgresQuerier) UpsertAccountLoginRequest(ctx context.Context, email string, otp string, expiresAt int64) error {
 	return q.queries.UpsertAccountLoginRequest(ctx, db.UpsertAccountLoginRequestParams{
 		Email:     email,
 		Otp:       otp,

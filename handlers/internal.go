@@ -1,18 +1,15 @@
 package handlers
 
 import (
-	"crypto/rand"
 	"encoding/json"
 	"errors"
 	"io"
-	"math/big"
 	"net/http"
-	"regexp"
 	"strconv"
-	"strings"
 
 	appauth "app/auth"
 	"app/middleware"
+	email "github.com/tavocg/go-email"
 )
 
 func decodeJSON(body io.Reader, dst any) error {
@@ -77,31 +74,16 @@ func (h *Handler) writeError(w http.ResponseWriter, r *http.Request, status int,
 	w.WriteHeader(status)
 }
 
-var validEmail = regexp.MustCompile(`^[a-z0-9](?:[a-z0-9+-]*[a-z0-9]|\.[a-z0-9+-]*[a-z0-9])*@(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.)+[a-z]{2,}$`)
-
 // normalizeEmail returns normalized email address if it meets strict rules.
 // Returns an empty string for invalid input.
 func normalizeEmail(original string) string {
-	email := strings.ToLower(strings.TrimSpace(original))
-
-	local, domain, ok := strings.Cut(email, "@")
-	if !ok {
+	valid, err := email.StrictParser(original)
+	if err != nil {
 		return ""
 	}
 
-	if len(local) > 30 {
-		return ""
-	}
-
-	if len(domain) > 24 {
-		return ""
-	}
-
-	if !validEmail.MatchString(email) {
-		return ""
-	}
-
-	return email
+	valid.Normalize(email.StripPlusTag())
+	return valid.Address()
 }
 
 func authenticatedAccountClaimsAndSubject(r *http.Request) (*appauth.Claims, int64, int, bool) {
@@ -120,14 +102,4 @@ func authenticatedAccountClaimsAndSubject(r *http.Request) (*appauth.Claims, int
 	}
 
 	return identity, sub, http.StatusOK, true
-}
-
-func randomOTP() (int64, error) {
-	max := big.NewInt(1_000_000)
-	value, err := rand.Int(rand.Reader, max)
-	if err != nil {
-		return 0, err
-	}
-
-	return value.Int64(), nil
 }

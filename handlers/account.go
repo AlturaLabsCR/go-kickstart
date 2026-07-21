@@ -6,6 +6,7 @@ import (
 
 	"app/database"
 	"app/middleware"
+	secrets "github.com/tavocg/go-secrets"
 )
 
 func (h *Handler) registerAccountRoutes() {
@@ -113,12 +114,11 @@ func (h *Handler) RequestEmailChange(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	otp, err := randomOTP()
+	otp, err := secrets.RandOTP()
 	if err != nil {
 		h.writeError(w, r, http.StatusInternalServerError, err, "failed to generate account email change otp", "sub", sub)
 		return
 	}
-
 	expiresAt := time.Now().UTC().Add(10 * time.Minute).Unix()
 	if err := h.db.Querier().UpsertAccountEmailChangeRequest(r.Context(), sub, newEmail, otp, expiresAt); err != nil {
 		h.writeError(w, r, http.StatusInternalServerError, err, "failed to upsert account email change request", "sub", sub, "email", newEmail)
@@ -137,7 +137,7 @@ func (h *Handler) ConfirmEmailChange(w http.ResponseWriter, r *http.Request) {
 	}
 
 	type changeEmailConfirmRequest struct {
-		OTP int64 `json:"otp"`
+		OTP string `json:"otp"`
 	}
 
 	var req changeEmailConfirmRequest

@@ -45,7 +45,7 @@ paths:
               $ref: '#/components/schemas/VerifyRequest'
             example:
               email: john@doe.com
-              otp: 123456
+              otp: "123456"
       responses:
         '200':
           description: Verified account and created session.
@@ -157,7 +157,7 @@ paths:
             schema:
               $ref: '#/components/schemas/ChangeEmailConfirmRequest'
             example:
-              otp: 123456
+              otp: "123456"
       responses:
         '204':
           description: Email change confirmed.
@@ -197,10 +197,11 @@ components:
           type: string
           format: email
         otp:
-          type: integer
+          type: string
           description: Six-digit one-time password.
-          minimum: 0
-          maximum: 999999
+          minLength: 6
+          maxLength: 6
+          pattern: '^[0-9]{6}$'
     RefreshRequest:
       type: object
       additionalProperties: false
@@ -261,10 +262,11 @@ components:
         - otp
       properties:
         otp:
-          type: integer
+          type: string
           description: Six-digit one-time password.
-          minimum: 0
-          maximum: 999999
+          minLength: 6
+          maxLength: 6
+          pattern: '^[0-9]{6}$'
     Error:
       type: object
       description: Generic error payload shape when the server returns JSON errors.
