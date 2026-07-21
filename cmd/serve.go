@@ -23,7 +23,6 @@ import (
 	locales "app/i18n"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
-	"github.com/tavocg/go-auth/authenticators/memory"
 	"github.com/tavocg/go-i18n"
 )
 
@@ -114,7 +113,7 @@ func runServer(connStr string, dev bool, logLvl string, logFmt string, authSecre
 		return err
 	}
 
-	authenticator, err := memory.NewAuthenticator[*auth.Claims](authSecret, authAccessTTL, authRefreshTTL)
+	authenticator, err := auth.NewAuthenticator(db, authSecret, authAccessTTL, authRefreshTTL)
 	if err != nil {
 		return err
 	}

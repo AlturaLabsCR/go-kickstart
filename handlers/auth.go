@@ -115,15 +115,8 @@ func (h *Handler) VerifyAuthenticationCode(w http.ResponseWriter, r *http.Reques
 		return
 	}
 
-	roles, err := h.db.Querier().SelectAccountRolesBySub(r.Context(), subject)
-	if err != nil {
-		h.writeError(w, r, http.StatusInternalServerError, err, "failed to select account roles", "sub", subject)
-		return
-	}
-
 	accessToken, refreshToken, err := h.authenticator.Issue(r.Context(), &appauth.Claims{
-		Sub:   fmt.Sprintf("%d", subject),
-		Roles: roles,
+		Sub: fmt.Sprintf("%d", subject),
 	})
 	if err != nil {
 		h.writeError(w, r, http.StatusInternalServerError, err, "failed to issue session tokens", "sub", subject)

@@ -37,6 +37,18 @@ type Querier interface {
 	// SelectAccountRolesBySub returns role keys assigned to an account.
 	SelectAccountRolesBySub(ctx context.Context, sub int64) ([]string, error)
 
+	// InsertRefreshToken stores a hashed refresh token for an account.
+	InsertRefreshToken(ctx context.Context, tokenHash string, sub int64, expiresAt int64) error
+
+	// ConsumeRefreshTokenByHash deletes and returns a refresh token record by token hash.
+	ConsumeRefreshTokenByHash(ctx context.Context, tokenHash string) (*RefreshToken, error)
+
+	// DeleteRefreshTokenByHash deletes a refresh token by token hash.
+	DeleteRefreshTokenByHash(ctx context.Context, tokenHash string) error
+
+	// DeleteRefreshTokensBySub deletes every refresh token for an account.
+	DeleteRefreshTokensBySub(ctx context.Context, sub int64) error
+
 	// RoleHasPermission reports whether a role includes a permission.
 	RoleHasPermission(ctx context.Context, roleKey string, permissionKey string) (bool, error)
 

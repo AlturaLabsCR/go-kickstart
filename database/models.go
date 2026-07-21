@@ -12,3 +12,10 @@ type AccountEmailChangeRequest struct {
 	Otp       string
 	ExpiresAt int64
 }
+
+type RefreshToken struct {
+	TokenHash string
+	Sub       int64
+	ExpiresAt int64
+	CreatedAt int64
+}
