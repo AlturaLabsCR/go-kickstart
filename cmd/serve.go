@@ -17,7 +17,9 @@ import (
 	"time"
 
 	"app/auth"
+	"app/cache/memory"
 	"app/database"
+	"app/database/cached"
 	"app/database/provider"
 	"app/handlers"
 	locales "app/i18n"
@@ -102,6 +104,7 @@ func runServer(connStr string, dev bool, logLvl string, logFmt string, authSecre
 	if err != nil {
 		return err
 	}
+	db = cached.New(db, memory.New())
 	defer func() {
 		if err := db.Close(context.Background()); err != nil {
 			logger.Error("database close error", "error", err)
