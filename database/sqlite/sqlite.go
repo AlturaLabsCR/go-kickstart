@@ -20,11 +20,11 @@ type Sqlite struct {
 	queries *db.Queries
 }
 
-type SqliteOption func(*Sqlite)
+type OptFunc func(context.Context, *sql.DB) error
 
 var _ database.Database = (*Sqlite)(nil)
 
-func NewSqlite(ctx context.Context, connStr string, opts ...SqliteOption) (*Sqlite, error) {
+func NewSqlite(ctx context.Context, connStr string, opts ...OptFunc) (*Sqlite, error) {
 	dir := filepath.Dir(connStr)
 	if dir != "." {
 		if err := os.MkdirAll(dir, 0o755); err != nil {
@@ -37,7 +37,15 @@ func NewSqlite(ctx context.Context, connStr string, opts ...SqliteOption) (*Sqli
 		return nil, err
 	}
 
+	for _, opt := range opts {
+		if err := opt(ctx, conn); err != nil {
+			_ = conn.Close()
+			return nil, err
+		}
+	}
+
 	if err := conn.Ping(); err != nil {
+		_ = conn.Close()
 		return nil, err
 	}
 
@@ -51,11 +59,16 @@ func NewSqlite(ctx context.Context, connStr string, opts ...SqliteOption) (*Sqli
 		queries: db.New(conn),
 	}
 
-	for _, opt := range opts {
-		opt(s)
-	}
-
 	return s, nil
+}
+
+func WithForeignKeys() OptFunc {
+	return func(ctx context.Context, conn *sql.DB) error {
+		conn.SetMaxOpenConns(1)
+
+		_, err := conn.ExecContext(ctx, "PRAGMA foreign_keys = ON")
+		return err
+	}
 }
 
 func (s *Sqlite) Querier() database.Querier {

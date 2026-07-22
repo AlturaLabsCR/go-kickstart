@@ -20,7 +20,7 @@ func Open(ctx context.Context, connStr string) (database.Database, error) {
 	case isPostgresConnStr(connStr):
 		return postgres.NewPostgres(ctx, connStr)
 	default:
-		return sqlite.NewSqlite(ctx, connStr)
+		return sqlite.NewSqlite(ctx, connStr, sqlite.WithForeignKeys())
 	}
 }
 
