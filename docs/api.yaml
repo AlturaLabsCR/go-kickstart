@@ -269,5 +269,11 @@ components:
           pattern: '^[0-9]{6}$'
     Error:
       type: object
-      description: Generic error payload shape when the server returns JSON errors.
-      additionalProperties: true
+      description: Generic JSON error payload.
+      additionalProperties: false
+      required:
+        - error
+      properties:
+        error:
+          type: string
+          description: Localized human-readable error message.

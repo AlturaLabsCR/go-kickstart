@@ -26,25 +26,56 @@ func (h *Handler) LoginOrCreateAccount(w http.ResponseWriter, r *http.Request) {
 	}
 	var req loginRequest
 	if err := decodeJSON(r.Body, &req); err != nil {
-		h.writeError(w, r, http.StatusBadRequest, err, "invalid login request body")
+		h.writeError(
+			w,
+			r,
+			http.StatusBadRequest,
+			err,
+			"err.invalid_login_body",
+			"invalid login request body",
+		)
 		return
 	}
 
 	email := normalizeEmail(req.Email)
 	if email == "" {
-		h.writeStatus(w, r, http.StatusBadRequest, "invalid login email", "email", req.Email)
+		h.writeStatus(
+			w,
+			r,
+			http.StatusBadRequest,
+			"err.invalid_login_email",
+			"invalid login email",
+			"email",
+			req.Email,
+		)
 		return
 	}
 
 	otp, err := secrets.RandOTP()
 	if err != nil {
-		h.writeError(w, r, http.StatusInternalServerError, err, "failed to generate login otp")
+		h.writeError(
+			w,
+			r,
+			http.StatusInternalServerError,
+			err,
+			"err.generate_login_otp",
+			"failed to generate login otp",
+		)
 		return
 	}
 
 	expiresAt := time.Now().UTC().Add(10 * time.Minute).Unix()
 	if err := h.db.Querier().UpsertAccountLoginRequest(r.Context(), email, otp, expiresAt); err != nil {
-		h.writeError(w, r, http.StatusInternalServerError, err, "failed to upsert login request", "email", email)
+		h.writeError(
+			w,
+			r,
+			http.StatusInternalServerError,
+			err,
+			"err.save_login",
+			"failed to upsert login request",
+			"email",
+			email,
+		)
 		return
 	}
 
@@ -67,24 +98,57 @@ func (h *Handler) VerifyAuthenticationCode(w http.ResponseWriter, r *http.Reques
 
 	var req verifyRequest
 	if err := decodeJSON(r.Body, &req); err != nil {
-		h.writeError(w, r, http.StatusBadRequest, err, "invalid verify request body")
+		h.writeError(
+			w,
+			r,
+			http.StatusBadRequest,
+			err,
+			"err.invalid_verify_body",
+			"invalid verify request body",
+		)
 		return
 	}
 
 	email := normalizeEmail(req.Email)
 	if email == "" {
-		h.writeStatus(w, r, http.StatusBadRequest, "invalid verify email", "email", req.Email)
+		h.writeStatus(
+			w,
+			r,
+			http.StatusBadRequest,
+			"err.invalid_verify_email",
+			"invalid verify email",
+			"email",
+			req.Email,
+		)
 		return
 	}
 
 	saved, err := h.db.Querier().SelectAccountLoginRequest(r.Context(), email)
 	if err != nil {
 		if h.db.IsErrNotFound(err) {
-			h.writeError(w, r, http.StatusUnauthorized, err, "missing login request", "email", email)
+			h.writeError(
+				w,
+				r,
+				http.StatusUnauthorized,
+				err,
+				"err.missing_login",
+				"missing login request",
+				"email",
+				email,
+			)
 			return
 		}
 
-		h.writeError(w, r, http.StatusInternalServerError, err, "failed to select login request", "email", email)
+		h.writeError(
+			w,
+			r,
+			http.StatusInternalServerError,
+			err,
+			"err.select_login",
+			"failed to select login request",
+			"email",
+			email,
+		)
 		return
 	}
 
@@ -92,7 +156,15 @@ func (h *Handler) VerifyAuthenticationCode(w http.ResponseWriter, r *http.Reques
 		if saved.ExpiresAt < time.Now().UTC().Unix() {
 			_ = h.db.Querier().DeleteAccountLoginRequest(r.Context(), email)
 		}
-		h.writeStatus(w, r, http.StatusUnauthorized, "invalid login verification code", "email", email)
+		h.writeStatus(
+			w,
+			r,
+			http.StatusUnauthorized,
+			"err.invalid_login_otp",
+			"invalid login verification code",
+			"email",
+			email,
+		)
 		return
 	}
 
@@ -111,7 +183,16 @@ func (h *Handler) VerifyAuthenticationCode(w http.ResponseWriter, r *http.Reques
 
 		return q.DeleteAccountLoginRequest(r.Context(), email)
 	}); err != nil {
-		h.writeError(w, r, http.StatusInternalServerError, err, "failed to finalize login verification", "email", email)
+		h.writeError(
+			w,
+			r,
+			http.StatusInternalServerError,
+			err,
+			"err.finalize_login",
+			"failed to finalize login verification",
+			"email",
+			email,
+		)
 		return
 	}
 
@@ -119,7 +200,16 @@ func (h *Handler) VerifyAuthenticationCode(w http.ResponseWriter, r *http.Reques
 		Sub: fmt.Sprintf("%d", subject),
 	})
 	if err != nil {
-		h.writeError(w, r, http.StatusInternalServerError, err, "failed to issue session tokens", "sub", subject)
+		h.writeError(
+			w,
+			r,
+			http.StatusInternalServerError,
+			err,
+			"err.issue_tokens",
+			"failed to issue session tokens",
+			"sub",
+			subject,
+		)
 		return
 	}
 
@@ -133,24 +223,51 @@ func (h *Handler) RefreshSession(w http.ResponseWriter, r *http.Request) {
 
 	var req refreshRequest
 	if err := decodeJSON(r.Body, &req); err != nil {
-		h.writeError(w, r, http.StatusBadRequest, err, "invalid refresh request body")
+		h.writeError(
+			w,
+			r,
+			http.StatusBadRequest,
+			err,
+			"err.invalid_refresh_body",
+			"invalid refresh request body",
+		)
 		return
 	}
 
 	req.RefreshToken = strings.TrimSpace(req.RefreshToken)
 	if req.RefreshToken == "" {
-		h.writeStatus(w, r, http.StatusBadRequest, "missing refresh token")
+		h.writeStatus(
+			w,
+			r,
+			http.StatusBadRequest,
+			"err.missing_refresh",
+			"missing refresh token",
+		)
 		return
 	}
 
 	accessToken, refreshToken, err := h.authenticator.Refresh(r.Context(), req.RefreshToken)
 	if err != nil {
 		if errors.Is(err, auth.ErrInvalidToken) || errors.Is(err, auth.ErrExpiredToken) {
-			h.writeError(w, r, http.StatusUnauthorized, err, "failed to refresh session")
+			h.writeError(
+				w,
+				r,
+				http.StatusUnauthorized,
+				err,
+				"err.refresh_session",
+				"failed to refresh session",
+			)
 			return
 		}
 
-		h.writeError(w, r, http.StatusInternalServerError, err, "failed to refresh session")
+		h.writeError(
+			w,
+			r,
+			http.StatusInternalServerError,
+			err,
+			"err.refresh_session",
+			"failed to refresh session",
+		)
 		return
 	}
 

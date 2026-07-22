@@ -31,13 +31,10 @@ func decodeJSON(body io.Reader, dst any) error {
 func writeJSON(w http.ResponseWriter, status int, payload any) {
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
 	w.WriteHeader(status)
-
-	if err := json.NewEncoder(w).Encode(payload); err != nil {
-		http.Error(w, "failed to encode response", http.StatusInternalServerError)
-	}
+	_ = json.NewEncoder(w).Encode(payload)
 }
 
-func (h *Handler) writeStatus(w http.ResponseWriter, r *http.Request, status int, msg string, args ...any) {
+func (h *Handler) writeStatus(w http.ResponseWriter, r *http.Request, status int, key string, msg string, args ...any) {
 	logArgs := []any{
 		"status", status,
 		"method", r.Method,
@@ -51,10 +48,10 @@ func (h *Handler) writeStatus(w http.ResponseWriter, r *http.Request, status int
 		h.logger.Debug(msg, logArgs...)
 	}
 
-	w.WriteHeader(status)
+	writeJSON(w, status, map[string]string{"error": h.localize(r, key)})
 }
 
-func (h *Handler) writeError(w http.ResponseWriter, r *http.Request, status int, err error, msg string, args ...any) {
+func (h *Handler) writeError(w http.ResponseWriter, r *http.Request, status int, err error, key string, msg string, args ...any) {
 	logArgs := []any{
 		"status", status,
 		"method", r.Method,
@@ -71,7 +68,16 @@ func (h *Handler) writeError(w http.ResponseWriter, r *http.Request, status int,
 		h.logger.Debug(msg, logArgs...)
 	}
 
-	w.WriteHeader(status)
+	writeJSON(w, status, map[string]string{"error": h.localize(r, key)})
+}
+
+func (h *Handler) localize(r *http.Request, key string, args ...any) string {
+	if h.localizer == nil {
+		return key
+	}
+
+	L := h.localizer.LocalizerFunc(h.localizer.PickLanguageFromRequest(r))
+	return L(key, args...)
 }
 
 // normalizeEmail returns normalized email address if it meets strict rules.

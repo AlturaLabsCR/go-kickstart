@@ -15,7 +15,9 @@ func (h *Handler) registerRootRoutes() {
 }
 
 func (h *Handler) Root(w http.ResponseWriter, r *http.Request) {
-	L := h.localizer.LocalizerFunc(h.localizer.PickLanguageFromRequest(r))
+	L := func(key string, args ...any) string {
+		return h.localize(r, key, args...)
+	}
 
 	if acceptsHTML(r) {
 		w.Header().Set("Content-Type", "text/html; charset=utf-8")
@@ -32,7 +34,14 @@ func (h *Handler) Root(w http.ResponseWriter, r *http.Request) {
 		})
 
 		if err := page.Render(r.Context(), w); err != nil {
-			h.writeError(w, r, http.StatusInternalServerError, err, "failed to render root page")
+			h.writeError(
+				w,
+				r,
+				http.StatusInternalServerError,
+				err,
+				"err.render_root",
+				"failed to render root page",
+			)
 		}
 		return
 	}
