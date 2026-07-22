@@ -133,7 +133,7 @@ func (h *Handler) RequestEmailChange(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	h.logger.Debug("generated account email change otp", "sub", sub, "email", newEmail, "otp", otp, "expires_at", expiresAt)
+	h.logger.Debug("generated account email change otp", "sub", sub, "email", newEmail, "otp", maskedOTP(h.dev, otp), "expires_at", expiresAt)
 	w.WriteHeader(http.StatusNoContent)
 }
 

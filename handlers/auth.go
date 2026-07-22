@@ -48,7 +48,7 @@ func (h *Handler) LoginOrCreateAccount(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	h.logger.Debug("generated login otp", "email", email, "otp", otp, "expires_at", expiresAt)
+	h.logger.Debug("generated login otp", "email", email, "otp", maskedOTP(h.dev, otp), "expires_at", expiresAt)
 	w.WriteHeader(http.StatusNoContent)
 }
 
@@ -173,4 +173,12 @@ func expiresIn(expiresAt int64) int64 {
 
 	now := time.Now().Unix()
 	return expiresAt - now
+}
+
+func maskedOTP(dev bool, otp string) string {
+	if dev {
+		return otp
+	}
+
+	return "******"
 }
