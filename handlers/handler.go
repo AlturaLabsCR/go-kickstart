@@ -8,7 +8,6 @@ import (
 	"strings"
 
 	appauth "app/auth"
-	"app/cache"
 	"app/database"
 	"app/middleware"
 	"github.com/tavocg/go-auth"
@@ -28,7 +27,6 @@ type Handler struct {
 
 	logger        Logger
 	db            database.Database
-	cache         cache.Cache
 	authenticator auth.Authenticator[*appauth.Claims]
 	localizer     *i18n.Localizer
 	rootPrefix    string
@@ -41,7 +39,6 @@ type Options struct {
 	Logger        Logger
 	Dev           bool
 	DB            database.Database
-	Cache         cache.Cache
 	Authenticator auth.Authenticator[*appauth.Claims]
 	Localizer     *i18n.Localizer
 	RootPrefix    string
@@ -63,11 +60,6 @@ func NewHandler(opts Options) *Handler {
 		panic("handler authenticator is required")
 	}
 
-	c := opts.Cache
-	if c == nil {
-		c = cache.NewMemoryCache("app")
-	}
-
 	rootPrefix := normalizeRootPrefix(opts.RootPrefix)
 
 	next := &Handler{
@@ -75,7 +67,6 @@ func NewHandler(opts Options) *Handler {
 		dev:           opts.Dev,
 		logger:        logger,
 		db:            opts.DB,
-		cache:         c,
 		authenticator: authenticator,
 		localizer:     localizer,
 		rootPrefix:    rootPrefix,
