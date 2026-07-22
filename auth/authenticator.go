@@ -114,6 +114,10 @@ func (a *Authenticator) RevokeAll(ctx context.Context, identity *Claims) error {
 	return a.db.Querier().DeleteRefreshTokensBySub(ctx, sub)
 }
 
+func (a *Authenticator) CleanExpiredRefreshTokens(ctx context.Context) error {
+	return a.db.Querier().DeleteExpiredRefreshTokens(ctx, time.Now().UTC().Unix())
+}
+
 func (a *Authenticator) issueForSub(ctx context.Context, q database.Querier, sub int64) (*goauth.Token, *goauth.Token, error) {
 	roles, err := q.SelectAccountRolesBySub(ctx, sub)
 	if err != nil {

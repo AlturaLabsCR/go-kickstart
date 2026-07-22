@@ -36,3 +36,7 @@ func (q *SqliteQuerier) DeleteRefreshTokenByHash(ctx context.Context, tokenHash 
 func (q *SqliteQuerier) DeleteRefreshTokensBySub(ctx context.Context, sub int64) error {
 	return q.queries.DeleteRefreshTokensBySub(ctx, sub)
 }
+
+func (q *SqliteQuerier) DeleteExpiredRefreshTokens(ctx context.Context, now int64) error {
+	return q.queries.DeleteExpiredRefreshTokens(ctx, now)
+}

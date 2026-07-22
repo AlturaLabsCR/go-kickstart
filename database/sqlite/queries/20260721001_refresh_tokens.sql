@@ -14,3 +14,7 @@ WHERE token_hash = ?;
 -- name: DeleteRefreshTokensBySub :exec
 DELETE FROM refresh_tokens
 WHERE sub = ?;
+
+-- name: DeleteExpiredRefreshTokens :exec
+DELETE FROM refresh_tokens
+WHERE expires_at != 0 AND expires_at <= ?;

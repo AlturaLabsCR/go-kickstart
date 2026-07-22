@@ -117,6 +117,9 @@ func runServer(connStr string, dev bool, logLvl string, logFmt string, authSecre
 	if err != nil {
 		return err
 	}
+	if err := authenticator.CleanExpiredRefreshTokens(context.Background()); err != nil {
+		return err
+	}
 
 	h := handlers.NewHandler(handlers.Options{
 		Logger:        logger,

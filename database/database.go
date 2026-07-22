@@ -49,6 +49,9 @@ type Querier interface {
 	// DeleteRefreshTokensBySub deletes every refresh token for an account.
 	DeleteRefreshTokensBySub(ctx context.Context, sub int64) error
 
+	// DeleteExpiredRefreshTokens deletes every expired refresh token.
+	DeleteExpiredRefreshTokens(ctx context.Context, now int64) error
+
 	// RoleHasPermission reports whether a role includes a permission.
 	RoleHasPermission(ctx context.Context, roleKey string, permissionKey string) (bool, error)
 
