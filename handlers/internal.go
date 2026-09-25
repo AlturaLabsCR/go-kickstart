@@ -52,23 +52,10 @@ func (h *Handler) writeStatus(w http.ResponseWriter, r *http.Request, status int
 }
 
 func (h *Handler) writeError(w http.ResponseWriter, r *http.Request, status int, err error, key string, msg string, args ...any) {
-	logArgs := []any{
-		"status", status,
-		"method", r.Method,
-		"path", r.URL.Path,
-	}
 	if err != nil {
-		logArgs = append(logArgs, "error", err)
+		args = append([]any{"error", err}, args...)
 	}
-	logArgs = append(logArgs, args...)
-
-	if status >= http.StatusInternalServerError {
-		h.logger.Error(msg, logArgs...)
-	} else if status >= http.StatusBadRequest {
-		h.logger.Debug(msg, logArgs...)
-	}
-
-	writeJSON(w, status, map[string]string{"error": h.localize(r, key)})
+	h.writeStatus(w, r, status, key, msg, args...)
 }
 
 func (h *Handler) localize(r *http.Request, key string, args ...any) string {
