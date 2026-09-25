@@ -58,11 +58,11 @@ func applyMigrations(ctx context.Context, conn *sql.DB) error {
 }
 
 func ensureMigrationTable(ctx context.Context, conn *sql.DB) error {
-	_, err := conn.ExecContext(ctx, `
-CREATE TABLE IF NOT EXISTS schema_migrations (
-  id INTEGER PRIMARY KEY CHECK (id = 1),
-  version INTEGER NOT NULL
-);
-`)
+	schema, err := migrationFiles.ReadFile("migrations/schema_migrations.sql")
+	if err != nil {
+		return err
+	}
+
+	_, err = conn.ExecContext(ctx, string(schema))
 	return err
 }

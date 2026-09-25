@@ -17,11 +17,9 @@ type Postgres struct {
 	queries *db.Queries
 }
 
-type PostgresOption func(*Postgres)
-
 var _ database.Database = (*Postgres)(nil)
 
-func NewPostgres(ctx context.Context, connStr string, opts ...PostgresOption) (*Postgres, error) {
+func NewPostgres(ctx context.Context, connStr string) (*Postgres, error) {
 	pool, err := pgxpool.New(ctx, connStr)
 	if err != nil {
 		return nil, err
@@ -37,16 +35,10 @@ func NewPostgres(ctx context.Context, connStr string, opts ...PostgresOption) (*
 		return nil, err
 	}
 
-	p := &Postgres{
+	return &Postgres{
 		pool:    pool,
 		queries: db.New(pool),
-	}
-
-	for _, opt := range opts {
-		opt(p)
-	}
-
-	return p, nil
+	}, nil
 }
 
 func (p *Postgres) Querier() database.Querier {
@@ -72,7 +64,7 @@ func (p *Postgres) IsErrNotFound(err error) bool {
 	return errors.Is(err, pgx.ErrNoRows)
 }
 
-func (p *Postgres) Close(ctx context.Context) (err error) {
+func (p *Postgres) Close() error {
 	p.pool.Close()
 	return nil
 }

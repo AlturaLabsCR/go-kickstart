@@ -81,6 +81,8 @@ This repository is a Go web server template for REST APIs and small HTML surface
    - Implement each new `Querier` method in both `database/postgres/queries` and `database/sqlite/queries`.
    - Update `database/cached.Querier` so it still satisfies `database.Querier`.
 
+SQLite constructor options configure DSN parameters for every new connection. Use `WithForeignKeys` for foreign-key enforcement; pool limits are configured separately in the constructor. Both backends initialize the migration table from their embedded `migrations/schema_migrations.sql` file.
+
 ## Caching Guidance
 
 Cache only database reads that are stable, frequently reused, small, and have clear invalidation rules.
@@ -104,7 +106,7 @@ Implementation notes:
 
 - Keep cache keys in `database/cached/internal.go`.
 - Cache JSON structs/slices inside `database/cached` when useful; keep the public `cache.Store` byte-oriented.
-- Invalidate related cache keys immediately after successful writes.
+- Invalidate related cache keys immediately after successful writes outside transactions. Inside transactions, collect keys and invalidate only after a successful commit.
 - Ignore best-effort invalidation errors only after the database write succeeds.
 - Use the request `ctx` for cache reads/writes. If invalidation must be best effort after a successful write, keep the existing pattern deliberate and localized.
 

@@ -5,8 +5,10 @@ import (
 	"context"
 	"database/sql"
 	"errors"
+	"net/url"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"app/database"
 	"app/database/sqlite/db"
@@ -20,12 +22,44 @@ type Sqlite struct {
 	queries *db.Queries
 }
 
-type OptFunc func(context.Context, *sql.DB) error
+// OptFunc configures DSN parameters applied to every new connection.
+type OptFunc func(url.Values)
 
 var _ database.Database = (*Sqlite)(nil)
 
 func NewSqlite(ctx context.Context, connStr string, opts ...OptFunc) (*Sqlite, error) {
-	dir := filepath.Dir(connStr)
+	filename, query, _ := strings.Cut(connStr, "?")
+	params, err := url.ParseQuery(query)
+	if err != nil {
+		return nil, err
+	}
+	for _, opt := range opts {
+		opt(params)
+	}
+	connStr = filename
+	if query := params.Encode(); query != "" {
+		connStr += "?" + query
+	}
+
+	// URI parameters are connection settings, not part of the disk path.
+	path := filename
+	if strings.HasPrefix(filename, "file:") {
+		uri, err := url.Parse(filename)
+		if err != nil {
+			return nil, err
+		}
+		path = uri.Path
+		if uri.Opaque != "" {
+			path, err = url.PathUnescape(uri.Opaque)
+			if err != nil {
+				return nil, err
+			}
+		}
+	}
+	if params.Get("mode") == "memory" {
+		path = ""
+	}
+	dir := filepath.Dir(path)
 	if dir != "." {
 		if err := os.MkdirAll(dir, 0o755); err != nil {
 			return nil, err
@@ -37,14 +71,10 @@ func NewSqlite(ctx context.Context, connStr string, opts ...OptFunc) (*Sqlite, e
 		return nil, err
 	}
 
-	for _, opt := range opts {
-		if err := opt(ctx, conn); err != nil {
-			_ = conn.Close()
-			return nil, err
-		}
-	}
+	// Keep the template's SQLite pool serialized, independently of pragmas.
+	conn.SetMaxOpenConns(1)
 
-	if err := conn.Ping(); err != nil {
+	if err := conn.PingContext(ctx); err != nil {
 		_ = conn.Close()
 		return nil, err
 	}
@@ -63,11 +93,10 @@ func NewSqlite(ctx context.Context, connStr string, opts ...OptFunc) (*Sqlite, e
 }
 
 func WithForeignKeys() OptFunc {
-	return func(ctx context.Context, conn *sql.DB) error {
-		conn.SetMaxOpenConns(1)
-
-		_, err := conn.ExecContext(ctx, "PRAGMA foreign_keys = ON")
-		return err
+	return func(params url.Values) {
+		// The driver gives the alias precedence over _foreign_keys.
+		params.Del("_fk")
+		params.Set("_foreign_keys", "on")
 	}
 }
 
@@ -94,6 +123,6 @@ func (s *Sqlite) IsErrNotFound(err error) bool {
 	return errors.Is(err, sql.ErrNoRows)
 }
 
-func (s *Sqlite) Close(context.Context) (err error) {
+func (s *Sqlite) Close() error {
 	return s.db.Close()
 }

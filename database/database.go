@@ -5,9 +5,9 @@ import "context"
 
 type Database interface {
 	Querier() Querier
-	WithTx(ctx context.Context, fn func(q Querier) error) (err error)
+	WithTx(ctx context.Context, fn func(q Querier) error) error
 	IsErrNotFound(err error) bool
-	Close(ctx context.Context) (err error)
+	Close() error
 }
 
 type Querier interface {

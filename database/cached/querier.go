@@ -8,9 +8,10 @@ import (
 )
 
 type Querier struct {
-	next      database.Querier
-	store     cache.Store
-	cacheRead bool
+	next       database.Querier
+	store      cache.Store
+	cacheRead  bool
+	invalidate func(keys ...string)
 }
 
 var _ database.Querier = (*Querier)(nil)
@@ -24,7 +25,7 @@ func (q *Querier) UpdateAccountEmail(ctx context.Context, sub int64, email strin
 		return err
 	}
 
-	_ = q.store.Delete(context.Background(), accountKey(sub))
+	q.invalidate(accountKey(sub))
 	return nil
 }
 
@@ -33,32 +34,14 @@ func (q *Querier) DeleteAccount(ctx context.Context, sub int64) error {
 		return err
 	}
 
-	_ = q.store.Delete(context.Background(), accountKey(sub))
-	_ = q.store.Delete(context.Background(), accountRolesKey(sub))
+	q.invalidate(accountKey(sub), accountRolesKey(sub))
 	return nil
 }
 
 func (q *Querier) SelectAccountBySub(ctx context.Context, sub int64) (*database.Account, error) {
-	if !q.cacheRead {
+	return readThrough(ctx, q, accountKey(sub), func() (*database.Account, error) {
 		return q.next.SelectAccountBySub(ctx, sub)
-	}
-
-	key := accountKey(sub)
-	account, ok, err := getJSON[database.Account](ctx, q.store, key)
-	if err != nil {
-		return nil, err
-	}
-	if ok {
-		return &account, nil
-	}
-
-	selected, err := q.next.SelectAccountBySub(ctx, sub)
-	if err != nil {
-		return nil, err
-	}
-
-	setJSON(ctx, q.store, key, selected)
-	return selected, nil
+	})
 }
 
 func (q *Querier) AssignRoleToAccount(ctx context.Context, sub int64, roleKey string) error {
@@ -66,31 +49,14 @@ func (q *Querier) AssignRoleToAccount(ctx context.Context, sub int64, roleKey st
 		return err
 	}
 
-	_ = q.store.Delete(context.Background(), accountRolesKey(sub))
+	q.invalidate(accountRolesKey(sub))
 	return nil
 }
 
 func (q *Querier) SelectAccountRolesBySub(ctx context.Context, sub int64) ([]string, error) {
-	if !q.cacheRead {
+	return readThrough(ctx, q, accountRolesKey(sub), func() ([]string, error) {
 		return q.next.SelectAccountRolesBySub(ctx, sub)
-	}
-
-	key := accountRolesKey(sub)
-	roles, ok, err := getJSON[[]string](ctx, q.store, key)
-	if err != nil {
-		return nil, err
-	}
-	if ok {
-		return roles, nil
-	}
-
-	roles, err = q.next.SelectAccountRolesBySub(ctx, sub)
-	if err != nil {
-		return nil, err
-	}
-
-	setJSON(ctx, q.store, key, roles)
-	return roles, nil
+	})
 }
 
 func (q *Querier) InsertRefreshToken(ctx context.Context, tokenHash string, sub int64, expiresAt int64) error {
@@ -114,29 +80,9 @@ func (q *Querier) DeleteExpiredRefreshTokens(ctx context.Context, now int64) err
 }
 
 func (q *Querier) RoleHasPermission(ctx context.Context, roleKey string, permissionKey string) (bool, error) {
-	if !q.cacheRead {
+	return readThrough(ctx, q, rolePermissionKey(roleKey, permissionKey), func() (bool, error) {
 		return q.next.RoleHasPermission(ctx, roleKey, permissionKey)
-	}
-
-	key := rolePermissionKey(roleKey, permissionKey)
-	data, err := q.store.Get(ctx, key)
-	if err == nil {
-		if allowed, ok := parseBoolBytes(data); ok {
-			return allowed, nil
-		}
-
-		_ = q.store.Delete(context.Background(), key)
-	} else if !cacheMiss(err) {
-		return false, err
-	}
-
-	allowed, err := q.next.RoleHasPermission(ctx, roleKey, permissionKey)
-	if err != nil {
-		return false, err
-	}
-
-	_ = q.store.Set(ctx, key, boolBytes(allowed))
-	return allowed, nil
+	})
 }
 
 func (q *Querier) UpsertAccountEmailChangeRequest(ctx context.Context, sub int64, email string, otp string, expiresAt int64) error {

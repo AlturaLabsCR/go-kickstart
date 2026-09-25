@@ -19,7 +19,7 @@ func TestOpenAutoMigratesSQLite(t *testing.T) {
 		t.Fatalf("open database: %v", err)
 	}
 	defer func() {
-		if err := dbi.Close(context.Background()); err != nil {
+		if err := dbi.Close(); err != nil {
 			t.Fatalf("close database: %v", err)
 		}
 	}()

@@ -53,7 +53,7 @@ func runServer(cfg serverConfig) error {
 	}
 	db = cached.New(db, memory.New())
 	defer func() {
-		if err := db.Close(context.Background()); err != nil {
+		if err := db.Close(); err != nil {
 			logger.Error("database close error", "error", err)
 		}
 	}()

@@ -58,11 +58,11 @@ func applyMigrations(ctx context.Context, pool *pgxpool.Pool) error {
 }
 
 func ensureMigrationTable(ctx context.Context, pool *pgxpool.Pool) error {
-	_, err := pool.Exec(ctx, `
-CREATE TABLE IF NOT EXISTS schema_migrations (
-  id SMALLINT PRIMARY KEY,
-  version BIGINT NOT NULL
-);
-`)
+	schema, err := migrationFiles.ReadFile("migrations/schema_migrations.sql")
+	if err != nil {
+		return err
+	}
+
+	_, err = pool.Exec(ctx, string(schema))
 	return err
 }

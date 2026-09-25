@@ -49,32 +49,28 @@ func getJSON[T any](ctx context.Context, store cache.Store, key string) (T, bool
 	var value T
 	err = json.Unmarshal(data, &value)
 	if err != nil {
-		_ = store.Delete(context.Background(), key)
+		_ = store.Delete(ctx, key)
 		return zero, false, nil
 	}
 
 	return value, true, nil
 }
 
-func boolBytes(value bool) []byte {
-	if value {
-		return []byte{1}
+func readThrough[T any](ctx context.Context, q *Querier, key string, load func() (T, error)) (T, error) {
+	if !q.cacheRead {
+		return load()
 	}
 
-	return []byte{0}
-}
-
-func parseBoolBytes(data []byte) (bool, bool) {
-	if len(data) != 1 {
-		return false, false
+	value, ok, err := getJSON[T](ctx, q.store, key)
+	if err != nil || ok {
+		return value, err
 	}
 
-	switch data[0] {
-	case 0:
-		return false, true
-	case 1:
-		return true, true
-	default:
-		return false, false
+	value, err = load()
+	if err != nil {
+		return value, err
 	}
+
+	setJSON(ctx, q.store, key, value)
+	return value, nil
 }
