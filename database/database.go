@@ -6,7 +6,6 @@ import "context"
 type Database interface {
 	Querier() Querier
 	WithTx(ctx context.Context, fn func(q Querier) error) (err error)
-	Exec(ctx context.Context, sql string) (err error)
 	IsErrNotFound(err error) bool
 	Close(ctx context.Context) (err error)
 }

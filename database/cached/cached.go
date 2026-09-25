@@ -43,10 +43,6 @@ func (d *Database) WithTx(ctx context.Context, fn func(q database.Querier) error
 	})
 }
 
-func (d *Database) Exec(ctx context.Context, sql string) error {
-	return d.next.Exec(ctx, sql)
-}
-
 func (d *Database) IsErrNotFound(err error) bool {
 	return d.next.IsErrNotFound(err)
 }

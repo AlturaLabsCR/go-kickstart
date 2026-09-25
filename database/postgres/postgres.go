@@ -68,11 +68,6 @@ func (p *Postgres) WithTx(ctx context.Context, fn func(q database.Querier) error
 	return tx.Commit(ctx)
 }
 
-func (p *Postgres) Exec(ctx context.Context, statement string) (err error) {
-	_, err = p.pool.Exec(ctx, statement)
-	return err
-}
-
 func (p *Postgres) IsErrNotFound(err error) bool {
 	return errors.Is(err, pgx.ErrNoRows)
 }

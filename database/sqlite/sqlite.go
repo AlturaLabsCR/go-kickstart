@@ -90,11 +90,6 @@ func (s *Sqlite) WithTx(ctx context.Context, fn func(q database.Querier) error) 
 	return tx.Commit()
 }
 
-func (s *Sqlite) Exec(ctx context.Context, statement string) (err error) {
-	_, err = s.db.ExecContext(ctx, statement)
-	return err
-}
-
 func (s *Sqlite) IsErrNotFound(err error) bool {
 	return errors.Is(err, sql.ErrNoRows)
 }
