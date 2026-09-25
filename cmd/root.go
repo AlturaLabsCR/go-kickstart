@@ -109,15 +109,6 @@ func findConfigDirs() []string {
 	return dirs
 }
 
-func mustBindFlag(key string, cmd *cobra.Command, name string) {
-	flag := cmd.Flags().Lookup(name)
-	if flag == nil {
-		panic("missing flag: " + name)
-	}
-
-	cobra.CheckErr(viper.BindPFlag(key, flag))
-}
-
 func mustBindPersistentFlag(key string, cmd *cobra.Command, name string) {
 	flag := cmd.PersistentFlags().Lookup(name)
 	if flag == nil {
