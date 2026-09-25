@@ -9,7 +9,6 @@ import (
 	"strings"
 
 	appauth "app/auth"
-	"app/database"
 	goauth "github.com/tavocg/go-auth"
 )
 
@@ -49,7 +48,11 @@ func AuthenticatedClaims(ctx context.Context) (*appauth.Claims, bool) {
 	return identity, ok
 }
 
-func RequirePermission(logger Logger, localize LocalizeFunc, db database.Database, permission string, next http.Handler) http.Handler {
+type PermissionChecker interface {
+	RoleHasPermission(ctx context.Context, roleKey string, permissionKey string) (bool, error)
+}
+
+func RequirePermission(logger Logger, localize LocalizeFunc, permissions PermissionChecker, permission string, next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		identity, ok := AuthenticatedClaims(r.Context())
 		if !ok || identity == nil || identity.Subject() == "" {
@@ -71,7 +74,7 @@ func RequirePermission(logger Logger, localize LocalizeFunc, db database.Databas
 				continue
 			}
 
-			allowed, err := db.Querier().RoleHasPermission(r.Context(), role, permission)
+			allowed, err := permissions.RoleHasPermission(r.Context(), role, permission)
 			if err != nil {
 				logger.Error("failed to check role permission", "status", http.StatusInternalServerError, "method", r.Method, "path", r.URL.Path, "sub", sub, "role", role, "permission", permission, "error", err)
 				writeJSONError(w, r, localize, http.StatusInternalServerError, "err.check_role_permission")

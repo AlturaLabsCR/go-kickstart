@@ -10,28 +10,23 @@ import (
 )
 
 func (h *Handler) registerAccountRoutes() {
-	authenticated := func(fn http.HandlerFunc) http.Handler {
-		return middleware.AuthenticateBearer(h.logger, h.localize, h.authenticator, http.HandlerFunc(fn))
+	authenticated := func(next http.Handler) http.Handler {
+		return middleware.AuthenticateBearer(h.logger, h.localize, h.authenticator, next)
 	}
-	defaultRole := func(fn http.HandlerFunc) http.Handler {
-		return middleware.AuthenticateBearer(
+	canChangeEmail := func(fn http.HandlerFunc) http.Handler {
+		return authenticated(middleware.RequirePermission(
 			h.logger,
 			h.localize,
-			h.authenticator,
-			middleware.RequirePermission(
-				h.logger,
-				h.localize,
-				h.db,
-				database.PermissionChangeEmail,
-				http.HandlerFunc(fn),
-			),
-		)
+			h.db.Querier(),
+			database.PermissionChangeEmail,
+			fn,
+		))
 	}
 
-	h.AddHandler(http.MethodGet, h.routePath("/account"), authenticated(h.GetAccount))
-	h.AddHandler(http.MethodDelete, h.routePath("/account"), authenticated(h.DeleteAccount))
-	h.AddHandler(http.MethodPatch, h.routePath("/account/email/change"), defaultRole(h.RequestEmailChange))
-	h.AddHandler(http.MethodPatch, h.routePath("/account/email/change/confirm"), defaultRole(h.ConfirmEmailChange))
+	h.AddHandler(http.MethodGet, h.routePath("/account"), authenticated(http.HandlerFunc(h.GetAccount)))
+	h.AddHandler(http.MethodDelete, h.routePath("/account"), authenticated(http.HandlerFunc(h.DeleteAccount)))
+	h.AddHandler(http.MethodPatch, h.routePath("/account/email/change"), canChangeEmail(h.RequestEmailChange))
+	h.AddHandler(http.MethodPatch, h.routePath("/account/email/change/confirm"), canChangeEmail(h.ConfirmEmailChange))
 }
 
 func (h *Handler) GetAccount(w http.ResponseWriter, r *http.Request) {
