@@ -1,11 +1,14 @@
 // Package cache defines a small key-value cache interface.
 package cache
 
-import "context"
+import (
+	"context"
+	"errors"
+)
 
 var (
-	ErrInvalidKey = errStr("invalid cache key")
-	ErrNotFound   = errStr("cache key not found")
+	ErrInvalidKey = errors.New("invalid cache key")
+	ErrNotFound   = errors.New("cache key not found")
 )
 
 type Store interface {
