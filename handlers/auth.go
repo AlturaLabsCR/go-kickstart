@@ -9,7 +9,6 @@ import (
 
 	appauth "app/auth"
 	"app/database"
-	"app/perms"
 	auth "github.com/tavocg/go-auth"
 	secrets "github.com/tavocg/go-secrets"
 )
@@ -177,7 +176,7 @@ func (h *Handler) VerifyAuthenticationCode(w http.ResponseWriter, r *http.Reques
 			return err
 		}
 
-		if err := q.AssignRoleToAccount(r.Context(), subject, perms.RoleDefault); err != nil {
+		if err := q.AssignRoleToAccount(r.Context(), subject, database.RoleDefault); err != nil {
 			return err
 		}
 

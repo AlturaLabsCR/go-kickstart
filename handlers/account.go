@@ -6,7 +6,6 @@ import (
 
 	"app/database"
 	"app/middleware"
-	"app/perms"
 	secrets "github.com/tavocg/go-secrets"
 )
 
@@ -23,7 +22,7 @@ func (h *Handler) registerAccountRoutes() {
 				h.logger,
 				h.localize,
 				h.db,
-				perms.PermissionChangeEmail,
+				database.PermissionChangeEmail,
 				http.HandlerFunc(fn),
 			),
 		)

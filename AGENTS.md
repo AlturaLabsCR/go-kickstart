@@ -12,7 +12,7 @@ This repository is a Go web server template for REST APIs and small HTML surface
 - `database/cached`: database read-through cache wrapper. Keep cache logic here, not in handlers.
 - `cache/`: small byte-oriented key-value cache interface and memory implementation.
 - `auth/`: JWT claims and authenticator construction.
-- `perms/`: role and permission keys.
+- `database/models.go`: application-facing models and role and permission keys.
 - `i18n/`: locale maps. User-facing strings and error messages should be represented by stable keys.
 - `docs/api.yaml`: OpenAPI source. `handlers/static/api/index.html` is generated and ignored.
 - `templates/`: `templ` HTML templates.
@@ -108,7 +108,7 @@ Implementation notes:
 
 ## Permissions and Roles
 
-- Role and permission identifiers are i18n keys, defined in `perms/perms.go`.
+- Role and permission identifiers are i18n keys, defined in `database/models.go`.
 - Add locale labels for new keys in `i18n/en.go` and `i18n/es.go`.
 - Store role and permission relationships in the database through migrations.
 - JWT claims may carry roles, but permission membership should be checked from the database.

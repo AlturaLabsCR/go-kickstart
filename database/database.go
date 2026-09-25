@@ -3,12 +3,6 @@ package database
 
 import "context"
 
-type AccountLoginRequest struct {
-	Email     string
-	Otp       string
-	ExpiresAt int64
-}
-
 type Database interface {
 	Querier() Querier
 	WithTx(ctx context.Context, fn func(q Querier) error) (err error)
