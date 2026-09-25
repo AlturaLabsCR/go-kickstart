@@ -48,21 +48,20 @@ func (h *Handler) GetAccount(w http.ResponseWriter, r *http.Request) {
 	}
 
 	account, err := h.db.Querier().SelectAccountBySub(r.Context(), sub)
+	if h.db.IsErrNotFound(err) {
+		h.writeError(
+			w,
+			r,
+			http.StatusNotFound,
+			err,
+			"err.account_not_found",
+			"account not found",
+			"sub",
+			sub,
+		)
+		return
+	}
 	if err != nil {
-		if h.db.IsErrNotFound(err) {
-			h.writeError(
-				w,
-				r,
-				http.StatusNotFound,
-				err,
-				"err.account_not_found",
-				"account not found",
-				"sub",
-				sub,
-			)
-			return
-		}
-
 		h.writeError(
 			w,
 			r,
@@ -184,21 +183,20 @@ func (h *Handler) RequestEmailChange(w http.ResponseWriter, r *http.Request) {
 	}
 
 	account, err := h.db.Querier().SelectAccountBySub(r.Context(), sub)
+	if h.db.IsErrNotFound(err) {
+		h.writeError(
+			w,
+			r,
+			http.StatusNotFound,
+			err,
+			"err.account_not_found",
+			"account not found",
+			"sub",
+			sub,
+		)
+		return
+	}
 	if err != nil {
-		if h.db.IsErrNotFound(err) {
-			h.writeError(
-				w,
-				r,
-				http.StatusNotFound,
-				err,
-				"err.account_not_found",
-				"account not found",
-				"sub",
-				sub,
-			)
-			return
-		}
-
 		h.writeError(
 			w,
 			r,
@@ -293,21 +291,20 @@ func (h *Handler) ConfirmEmailChange(w http.ResponseWriter, r *http.Request) {
 	}
 
 	saved, err := h.db.Querier().SelectAccountEmailChangeRequestBySub(r.Context(), sub)
+	if h.db.IsErrNotFound(err) {
+		h.writeError(
+			w,
+			r,
+			http.StatusUnauthorized,
+			err,
+			"err.missing_email_change",
+			"missing account email change request",
+			"sub",
+			sub,
+		)
+		return
+	}
 	if err != nil {
-		if h.db.IsErrNotFound(err) {
-			h.writeError(
-				w,
-				r,
-				http.StatusUnauthorized,
-				err,
-				"err.missing_email_change",
-				"missing account email change request",
-				"sub",
-				sub,
-			)
-			return
-		}
-
 		h.writeError(
 			w,
 			r,

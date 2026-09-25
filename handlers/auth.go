@@ -123,21 +123,20 @@ func (h *Handler) VerifyAuthenticationCode(w http.ResponseWriter, r *http.Reques
 	}
 
 	saved, err := h.db.Querier().SelectAccountLoginRequest(r.Context(), email)
+	if h.db.IsErrNotFound(err) {
+		h.writeError(
+			w,
+			r,
+			http.StatusUnauthorized,
+			err,
+			"err.missing_login",
+			"missing login request",
+			"email",
+			email,
+		)
+		return
+	}
 	if err != nil {
-		if h.db.IsErrNotFound(err) {
-			h.writeError(
-				w,
-				r,
-				http.StatusUnauthorized,
-				err,
-				"err.missing_login",
-				"missing login request",
-				"email",
-				email,
-			)
-			return
-		}
-
 		h.writeError(
 			w,
 			r,
@@ -247,22 +246,15 @@ func (h *Handler) RefreshSession(w http.ResponseWriter, r *http.Request) {
 
 	accessToken, refreshToken, err := h.authenticator.Refresh(r.Context(), req.RefreshToken)
 	if err != nil {
+		status := http.StatusInternalServerError
 		if errors.Is(err, auth.ErrInvalidToken) || errors.Is(err, auth.ErrExpiredToken) {
-			h.writeError(
-				w,
-				r,
-				http.StatusUnauthorized,
-				err,
-				"err.refresh_session",
-				"failed to refresh session",
-			)
-			return
+			status = http.StatusUnauthorized
 		}
 
 		h.writeError(
 			w,
 			r,
-			http.StatusInternalServerError,
+			status,
 			err,
 			"err.refresh_session",
 			"failed to refresh session",
