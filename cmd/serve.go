@@ -3,29 +3,10 @@
 package cmd
 
 import (
-	"context"
-	"errors"
-	"fmt"
-	"log/slog"
-	"net"
-	"net/http"
-	"os"
-	"os/signal"
-	"strconv"
-	"strings"
-	"syscall"
 	"time"
 
-	"app/auth"
-	"app/cache/memory"
-	"app/database"
-	"app/database/cached"
-	"app/database/provider"
-	"app/handlers"
-	locales "app/i18n"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
-	"github.com/tavocg/go-i18n"
 )
 
 var serveCmd = &cobra.Command{
@@ -75,131 +56,16 @@ func init() {
 }
 
 func runServerFromConfig() error {
-	return runServer(
-		viper.GetString("db"),
-		viper.GetBool("dev"),
-		viper.GetString("loglvl"),
-		viper.GetString("logfmt"),
-		viper.GetString("auth.secret"),
-		viper.GetDuration("auth.access-token-ttl"),
-		viper.GetDuration("auth.refresh-token-ttl"),
-		viper.GetString("root"),
-		viper.GetString("host"),
-		viper.GetInt("port"),
-	)
-}
-
-func runServer(connStr string, dev bool, logLvl string, logFmt string, authSecret string, authAccessTTL time.Duration, authRefreshTTL time.Duration, rootPrefix string, host string, port int) error {
-	logger, err := newLogger(dev, logLvl, logFmt)
-	if err != nil {
-		return err
-	}
-
-	if connStr == "" {
-		return errors.New("database DSN is required")
-	}
-
-	var db database.Database
-	db, err = provider.Open(context.Background(), connStr)
-	if err != nil {
-		return err
-	}
-	db = cached.New(db, memory.New())
-	defer func() {
-		if err := db.Close(context.Background()); err != nil {
-			logger.Error("database close error", "error", err)
-		}
-	}()
-
-	localizer, err := i18n.NewLocalizer(locales.Locales)
-	if err != nil {
-		return err
-	}
-
-	authenticator, err := auth.NewAuthenticator(db, authSecret, authAccessTTL, authRefreshTTL)
-	if err != nil {
-		return err
-	}
-	if err := authenticator.CleanExpiredRefreshTokens(context.Background()); err != nil {
-		return err
-	}
-
-	h := handlers.NewHandler(handlers.Options{
-		Logger:        logger,
-		Dev:           dev,
-		DB:            db,
-		Authenticator: authenticator,
-		Localizer:     localizer,
-		RootPrefix:    rootPrefix,
+	return runServer(serverConfig{
+		DatabaseDSN:     viper.GetString("db"),
+		Dev:             viper.GetBool("dev"),
+		LogLevel:        viper.GetString("loglvl"),
+		LogFormat:       viper.GetString("logfmt"),
+		AuthSecret:      viper.GetString("auth.secret"),
+		AccessTokenTTL:  viper.GetDuration("auth.access-token-ttl"),
+		RefreshTokenTTL: viper.GetDuration("auth.refresh-token-ttl"),
+		RootPrefix:      viper.GetString("root"),
+		Host:            viper.GetString("host"),
+		Port:            viper.GetInt("port"),
 	})
-
-	srv := &http.Server{
-		Addr:    net.JoinHostPort(host, strconv.Itoa(port)),
-		Handler: h.Mux(),
-	}
-
-	listener, err := net.Listen("tcp", srv.Addr)
-	if err != nil {
-		return err
-	}
-
-	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
-	defer stop()
-
-	go func() {
-		logger.Info("listening", "addr", listener.Addr().String())
-		if err := srv.Serve(listener); err != nil && err != http.ErrServerClosed {
-			logger.Error("server error", "error", err)
-			os.Exit(1)
-		}
-	}()
-
-	<-ctx.Done()
-
-	shutdownCtx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-	defer cancel()
-
-	if err := srv.Shutdown(shutdownCtx); err != nil {
-		logger.Error("shutdown error", "error", err)
-	}
-
-	return nil
-}
-
-func newLogger(dev bool, logLvl string, logFmt string) (*slog.Logger, error) {
-	level, err := parseLogLevel(logLvl)
-	if err != nil {
-		return nil, err
-	}
-
-	opts := &slog.HandlerOptions{
-		Level: level,
-	}
-	if dev {
-		opts.AddSource = true
-	}
-
-	switch strings.ToLower(logFmt) {
-	case "json":
-		return slog.New(slog.NewJSONHandler(os.Stdout, opts)), nil
-	case "text":
-		return slog.New(slog.NewTextHandler(os.Stdout, opts)), nil
-	default:
-		return nil, fmt.Errorf("invalid --logfmt %q: expected text or json", logFmt)
-	}
-}
-
-func parseLogLevel(logLvl string) (slog.Level, error) {
-	switch strings.ToLower(logLvl) {
-	case "debug":
-		return slog.LevelDebug, nil
-	case "info":
-		return slog.LevelInfo, nil
-	case "warn", "warning":
-		return slog.LevelWarn, nil
-	case "error":
-		return slog.LevelError, nil
-	default:
-		return 0, fmt.Errorf("invalid --loglvl %q: expected debug, info, warn, or error", logLvl)
-	}
 }

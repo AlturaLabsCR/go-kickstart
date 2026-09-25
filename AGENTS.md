@@ -4,7 +4,7 @@ This repository is a Go web server template for REST APIs and small HTML surface
 
 ## Project Shape
 
-- `cmd/`: CLI commands and runtime wiring. `cmd/serve.go` opens the database, wraps it with cache, creates the authenticator/localizer, and builds the HTTP handler.
+- `cmd/`: CLI commands and runtime wiring. `cmd/serve.go` handles Cobra/Viper configuration, `cmd/server.go` wires dependencies and runs the HTTP server, and `cmd/logging.go` constructs the logger.
 - `handlers/`: HTTP route registration and endpoint implementations. Keep related endpoints together: account endpoints belong in `account.go`; a new `/myendpoint/...` group should usually get `myendpoint.go` with `registerMyEndpointRoutes`.
 - `middleware/`: HTTP middleware. Middleware should depend on small function/interface types where practical, such as `LocalizeFunc`, instead of depending on full handler state.
 - `database/`: database interfaces, models, migrations, sqlc config, and backend implementations.
@@ -147,7 +147,7 @@ h.writeError(
 ## Configuration
 
 - Add new runtime settings in `cmd/serve.go`.
-- Keep Viper defaults, flags, flag binding, `runServerFromConfig`, and `runServer` arguments aligned.
+- Keep Viper defaults, flags, flag binding, `runServerFromConfig`, and the `serverConfig` fields in `cmd/server.go` aligned.
 - Avoid adding configuration until the code path actually needs it.
 
 ## Verification

@@ -22,8 +22,7 @@ type Logger interface {
 }
 
 type Handler struct {
-	initialized bool
-	dev         bool
+	dev bool
 
 	logger        Logger
 	db            database.Database
@@ -31,8 +30,7 @@ type Handler struct {
 	localizer     *i18n.Localizer
 	rootPrefix    string
 
-	mux   *http.ServeMux
-	paths []string
+	mux *http.ServeMux
 }
 
 type Options struct {
@@ -63,7 +61,6 @@ func NewHandler(opts Options) *Handler {
 	rootPrefix := normalizeRootPrefix(opts.RootPrefix)
 
 	next := &Handler{
-		initialized:   true,
 		dev:           opts.Dev,
 		logger:        logger,
 		db:            opts.DB,
@@ -88,16 +85,15 @@ func (h *Handler) AddHandler(method, path string, handler http.Handler) {
 		pattern = method + " " + path
 	}
 
-	h.paths = append(h.paths, path)
 	h.mux.Handle(pattern, middleware.RequestLogger(h.logger, pattern, handler))
 }
 
-func (h *Handler) Mux() *http.ServeMux {
-	if h == nil || !h.initialized {
+func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	if h == nil || h.mux == nil {
 		panic("handler not initialized")
 	}
 
-	return h.mux
+	h.mux.ServeHTTP(w, r)
 }
 
 func (h *Handler) registerRoutes() {
