@@ -16,5 +16,5 @@ func (h *Handler) registerStaticRoutes() {
 	}
 
 	prefix := h.routePath("/s/")
-	h.AddHandler(http.MethodGet, prefix, http.StripPrefix(prefix, http.FileServerFS(files)))
+	h.AddHandler(http.MethodGet, "/s/", http.StripPrefix(prefix, http.FileServerFS(files)))
 }

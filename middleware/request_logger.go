@@ -18,9 +18,17 @@ type statusWriter struct {
 }
 
 func (w *statusWriter) WriteHeader(status int) {
+	if w.wroteHeader {
+		return
+	}
+
+	w.ResponseWriter.WriteHeader(status)
+	if status < 200 {
+		return
+	}
+
 	w.status = status
 	w.wroteHeader = true
-	w.ResponseWriter.WriteHeader(status)
 }
 
 func (w *statusWriter) Write(p []byte) (int, error) {
@@ -31,7 +39,7 @@ func (w *statusWriter) Write(p []byte) (int, error) {
 	return w.ResponseWriter.Write(p)
 }
 
-func RequestLogger(logger Logger, pattern string, next http.Handler) http.Handler {
+func RequestLogger(logger Logger, next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		start := time.Now()
 		sw := &statusWriter{
@@ -42,7 +50,9 @@ func RequestLogger(logger Logger, pattern string, next http.Handler) http.Handle
 		next.ServeHTTP(sw, r)
 
 		args := []any{
-			"pattern", pattern,
+			"pattern", r.Pattern,
+			"method", r.Method,
+			"path", r.URL.Path,
 			"status", sw.status,
 			"took", time.Since(start),
 		}

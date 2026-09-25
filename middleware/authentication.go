@@ -12,9 +12,13 @@ import (
 	goauth "github.com/tavocg/go-auth"
 )
 
-type authenticatedClaimsContextKey struct{}
+type identityContextKey struct{}
 
-var AuthenticatedClaimsContextKey = authenticatedClaimsContextKey{}
+// Identity holds verified claims and their validated account subject.
+type Identity struct {
+	Claims *appauth.Claims
+	Sub    int64
+}
 
 func AuthenticateBearer(logger Logger, localize LocalizeFunc, authenticator goauth.Authenticator[*appauth.Claims], next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -25,7 +29,7 @@ func AuthenticateBearer(logger Logger, localize LocalizeFunc, authenticator goau
 			return
 		}
 
-		identity, err := authenticator.Verify(r.Context(), parts[1])
+		claims, err := authenticator.Verify(r.Context(), parts[1])
 		if err != nil {
 			if errors.Is(err, goauth.ErrInvalidToken) || errors.Is(err, goauth.ErrExpiredToken) {
 				logger.Debug("failed to verify bearer token", "status", http.StatusUnauthorized, "method", r.Method, "path", r.URL.Path, "error", err)
@@ -38,13 +42,27 @@ func AuthenticateBearer(logger Logger, localize LocalizeFunc, authenticator goau
 			return
 		}
 
-		ctx := context.WithValue(r.Context(), AuthenticatedClaimsContextKey, identity)
+		if claims == nil || claims.Subject() == "" {
+			logger.Debug("missing authenticated identity", "status", http.StatusUnauthorized, "method", r.Method, "path", r.URL.Path)
+			writeJSONError(w, r, localize, http.StatusUnauthorized, "err.missing_identity")
+			return
+		}
+
+		sub, err := strconv.ParseInt(claims.Subject(), 10, 64)
+		if err != nil || sub <= 0 {
+			logger.Debug("invalid authenticated subject", "status", http.StatusUnauthorized, "method", r.Method, "path", r.URL.Path, "sub", claims.Subject())
+			writeJSONError(w, r, localize, http.StatusUnauthorized, "err.invalid_subject")
+			return
+		}
+
+		identity := Identity{Claims: claims, Sub: sub}
+		ctx := context.WithValue(r.Context(), identityContextKey{}, identity)
 		next.ServeHTTP(w, r.WithContext(ctx))
 	})
 }
 
-func AuthenticatedClaims(ctx context.Context) (*appauth.Claims, bool) {
-	identity, ok := ctx.Value(AuthenticatedClaimsContextKey).(*appauth.Claims)
+func AuthenticatedIdentity(ctx context.Context) (Identity, bool) {
+	identity, ok := ctx.Value(identityContextKey{}).(Identity)
 	return identity, ok
 }
 
@@ -54,21 +72,16 @@ type PermissionChecker interface {
 
 func RequirePermission(logger Logger, localize LocalizeFunc, permissions PermissionChecker, permission string, next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		identity, ok := AuthenticatedClaims(r.Context())
-		if !ok || identity == nil || identity.Subject() == "" {
+		identity, ok := AuthenticatedIdentity(r.Context())
+		if !ok {
 			logger.Debug("missing authenticated identity", "status", http.StatusUnauthorized, "method", r.Method, "path", r.URL.Path)
 			writeJSONError(w, r, localize, http.StatusUnauthorized, "err.missing_identity")
 			return
 		}
 
-		sub, err := strconv.ParseInt(identity.Subject(), 10, 64)
-		if err != nil || sub <= 0 {
-			logger.Debug("invalid authenticated subject", "status", http.StatusUnauthorized, "method", r.Method, "path", r.URL.Path, "sub", identity.Subject())
-			writeJSONError(w, r, localize, http.StatusUnauthorized, "err.invalid_subject")
-			return
-		}
+		sub := identity.Sub
 
-		for _, role := range identity.Roles {
+		for _, role := range identity.Claims.Roles {
 			role = strings.TrimSpace(role)
 			if role == "" {
 				continue
@@ -86,7 +99,7 @@ func RequirePermission(logger Logger, localize LocalizeFunc, permissions Permiss
 			}
 		}
 
-		logger.Debug("permission denied", "status", http.StatusForbidden, "method", r.Method, "path", r.URL.Path, "sub", sub, "permission", permission, "roles", identity.Roles)
+		logger.Debug("permission denied", "status", http.StatusForbidden, "method", r.Method, "path", r.URL.Path, "sub", sub, "permission", permission, "roles", identity.Claims.Roles)
 		writeJSONError(w, r, localize, http.StatusForbidden, "err.permission_denied")
 	})
 }

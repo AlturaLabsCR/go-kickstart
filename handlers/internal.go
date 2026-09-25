@@ -5,9 +5,7 @@ import (
 	"errors"
 	"io"
 	"net/http"
-	"strconv"
 
-	appauth "app/auth"
 	"app/middleware"
 	email "github.com/tavocg/go-email"
 )
@@ -79,20 +77,16 @@ func normalizeEmail(original string) string {
 	return valid.Address()
 }
 
-func authenticatedAccountClaimsAndSubject(r *http.Request) (*appauth.Claims, int64, int, bool) {
-	identity, ok := middleware.AuthenticatedClaims(r.Context())
+func (h *Handler) requireIdentity(w http.ResponseWriter, r *http.Request) (middleware.Identity, bool) {
+	identity, ok := middleware.AuthenticatedIdentity(r.Context())
 	if !ok {
-		return nil, 0, http.StatusInternalServerError, false
+		h.writeStatus(
+			w,
+			r,
+			http.StatusInternalServerError,
+			"err.missing_account_subject",
+			"missing authenticated account subject",
+		)
 	}
-
-	if identity == nil || identity.Sub == "" {
-		return nil, 0, http.StatusUnauthorized, false
-	}
-
-	sub, err := strconv.ParseInt(identity.Sub, 10, 64)
-	if err != nil || sub <= 0 {
-		return nil, 0, http.StatusUnauthorized, false
-	}
-
-	return identity, sub, http.StatusOK, true
+	return identity, ok
 }

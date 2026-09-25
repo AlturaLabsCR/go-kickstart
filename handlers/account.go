@@ -23,24 +23,18 @@ func (h *Handler) registerAccountRoutes() {
 		))
 	}
 
-	h.AddHandler(http.MethodGet, h.routePath("/account"), authenticated(http.HandlerFunc(h.GetAccount)))
-	h.AddHandler(http.MethodDelete, h.routePath("/account"), authenticated(http.HandlerFunc(h.DeleteAccount)))
-	h.AddHandler(http.MethodPatch, h.routePath("/account/email/change"), canChangeEmail(h.RequestEmailChange))
-	h.AddHandler(http.MethodPatch, h.routePath("/account/email/change/confirm"), canChangeEmail(h.ConfirmEmailChange))
+	h.AddHandler(http.MethodGet, "/account", authenticated(http.HandlerFunc(h.GetAccount)))
+	h.AddHandler(http.MethodDelete, "/account", authenticated(http.HandlerFunc(h.DeleteAccount)))
+	h.AddHandler(http.MethodPatch, "/account/email/change", canChangeEmail(h.RequestEmailChange))
+	h.AddHandler(http.MethodPatch, "/account/email/change/confirm", canChangeEmail(h.ConfirmEmailChange))
 }
 
 func (h *Handler) GetAccount(w http.ResponseWriter, r *http.Request) {
-	_, sub, status, ok := authenticatedAccountClaimsAndSubject(r)
+	identity, ok := h.requireIdentity(w, r)
 	if !ok {
-		h.writeStatus(
-			w,
-			r,
-			status,
-			"err.missing_account_subject",
-			"missing authenticated account subject",
-		)
 		return
 	}
+	sub := identity.Sub
 
 	account, err := h.db.Querier().SelectAccountBySub(r.Context(), sub)
 	if h.db.IsErrNotFound(err) {
@@ -82,19 +76,13 @@ func (h *Handler) GetAccount(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handler) DeleteAccount(w http.ResponseWriter, r *http.Request) {
-	identity, sub, status, ok := authenticatedAccountClaimsAndSubject(r)
+	identity, ok := h.requireIdentity(w, r)
 	if !ok {
-		h.writeStatus(
-			w,
-			r,
-			status,
-			"err.missing_account_subject",
-			"missing authenticated account subject",
-		)
 		return
 	}
+	sub := identity.Sub
 
-	if err := h.authenticator.RevokeAll(r.Context(), identity); err != nil {
+	if err := h.authenticator.RevokeAll(r.Context(), identity.Claims); err != nil {
 		h.writeError(
 			w,
 			r,
@@ -132,17 +120,11 @@ func (h *Handler) DeleteAccount(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handler) RequestEmailChange(w http.ResponseWriter, r *http.Request) {
-	_, sub, status, ok := authenticatedAccountClaimsAndSubject(r)
+	identity, ok := h.requireIdentity(w, r)
 	if !ok {
-		h.writeStatus(
-			w,
-			r,
-			status,
-			"err.missing_account_subject",
-			"missing authenticated account subject",
-		)
 		return
 	}
+	sub := identity.Sub
 
 	type changeEmailRequest struct {
 		NewEmail string `json:"new_email"`
@@ -256,17 +238,11 @@ func (h *Handler) RequestEmailChange(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handler) ConfirmEmailChange(w http.ResponseWriter, r *http.Request) {
-	_, sub, status, ok := authenticatedAccountClaimsAndSubject(r)
+	identity, ok := h.requireIdentity(w, r)
 	if !ok {
-		h.writeStatus(
-			w,
-			r,
-			status,
-			"err.missing_account_subject",
-			"missing authenticated account subject",
-		)
 		return
 	}
+	sub := identity.Sub
 
 	type changeEmailConfirmRequest struct {
 		OTP string `json:"otp"`

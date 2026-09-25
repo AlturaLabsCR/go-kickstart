@@ -14,9 +14,9 @@ import (
 )
 
 func (h *Handler) registerAuthRoutes() {
-	h.Add(http.MethodPost, h.routePath("/auth/login"), h.LoginOrCreateAccount)
-	h.Add(http.MethodPost, h.routePath("/auth/verify"), h.VerifyAuthenticationCode)
-	h.Add(http.MethodPost, h.routePath("/auth/refresh"), h.RefreshSession)
+	h.Add(http.MethodPost, "/auth/login", h.LoginOrCreateAccount)
+	h.Add(http.MethodPost, "/auth/verify", h.VerifyAuthenticationCode)
+	h.Add(http.MethodPost, "/auth/refresh", h.RefreshSession)
 }
 
 func (h *Handler) LoginOrCreateAccount(w http.ResponseWriter, r *http.Request) {

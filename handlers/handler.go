@@ -30,7 +30,8 @@ type Handler struct {
 	localizer     *i18n.Localizer
 	rootPrefix    string
 
-	mux *http.ServeMux
+	mux   *http.ServeMux
+	entry http.Handler
 }
 
 type Options struct {
@@ -71,6 +72,7 @@ func NewHandler(opts Options) *Handler {
 	}
 
 	next.registerRoutes()
+	next.entry = middleware.RequestLogger(next.logger, next.mux)
 
 	return next
 }
@@ -80,20 +82,20 @@ func (h *Handler) Add(method, path string, fn http.HandlerFunc) {
 }
 
 func (h *Handler) AddHandler(method, path string, handler http.Handler) {
-	pattern := path
+	pattern := h.routePath(path)
 	if method != "" {
-		pattern = method + " " + path
+		pattern = method + " " + pattern
 	}
 
-	h.mux.Handle(pattern, middleware.RequestLogger(h.logger, pattern, handler))
+	h.mux.Handle(pattern, handler)
 }
 
 func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	if h == nil || h.mux == nil {
+	if h == nil || h.entry == nil {
 		panic("handler not initialized")
 	}
 
-	h.mux.ServeHTTP(w, r)
+	h.entry.ServeHTTP(w, r)
 }
 
 func (h *Handler) registerRoutes() {

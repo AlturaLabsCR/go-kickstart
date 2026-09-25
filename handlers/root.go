@@ -11,7 +11,7 @@ import (
 )
 
 func (h *Handler) registerRootRoutes() {
-	h.Add(http.MethodGet, h.routePath("/"), h.Root)
+	h.Add(http.MethodGet, "/", h.Root)
 }
 
 func (h *Handler) Root(w http.ResponseWriter, r *http.Request) {
