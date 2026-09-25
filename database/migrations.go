@@ -1,6 +1,7 @@
 package database
 
 import (
+	"cmp"
 	"fmt"
 	"io/fs"
 	"path"
@@ -50,14 +51,7 @@ func ReadMigrations(fsys fs.FS) ([]Migration, error) {
 	}
 
 	slices.SortFunc(migrations, func(a, b Migration) int {
-		switch {
-		case a.Version < b.Version:
-			return -1
-		case a.Version > b.Version:
-			return 1
-		default:
-			return 0
-		}
+		return cmp.Compare(a.Version, b.Version)
 	})
 
 	for i := 1; i < len(migrations); i++ {
