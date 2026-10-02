@@ -12,7 +12,11 @@ Very opinionated, your mileage may vary.
 - [`sqlc-dev/sqlc`](https://github.com/sqlc-dev/sqlc) - Type-safe SQL code generation (no ORM)
 - GPL-licensed
 
-## Customizing
+## Start using this template
+
+- `npm ci`
+- `go generate ./...`
+- `go run .`
 
 There are several places where placeholder strings are used,
 update with your preferred details.
