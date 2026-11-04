@@ -42,6 +42,10 @@ func runServer(cfg serverConfig) error {
 		return err
 	}
 
+	if len(cfg.AuthSecret) < 32 {
+		logger.Warn("JWT signing secret is shorter than the recommended 32 random bytes; tokens may be forged", "secret_bytes", len(cfg.AuthSecret))
+	}
+
 	if cfg.DatabaseDSN == "" {
 		return errors.New("database DSN is required")
 	}
