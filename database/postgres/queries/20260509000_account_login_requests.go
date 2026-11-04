@@ -15,8 +15,8 @@ func (q *PostgresQuerier) UpsertAccountLoginRequest(ctx context.Context, email s
 	})
 }
 
-func (q *PostgresQuerier) SelectAccountLoginRequest(ctx context.Context, email string) (*database.AccountLoginRequest, error) {
-	request, err := q.queries.SelectAccountLoginRequest(ctx, email)
+func (q *PostgresQuerier) ConsumeAccountLoginRequest(ctx context.Context, email string, otp string, now int64) (*database.AccountLoginRequest, error) {
+	request, err := q.queries.ConsumeAccountLoginRequest(ctx, db.ConsumeAccountLoginRequestParams{Email: email, Otp: otp, ExpiresAt: now})
 	if err != nil {
 		return nil, err
 	}

@@ -6,10 +6,10 @@ ON CONFLICT(sub) DO UPDATE SET
   otp = excluded.otp,
   expires_at = excluded.expires_at;
 
--- name: SelectAccountEmailChangeRequestBySub :one
-SELECT sub, email, otp, expires_at
-FROM account_email_change_requests
-WHERE sub = ?;
+-- name: ConsumeAccountEmailChangeRequest :one
+DELETE FROM account_email_change_requests
+WHERE sub = ? AND otp = ? AND expires_at > ?
+RETURNING sub, email, otp, expires_at;
 
 -- name: DeleteAccountEmailChangeRequest :exec
 DELETE FROM account_email_change_requests

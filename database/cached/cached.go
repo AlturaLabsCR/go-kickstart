@@ -28,7 +28,7 @@ func New(next database.Database, store cache.Store) database.Database {
 
 func (d *Database) Querier() database.Querier {
 	return &Querier{
-		next:       d.next.Querier(),
+		Querier:    d.next.Querier(),
 		store:      d.store,
 		cacheRead:  true,
 		invalidate: d.invalidate,
@@ -39,8 +39,8 @@ func (d *Database) WithTx(ctx context.Context, fn func(q database.Querier) error
 	pending := make(map[string]struct{})
 	err := d.next.WithTx(ctx, func(q database.Querier) error {
 		return fn(&Querier{
-			next:  q,
-			store: d.store,
+			Querier: q,
+			store:   d.store,
 			invalidate: func(keys ...string) {
 				for _, key := range keys {
 					pending[key] = struct{}{}

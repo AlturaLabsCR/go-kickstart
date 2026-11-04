@@ -2,7 +2,9 @@ openapi: 3.1.0
 info:
   title: App API
   version: 0.1.0
-  description: OpenAPI specification of App.
+  description: >-
+    OpenAPI specification of App. JSON request bodies are limited to 1 MiB;
+    oversized bodies return 400. JSON responses include Cache-Control no-store.
 servers:
   - url: http://localhost:3080
     description: Local development server
@@ -16,7 +18,7 @@ paths:
         - Authentication
       operationId: loginOrCreateAccount
       summary: Trigger login or account creation
-      description: Triggers a confirmation email containing a temporary 6-digit verification code.
+      description: Creates a temporary 6-digit verification code. Email delivery is not implemented; development mode can log the code.
       requestBody:
         required: true
         content:
@@ -27,7 +29,7 @@ paths:
               email: john@doe.com
       responses:
         '204':
-          description: Verification email sent.
+          description: Verification request stored.
         default:
           $ref: '#/components/responses/Error'
   /auth/verify:
@@ -36,7 +38,7 @@ paths:
         - Authentication
       operationId: verifyAuthenticationCode
       summary: Verify email code
-      description: Verifies the provided email and 6-digit code, then creates a new session. If no account exists for the email address, a new account is created.
+      description: Atomically consumes the provided unexpired email code once, then creates a new session. If no account exists for the email address, a new account is created.
       requestBody:
         required: true
         content:

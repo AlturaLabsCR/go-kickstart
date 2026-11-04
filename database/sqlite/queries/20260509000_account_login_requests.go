@@ -15,8 +15,8 @@ func (q *SqliteQuerier) UpsertAccountLoginRequest(ctx context.Context, email str
 	})
 }
 
-func (q *SqliteQuerier) SelectAccountLoginRequest(ctx context.Context, email string) (*database.AccountLoginRequest, error) {
-	request, err := q.queries.SelectAccountLoginRequest(ctx, email)
+func (q *SqliteQuerier) ConsumeAccountLoginRequest(ctx context.Context, email string, otp string, now int64) (*database.AccountLoginRequest, error) {
+	request, err := q.queries.ConsumeAccountLoginRequest(ctx, db.ConsumeAccountLoginRequestParams{Email: email, Otp: otp, ExpiresAt: now})
 	if err != nil {
 		return nil, err
 	}

@@ -26,6 +26,13 @@ func NewAuthenticator(db database.Database, secret string, accessTTL time.Durati
 		return nil, fmt.Errorf("database is required")
 	}
 
+	if len(secret) < 32 {
+		return nil, fmt.Errorf("JWT signing secret must contain at least 32 bytes")
+	}
+	if accessTTL < time.Second || refreshTTL < time.Second {
+		return nil, fmt.Errorf("token TTLs must be at least one second")
+	}
+
 	tokener, err := jwt.NewHS256Tokener[*Claims](secret, accessTTL)
 	if err != nil {
 		return nil, err

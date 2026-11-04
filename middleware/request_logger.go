@@ -17,6 +17,9 @@ type statusWriter struct {
 	wroteHeader bool
 }
 
+// Unwrap preserves access to streaming and deadline controls through ResponseController.
+func (w *statusWriter) Unwrap() http.ResponseWriter { return w.ResponseWriter }
+
 func (w *statusWriter) WriteHeader(status int) {
 	if w.wroteHeader {
 		return

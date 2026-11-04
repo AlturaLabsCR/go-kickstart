@@ -67,6 +67,7 @@ func AuthenticatedIdentity(ctx context.Context) (Identity, bool) {
 }
 
 type PermissionChecker interface {
+	SelectAccountRolesBySub(ctx context.Context, sub int64) ([]string, error)
 	RoleHasPermission(ctx context.Context, roleKey string, permissionKey string) (bool, error)
 }
 
@@ -81,7 +82,14 @@ func RequirePermission(logger Logger, localize LocalizeFunc, permissions Permiss
 
 		sub := identity.Sub
 
-		for _, role := range identity.Claims.Roles {
+		roles, err := permissions.SelectAccountRolesBySub(r.Context(), sub)
+		if err != nil {
+			logger.Error("failed to load account roles", "sub", sub, "error", err)
+			writeJSONError(w, r, localize, http.StatusInternalServerError, "err.check_role_permission")
+			return
+		}
+
+		for _, role := range roles {
 			role = strings.TrimSpace(role)
 			if role == "" {
 				continue
@@ -99,7 +107,7 @@ func RequirePermission(logger Logger, localize LocalizeFunc, permissions Permiss
 			}
 		}
 
-		logger.Debug("permission denied", "status", http.StatusForbidden, "method", r.Method, "path", r.URL.Path, "sub", sub, "permission", permission, "roles", identity.Claims.Roles)
+		logger.Debug("permission denied", "status", http.StatusForbidden, "method", r.Method, "path", r.URL.Path, "sub", sub, "permission", permission, "roles", roles)
 		writeJSONError(w, r, localize, http.StatusForbidden, "err.permission_denied")
 	})
 }

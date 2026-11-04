@@ -34,7 +34,7 @@ This repository is a Go web server template for REST APIs and small HTML surface
 
 3. Keep request/response handling consistent.
    - Define request/response structs near the handler that uses them unless they are shared.
-   - Use `decodeJSON` for JSON bodies.
+   - Use `decodeJSON(w, r, &request)` for JSON bodies; it enforces a 1 MiB limit.
    - Use `writeJSON` for JSON success responses.
    - Use `h.writeStatus` or `h.writeError` for error responses so logs and localized JSON error bodies stay consistent.
    - Format `h.writeStatus` and `h.writeError` calls one argument per line when they have localization keys or log args.

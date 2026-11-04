@@ -81,8 +81,13 @@ func runServer(cfg serverConfig) error {
 	})
 
 	srv := &http.Server{
-		Addr:    net.JoinHostPort(cfg.Host, strconv.Itoa(cfg.Port)),
-		Handler: h,
+		Addr:              net.JoinHostPort(cfg.Host, strconv.Itoa(cfg.Port)),
+		Handler:           h,
+		ReadHeaderTimeout: 5 * time.Second,
+		ReadTimeout:       15 * time.Second,
+		WriteTimeout:      30 * time.Second,
+		IdleTimeout:       60 * time.Second,
+		MaxHeaderBytes:    32 << 10,
 	}
 
 	listener, err := net.Listen("tcp", srv.Addr)

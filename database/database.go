@@ -51,8 +51,8 @@ type Querier interface {
 	// UpsertAccountEmailChangeRequest creates or updates the pending email change request for an account.
 	UpsertAccountEmailChangeRequest(ctx context.Context, sub int64, email string, otp string, expiresAt int64) error
 
-	// SelectAccountEmailChangeRequestBySub returns the pending email change request for an account.
-	SelectAccountEmailChangeRequestBySub(ctx context.Context, sub int64) (*AccountEmailChangeRequest, error)
+	// ConsumeAccountEmailChangeRequest atomically consumes a matching, unexpired request.
+	ConsumeAccountEmailChangeRequest(ctx context.Context, sub int64, otp string, now int64) (*AccountEmailChangeRequest, error)
 
 	// DeleteAccountEmailChangeRequest deletes the pending email change request for an account.
 	DeleteAccountEmailChangeRequest(ctx context.Context, sub int64) error
@@ -60,8 +60,8 @@ type Querier interface {
 	// UpsertAccountLoginRequest creates or updates the login request for an email.
 	UpsertAccountLoginRequest(ctx context.Context, email string, otp string, expiresAt int64) error
 
-	// SelectAccountLoginRequest returns the login request for an email.
-	SelectAccountLoginRequest(ctx context.Context, email string) (*AccountLoginRequest, error)
+	// ConsumeAccountLoginRequest atomically consumes a matching, unexpired request.
+	ConsumeAccountLoginRequest(ctx context.Context, email string, otp string, now int64) (*AccountLoginRequest, error)
 
 	// DeleteAccountLoginRequest deletes the login request for an email.
 	DeleteAccountLoginRequest(ctx context.Context, email string) error

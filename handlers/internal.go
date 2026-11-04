@@ -10,8 +10,8 @@ import (
 	email "github.com/tavocg/go-email"
 )
 
-func decodeJSON(body io.Reader, dst any) error {
-	decoder := json.NewDecoder(body)
+func decodeJSON(w http.ResponseWriter, r *http.Request, dst any) error {
+	decoder := json.NewDecoder(http.MaxBytesReader(w, r.Body, 1<<20))
 	decoder.DisallowUnknownFields()
 
 	if err := decoder.Decode(dst); err != nil {
@@ -27,6 +27,7 @@ func decodeJSON(body io.Reader, dst any) error {
 }
 
 func writeJSON(w http.ResponseWriter, status int, payload any) {
+	w.Header().Set("Cache-Control", "no-store")
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
 	w.WriteHeader(status)
 	_ = json.NewEncoder(w).Encode(payload)
@@ -73,7 +74,7 @@ func normalizeEmail(original string) string {
 		return ""
 	}
 
-	valid.Normalize(email.StripPlusTag())
+	valid.Normalize()
 	return valid.Address()
 }
 

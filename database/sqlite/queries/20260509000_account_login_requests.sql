@@ -5,10 +5,10 @@ ON CONFLICT(email) DO UPDATE SET
   otp = excluded.otp,
   expires_at = excluded.expires_at;
 
--- name: SelectAccountLoginRequest :one
-SELECT email, otp, expires_at
-FROM account_login_requests
-WHERE email = ?;
+-- name: ConsumeAccountLoginRequest :one
+DELETE FROM account_login_requests
+WHERE email = ? AND otp = ? AND expires_at > ?
+RETURNING email, otp, expires_at;
 
 -- name: DeleteAccountLoginRequest :exec
 DELETE FROM account_login_requests

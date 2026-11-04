@@ -16,8 +16,8 @@ func (q *PostgresQuerier) UpsertAccountEmailChangeRequest(ctx context.Context, s
 	})
 }
 
-func (q *PostgresQuerier) SelectAccountEmailChangeRequestBySub(ctx context.Context, sub int64) (*database.AccountEmailChangeRequest, error) {
-	request, err := q.queries.SelectAccountEmailChangeRequestBySub(ctx, sub)
+func (q *PostgresQuerier) ConsumeAccountEmailChangeRequest(ctx context.Context, sub int64, otp string, now int64) (*database.AccountEmailChangeRequest, error) {
+	request, err := q.queries.ConsumeAccountEmailChangeRequest(ctx, db.ConsumeAccountEmailChangeRequestParams{Sub: sub, Otp: otp, ExpiresAt: now})
 	if err != nil {
 		return nil, err
 	}

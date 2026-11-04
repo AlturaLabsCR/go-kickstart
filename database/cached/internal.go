@@ -13,14 +13,6 @@ func accountKey(sub int64) string {
 	return "db:account:" + strconv.FormatInt(sub, 10)
 }
 
-func accountRolesKey(sub int64) string {
-	return "db:account_roles:" + strconv.FormatInt(sub, 10)
-}
-
-func rolePermissionKey(role string, permission string) string {
-	return "db:role_permission:" + role + ":" + permission
-}
-
 func cacheMiss(err error) bool {
 	return errors.Is(err, cache.ErrNotFound)
 }

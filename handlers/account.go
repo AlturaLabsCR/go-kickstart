@@ -131,7 +131,7 @@ func (h *Handler) RequestEmailChange(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var req changeEmailRequest
-	if err := decodeJSON(r.Body, &req); err != nil {
+	if err := decodeJSON(w, r, &req); err != nil {
 		h.writeError(
 			w,
 			r,
@@ -249,7 +249,7 @@ func (h *Handler) ConfirmEmailChange(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var req changeEmailConfirmRequest
-	if err := decodeJSON(r.Body, &req); err != nil {
+	if err := decodeJSON(w, r, &req); err != nil {
 		h.writeError(
 			w,
 			r,
@@ -261,58 +261,24 @@ func (h *Handler) ConfirmEmailChange(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	saved, err := h.db.Querier().SelectAccountEmailChangeRequestBySub(r.Context(), sub)
-	if h.db.IsErrNotFound(err) {
-		h.writeError(
-			w,
-			r,
-			http.StatusUnauthorized,
-			err,
-			"err.missing_email_change",
-			"missing account email change request",
-			"sub",
-			sub,
-		)
-		return
-	}
-	if err != nil {
-		h.writeError(
-			w,
-			r,
-			http.StatusInternalServerError,
-			err,
-			"err.select_email_change",
-			"failed to select account email change request",
-			"sub",
-			sub,
-		)
-		return
-	}
-
-	if saved.Otp != req.OTP || saved.ExpiresAt < time.Now().UTC().Unix() {
-		if saved.ExpiresAt < time.Now().UTC().Unix() {
-			_ = h.db.Querier().DeleteAccountEmailChangeRequest(r.Context(), sub)
-		}
-
-		h.writeStatus(
-			w,
-			r,
-			http.StatusUnauthorized,
-			"err.invalid_email_change_otp",
-			"invalid account email change verification code",
-			"sub",
-			sub,
-		)
-		return
-	}
-
 	if err := h.db.WithTx(r.Context(), func(q database.Querier) error {
-		if err := q.DeleteAccountEmailChangeRequest(r.Context(), sub); err != nil {
+		saved, err := q.ConsumeAccountEmailChangeRequest(r.Context(), sub, req.OTP, time.Now().Unix())
+		if err != nil {
 			return err
 		}
 
 		return q.UpdateAccountEmail(r.Context(), sub, saved.Email)
 	}); err != nil {
+		if h.db.IsErrNotFound(err) {
+			h.writeStatus(
+				w,
+				r,
+				http.StatusUnauthorized,
+				"err.invalid_email_change_otp",
+				"invalid or expired email change code",
+			)
+			return
+		}
 		h.writeError(
 			w,
 			r,
@@ -322,8 +288,6 @@ func (h *Handler) ConfirmEmailChange(w http.ResponseWriter, r *http.Request) {
 			"failed to confirm account email change",
 			"sub",
 			sub,
-			"email",
-			saved.Email,
 		)
 		return
 	}

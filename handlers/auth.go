@@ -24,7 +24,7 @@ func (h *Handler) LoginOrCreateAccount(w http.ResponseWriter, r *http.Request) {
 		Email string `json:"email"`
 	}
 	var req loginRequest
-	if err := decodeJSON(r.Body, &req); err != nil {
+	if err := decodeJSON(w, r, &req); err != nil {
 		h.writeError(
 			w,
 			r,
@@ -96,7 +96,7 @@ func (h *Handler) VerifyAuthenticationCode(w http.ResponseWriter, r *http.Reques
 	}
 
 	var req verifyRequest
-	if err := decodeJSON(r.Body, &req); err != nil {
+	if err := decodeJSON(w, r, &req); err != nil {
 		h.writeError(
 			w,
 			r,
@@ -122,54 +122,13 @@ func (h *Handler) VerifyAuthenticationCode(w http.ResponseWriter, r *http.Reques
 		return
 	}
 
-	saved, err := h.db.Querier().SelectAccountLoginRequest(r.Context(), email)
-	if h.db.IsErrNotFound(err) {
-		h.writeError(
-			w,
-			r,
-			http.StatusUnauthorized,
-			err,
-			"err.missing_login",
-			"missing login request",
-			"email",
-			email,
-		)
-		return
-	}
-	if err != nil {
-		h.writeError(
-			w,
-			r,
-			http.StatusInternalServerError,
-			err,
-			"err.select_login",
-			"failed to select login request",
-			"email",
-			email,
-		)
-		return
-	}
-
-	if saved.Otp != req.OTP || saved.ExpiresAt < time.Now().UTC().Unix() {
-		if saved.ExpiresAt < time.Now().UTC().Unix() {
-			_ = h.db.Querier().DeleteAccountLoginRequest(r.Context(), email)
-		}
-		h.writeStatus(
-			w,
-			r,
-			http.StatusUnauthorized,
-			"err.invalid_login_otp",
-			"invalid login verification code",
-			"email",
-			email,
-		)
-		return
-	}
-
 	var subject int64
 	if err := h.db.WithTx(r.Context(), func(q database.Querier) error {
-		var err error
+		if _, err := q.ConsumeAccountLoginRequest(r.Context(), email, req.OTP, time.Now().Unix()); err != nil {
+			return err
+		}
 
+		var err error
 		subject, err = q.OncesertAccountByEmail(r.Context(), email, time.Now().UTC().Unix())
 		if err != nil {
 			return err
@@ -179,8 +138,18 @@ func (h *Handler) VerifyAuthenticationCode(w http.ResponseWriter, r *http.Reques
 			return err
 		}
 
-		return q.DeleteAccountLoginRequest(r.Context(), email)
+		return nil
 	}); err != nil {
+		if h.db.IsErrNotFound(err) {
+			h.writeStatus(
+				w,
+				r,
+				http.StatusUnauthorized,
+				"err.invalid_login_otp",
+				"invalid or expired login code",
+			)
+			return
+		}
 		h.writeError(
 			w,
 			r,
@@ -220,7 +189,7 @@ func (h *Handler) RefreshSession(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var req refreshRequest
-	if err := decodeJSON(r.Body, &req); err != nil {
+	if err := decodeJSON(w, r, &req); err != nil {
 		h.writeError(
 			w,
 			r,
