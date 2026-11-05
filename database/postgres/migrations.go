@@ -62,7 +62,7 @@ func applyMigrations(ctx context.Context, pool *pgxpool.Pool) error {
 }
 
 func ensureMigrationTable(ctx context.Context, tx pgx.Tx) error {
-	schema, err := migrationFiles.ReadFile("migrations/schema_migrations.sql")
+	schema, err := migrationFiles.ReadFile("migrations/20260503000_schema_migrations.sql")
 	if err != nil {
 		return err
 	}

@@ -57,7 +57,7 @@ func applyMigrations(ctx context.Context, conn *sql.DB) error {
 }
 
 func ensureMigrationTable(ctx context.Context, tx *sql.Tx) error {
-	schema, err := migrationFiles.ReadFile("migrations/schema_migrations.sql")
+	schema, err := migrationFiles.ReadFile("migrations/20260503000_schema_migrations.sql")
 	if err != nil {
 		return err
 	}

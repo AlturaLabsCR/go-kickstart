@@ -81,7 +81,7 @@ This repository is a Go web server template for REST APIs and small HTML surface
    - Implement each new `Querier` method in both `database/postgres/queries` and `database/sqlite/queries`.
    - Update `database/cached.Querier` so it still satisfies `database.Querier`.
 
-SQLite constructor options configure DSN parameters for every new connection. Use `WithForeignKeys` for foreign-key enforcement; pool limits are configured separately in the constructor. Both backends initialize the migration table from their embedded `migrations/schema_migrations.sql` file.
+SQLite constructor options configure DSN parameters for every new connection. Use `WithForeignKeys` for foreign-key enforcement; pool limits are configured separately in the constructor. Both backends initialize the migration table from their embedded `migrations/20260503000_schema_migrations.sql` file.
 
 ## Caching Guidance
 
