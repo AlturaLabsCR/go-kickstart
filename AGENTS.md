@@ -8,7 +8,7 @@ This repository is a Go web server template for REST APIs and small HTML surface
 - `handlers/`: HTTP route registration and endpoint implementations. Keep related endpoints together: account endpoints belong in `account.go`; a new `/myendpoint/...` group should usually get `myendpoint.go` with `registerMyEndpointRoutes`.
 - `middleware/`: HTTP middleware. Middleware should depend on small function/interface types where practical, such as `LocalizeFunc`, instead of depending on full handler state.
 - `database/`: database interfaces, models, migrations, sqlc config, and backend implementations.
-- `database/postgres` and `database/sqlite`: backend-specific migrations, generated sqlc packages, and query adapters.
+- `database/postgres`, `database/sqlite`, and `database/mysql`: backend-specific migrations, generated sqlc packages, and query adapters.
 - `database/cached`: database read-through cache wrapper. Keep cache logic here, not in handlers.
 - `cache/`: small byte-oriented key-value cache interface and memory implementation.
 - `auth/`: JWT claims and authenticator construction.
@@ -52,10 +52,11 @@ This repository is a Go web server template for REST APIs and small HTML surface
 
 ## Database Changes
 
-1. Add migrations for both backends.
+1. Add migrations for every backend.
    - Postgres migrations go in `database/postgres/migrations`.
    - SQLite migrations go in `database/sqlite/migrations`.
-   - Use matching version prefixes for the same logical migration in both backends.
+   - MySQL migrations go in `database/mysql/migrations`.
+   - Use matching version prefixes for the same logical migration in every backend.
    - Filename format is `<version>_<name>.up.sql`, for example `20260722000_widgets.up.sql`.
 
 2. Versioning rules.
@@ -63,25 +64,26 @@ This repository is a Go web server template for REST APIs and small HTML surface
    - Migrations are sorted by version and applied when `version > schema_migrations.version`.
    - Do not reuse a version. The migration loader rejects duplicates.
    - Use a monotonic timestamp-style version. If adding multiple migrations on the same day, increment the suffix: `20260722000`, `20260722001`, etc.
-   - The runner locks before reading the version and applies all pending migrations in one transaction, including version updates. A failure rolls back the entire pending batch; a competing startup may fail with a lock error and must be retried after the first finishes.
+   - Every runner locks before reading the version. Postgres and SQLite apply the pending batch in one transaction, including version updates; a failure rolls back the entire batch. MySQL DDL commits implicitly, so its runner uses `GET_LOCK` on a dedicated connection and advances the version after each successful migration instead. A competing startup may fail with a lock error and must be retried after the first finishes.
 
 3. Add sqlc queries.
    - Postgres query files go in `database/postgres/queries`.
    - SQLite query files go in `database/sqlite/queries`.
-   - Keep query names and behavior aligned across both backends when they implement the same app operation.
+   - MySQL query files go in `database/mysql/queries`.
+   - Keep query names and behavior aligned across every backend when they implement the same app operation.
 
 4. Generate database code.
    - Run `go generate ./database` after migration or query changes.
    - This runs `go tool sqlc generate` using `database/sqlc.yaml`.
-   - Generated code lands in ignored backend `db` folders; adapters in `database/postgres/queries` and `database/sqlite/queries` are source files and should be updated manually.
+   - Generated code lands in ignored backend `db` folders; adapters in `database/postgres/queries`, `database/sqlite/queries`, and `database/mysql/queries` are source files and should be updated manually.
 
 5. Update the database interface and wrappers.
    - Add app-level models to `database/models.go` when generated row types should not leak out.
    - Add methods to `database.Querier` or `database.Database` only for operations needed by application code.
-   - Implement each new `Querier` method in both `database/postgres/queries` and `database/sqlite/queries`.
+   - Implement each new `Querier` method in `database/postgres/queries`, `database/sqlite/queries`, and `database/mysql/queries`.
    - Update `database/cached.Querier` so it still satisfies `database.Querier`.
 
-SQLite constructor options configure DSN parameters for every new connection. Use `WithForeignKeys` for foreign-key enforcement; pool limits are configured separately in the constructor. Both backends initialize the migration table from their embedded `migrations/20260503000_schema_migrations.sql` file.
+SQLite constructor options configure DSN parameters for every new connection. Use `WithForeignKeys` for foreign-key enforcement; pool limits are configured separately in the constructor. MySQL accepts either a driver DSN (`user:pass@tcp(host:port)/dbname`) or a `mysql://user:pass@host:port/dbname?param=value` URL. Every backend initializes the migration table from its embedded `migrations/20260503000_schema_migrations.sql` file.
 
 ## Caching Guidance
 

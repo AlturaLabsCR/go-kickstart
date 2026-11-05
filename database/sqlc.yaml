@@ -15,3 +15,10 @@ sql:
       go:
         package: "db"
         out: "sqlite/db"
+  - engine: "mysql"
+    schema: "mysql/migrations"
+    queries: "mysql/queries"
+    gen:
+      go:
+        package: "db"
+        out: "mysql/db"

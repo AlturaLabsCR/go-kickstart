@@ -56,6 +56,8 @@ loglvl: info
 # Override with:
 #   APP_DB=data/custom.sqlite app serve
 #   app serve --db data/custom.sqlite
+#   app serve --db 'postgres://user:pass@localhost:5432/app?sslmode=disable'
+#   app serve --db 'mysql://user:pass@localhost:3306/app'
 db: data/app.sqlite
 
 # Sender used when building emails. The default noop mailer discards messages.
