@@ -88,7 +88,7 @@ func NewHandler(opts Options) *Handler {
 	}
 
 	next.registerRoutes()
-	next.entry = middleware.RequestLogger(next.logger, next.mux)
+	next.entry = middleware.RequestLogger(next.logger, http.HandlerFunc(next.route))
 
 	return next
 }

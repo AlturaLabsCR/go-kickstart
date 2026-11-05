@@ -11,8 +11,10 @@ var en = map[string]string{
 	"mail.email_change.body":    "Your email change code is {{.Code}}. It expires in {{.Minutes}} minutes. If you did not request it, ignore this message.",
 	"err.send_otp":              "Failed to send the verification email. Please try again later.",
 
-	"err.check_otp_limit":  "Failed to check the verification code request limit.",
-	"err.otp_rate_limited": "Too many verification code requests. Try again later.",
+	"err.check_otp_limit":    "Failed to check the verification code request limit.",
+	"err.otp_rate_limited":   "Too many verification code requests. Try again later.",
+	"err.route_not_found":    "Route not found.",
+	"err.method_not_allowed": "Method not allowed for this route.",
 
 	"perm.change_email": "Change account email",
 	"role.default":      "Default user",

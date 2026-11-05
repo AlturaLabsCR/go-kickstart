@@ -11,7 +11,11 @@ import (
 )
 
 func (h *Handler) registerRootRoutes() {
-	h.Add(http.MethodGet, "/", h.Root)
+	route := "/"
+	if h.rootPrefix == "" {
+		route = "/{$}"
+	}
+	h.Add(http.MethodGet, route, h.Root)
 }
 
 func (h *Handler) Root(w http.ResponseWriter, r *http.Request) {

@@ -5,6 +5,9 @@ info:
   description: >-
     OpenAPI specification of App. JSON request bodies are limited to 1 MiB;
     oversized bodies return 400. JSON responses include Cache-Control no-store.
+    Unmatched routes return localized JSON with status 404. Unsupported methods
+    return localized JSON with status 405 and the Allow header. The root page
+    matches only the application root, not unknown paths.
 servers:
   - url: http://localhost:3080
     description: Local development server
