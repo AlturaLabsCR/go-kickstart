@@ -14,8 +14,8 @@ import (
 )
 
 func (h *Handler) registerAuthRoutes() {
-	h.AddHandler(http.MethodPost, "/auth/login", h.limitOTPIssuance(http.HandlerFunc(h.LoginOrCreateAccount)))
-	h.AddHandler(http.MethodPost, "/auth/verify", h.limitOTPVerification(http.HandlerFunc(h.VerifyAuthenticationCode)))
+	h.Add(http.MethodPost, "/auth/login", h.LoginOrCreateAccount)
+	h.Add(http.MethodPost, "/auth/verify", h.VerifyAuthenticationCode)
 	h.Add(http.MethodPost, "/auth/refresh", h.RefreshSession)
 }
 

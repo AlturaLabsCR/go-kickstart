@@ -155,8 +155,7 @@ h.writeError(
 
 ## Email delivery
 
-- OTP routes also enforce shared one-minute budgets before body parsing or authentication: issuance 10/origin and 100/global, verification 30/origin and 300/global. Login and email changes share these aggregate budgets; existing per-identity limits still apply. Rejected attempts consume any preceding budget, so exhausting a global budget throttles all clients of that flow until its window expires.
-- OTP origin keys use only `RemoteAddr`: normalized IPv4 or an IPv6 /64. Forwarding headers are ignored; clients behind a proxy/NAT share the peer's budget. Invalid peer addresses share an `unknown` bucket. Supporting forwarded client addresses requires an explicit trusted-proxy policy.
+- The app is intended to run behind a reverse proxy. Apply per-client-IP throttling at that proxy to the OTP routes (`/auth/login`, `/auth/verify`, `/account/email/change`, `/account/email/change/confirm`, with the configured root prefix). The application enforces persistent budgets by normalized email for login and by authenticated account for email changes; it does not impose peer-IP or global OTP budgets. Keep identity budgets even when proxy limits are enabled.
 
 - Handlers receive `github.com/tavocg/go-email/mailer.Mailer` through `handlers.Options`.
 - `cmd/server.go` injects `app/mailer/noop.Mailer` by default. Replace that provider with an SMTP or Mailgun client to deliver messages; handlers remain unchanged.

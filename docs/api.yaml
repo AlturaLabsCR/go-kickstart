@@ -8,13 +8,10 @@ info:
     Unmatched routes return localized JSON with status 404. Unsupported methods
     return localized JSON with status 405 and the Allow header. The root page
     matches only the application root, not unknown paths.
-    OTP routes share additional one-minute budgets across login and email changes:
-    issuance allows 10 requests per origin and 100 globally; verification allows
-    30 per origin and 300 globally. These budgets apply before parsing bodies or
-    authenticating requests, in addition to the per-identity limits below.
-    Origin means the direct peer IPv4 address or IPv6 /64; forwarding headers
-    are ignored, so clients behind a proxy share its budget. A global rejection
-    affects all clients of that flow until the window expires.
+    OTP limits in the application are per normalized email for login and per
+    authenticated account for email changes. Per-client-IP throttling belongs
+    in the deployment's reverse proxy; the application does not impose IP or
+    global OTP limits.
 servers:
   - url: http://localhost:3080
     description: Local development server
@@ -210,7 +207,7 @@ components:
           schema:
             $ref: '#/components/schemas/Error'
     OTPRateLimited:
-      description: An OTP global, origin or identity budget is exhausted. Retry-After refers to the rejecting budget; other budgets may still apply afterward. Budgets are charged in that order, including malformed or unauthenticated requests at the aggregate levels. Rejected attempts retain earlier charges. Limits persist in the database and are not reset by requesting another code or restarting the server.
+      description: An OTP identity budget is exhausted. Retry-After refers to the rejecting budget; other identity budgets may still apply afterward. Limits persist in the database and are not reset by requesting another code or restarting the server.
       headers:
         Retry-After:
           description: Seconds until this request budget resets.
