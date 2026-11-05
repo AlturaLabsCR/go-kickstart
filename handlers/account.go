@@ -203,7 +203,7 @@ func (h *Handler) RequestEmailChange(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if !h.allowOTPRequest(w, r, "email_change.issue", strconv.FormatInt(sub, 10), 1, time.Minute) {
+	if !h.allowOTPRequest(w, r, "email_change.issue", strconv.FormatInt(sub, 10), 10, time.Minute) {
 		return
 	}
 
