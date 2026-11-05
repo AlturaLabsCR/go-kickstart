@@ -25,6 +25,7 @@ type Querier interface {
 	OncesertAccountByEmail(ctx context.Context, email string, createdAt int64) (sub int64, err error)
 
 	// UpdateAccountEmail updates the email for the account subject.
+	// It returns ErrEmailUnavailable if another account already uses the email.
 	UpdateAccountEmail(ctx context.Context, sub int64, email string) error
 
 	// DeleteAccount deletes the account for the account subject.

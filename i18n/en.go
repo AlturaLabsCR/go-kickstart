@@ -23,6 +23,7 @@ var en = map[string]string{
 	"err.confirm_email_change":       "Failed to confirm account email change.",
 	"err.delete_account":             "Failed to delete account.",
 	"err.email_change_same":          "Account email change target matches current email.",
+	"err.email_unavailable":          "This email address is unavailable. Choose another address.",
 	"err.finalize_login":             "Failed to finalize login verification.",
 	"err.generate_email_change_otp":  "Failed to generate account email change code.",
 	"err.generate_login_otp":         "Failed to generate login code.",

@@ -23,6 +23,7 @@ var es = map[string]string{
 	"err.confirm_email_change":       "No se pudo confirmar el cambio de correo.",
 	"err.delete_account":             "No se pudo eliminar la cuenta.",
 	"err.email_change_same":          "El correo nuevo coincide con el correo actual.",
+	"err.email_unavailable":          "Este correo no esta disponible. Elige otra direccion.",
 	"err.finalize_login":             "No se pudo finalizar la verificacion de inicio de sesion.",
 	"err.generate_email_change_otp":  "No se pudo generar el codigo de cambio de correo.",
 	"err.generate_login_otp":         "No se pudo generar el codigo de inicio de sesion.",

@@ -177,6 +177,12 @@ paths:
           $ref: '#/components/responses/OTPRateLimited'
         '204':
           description: Email change confirmed.
+        '409':
+          description: The target email is unavailable. Reported only after validating the code. The account stays unchanged and the code remains valid until expiration; this attempt still counts toward the verification limit.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
         default:
           $ref: '#/components/responses/Error'
 components:

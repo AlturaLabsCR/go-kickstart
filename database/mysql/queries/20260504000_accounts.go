@@ -2,9 +2,11 @@ package queries
 
 import (
 	"context"
+	"errors"
 
 	"app/database"
 	"app/database/mysql/db"
+	"github.com/go-sql-driver/mysql"
 )
 
 func (q *MysqlQuerier) OncesertAccountByEmail(ctx context.Context, email string, createdAt int64) (sub int64, err error) {
@@ -28,10 +30,16 @@ func (q *MysqlQuerier) OncesertAccountByEmail(ctx context.Context, email string,
 }
 
 func (q *MysqlQuerier) UpdateAccountEmail(ctx context.Context, sub int64, email string) error {
-	return q.queries.UpdateAccountEmail(ctx, db.UpdateAccountEmailParams{
+	err := q.queries.UpdateAccountEmail(ctx, db.UpdateAccountEmailParams{
 		Email: email,
 		Sub:   sub,
 	})
+	// This statement only changes email; duplicate keys mean it is unavailable.
+	var conflict *mysql.MySQLError
+	if errors.As(err, &conflict) && conflict.Number == 1062 {
+		return database.ErrEmailUnavailable
+	}
+	return err
 }
 
 func (q *MysqlQuerier) DeleteAccount(ctx context.Context, sub int64) error {

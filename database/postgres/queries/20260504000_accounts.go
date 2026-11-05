@@ -2,9 +2,11 @@ package queries
 
 import (
 	"context"
+	"errors"
 
 	"app/database"
 	"app/database/postgres/db"
+	"github.com/jackc/pgx/v5/pgconn"
 )
 
 func (q *PostgresQuerier) OncesertAccountByEmail(ctx context.Context, email string, createdAt int64) (sub int64, err error) {
@@ -20,10 +22,15 @@ func (q *PostgresQuerier) OncesertAccountByEmail(ctx context.Context, email stri
 }
 
 func (q *PostgresQuerier) UpdateAccountEmail(ctx context.Context, sub int64, email string) error {
-	return q.queries.UpdateAccountEmail(ctx, db.UpdateAccountEmailParams{
+	err := q.queries.UpdateAccountEmail(ctx, db.UpdateAccountEmailParams{
 		Sub:   sub,
 		Email: email,
 	})
+	var conflict *pgconn.PgError
+	if errors.As(err, &conflict) && conflict.Code == "23505" && conflict.ConstraintName == "accounts_email_key" {
+		return database.ErrEmailUnavailable
+	}
+	return err
 }
 
 func (q *PostgresQuerier) DeleteAccount(ctx context.Context, sub int64) error {

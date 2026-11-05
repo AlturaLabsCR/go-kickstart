@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"errors"
 	"net/http"
 	"strconv"
 	"time"
@@ -282,6 +283,16 @@ func (h *Handler) ConfirmEmailChange(w http.ResponseWriter, r *http.Request) {
 
 		return q.UpdateAccountEmail(r.Context(), sub, saved.Email)
 	}); err != nil {
+		if errors.Is(err, database.ErrEmailUnavailable) {
+			h.writeStatus(
+				w,
+				r,
+				http.StatusConflict,
+				"err.email_unavailable",
+				"account email change target is unavailable",
+			)
+			return
+		}
 		if h.db.IsErrNotFound(err) {
 			h.writeStatus(
 				w,

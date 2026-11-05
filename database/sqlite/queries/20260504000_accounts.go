@@ -2,9 +2,12 @@ package queries
 
 import (
 	"context"
+	"errors"
 
 	"app/database"
 	"app/database/sqlite/db"
+	"modernc.org/sqlite"
+	sqlite3 "modernc.org/sqlite/lib"
 )
 
 func (q *SqliteQuerier) OncesertAccountByEmail(ctx context.Context, email string, createdAt int64) (sub int64, err error) {
@@ -20,10 +23,16 @@ func (q *SqliteQuerier) OncesertAccountByEmail(ctx context.Context, email string
 }
 
 func (q *SqliteQuerier) UpdateAccountEmail(ctx context.Context, sub int64, email string) error {
-	return q.queries.UpdateAccountEmail(ctx, db.UpdateAccountEmailParams{
+	err := q.queries.UpdateAccountEmail(ctx, db.UpdateAccountEmailParams{
 		Email: email,
 		Sub:   sub,
 	})
+	// This statement only changes email; other constraint errors remain failures.
+	var conflict *sqlite.Error
+	if errors.As(err, &conflict) && conflict.Code() == sqlite3.SQLITE_CONSTRAINT_UNIQUE {
+		return database.ErrEmailUnavailable
+	}
+	return err
 }
 
 func (q *SqliteQuerier) DeleteAccount(ctx context.Context, sub int64) error {
