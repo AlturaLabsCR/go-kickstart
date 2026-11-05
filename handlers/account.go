@@ -27,8 +27,8 @@ func (h *Handler) registerAccountRoutes() {
 
 	h.AddHandler(http.MethodGet, "/account", authenticated(http.HandlerFunc(h.GetAccount)))
 	h.AddHandler(http.MethodDelete, "/account", authenticated(http.HandlerFunc(h.DeleteAccount)))
-	h.AddHandler(http.MethodPatch, "/account/email/change", canChangeEmail(h.RequestEmailChange))
-	h.AddHandler(http.MethodPatch, "/account/email/change/confirm", canChangeEmail(h.ConfirmEmailChange))
+	h.AddHandler(http.MethodPatch, "/account/email/change", h.limitOTPIssuance(canChangeEmail(h.RequestEmailChange)))
+	h.AddHandler(http.MethodPatch, "/account/email/change/confirm", h.limitOTPVerification(canChangeEmail(h.ConfirmEmailChange)))
 }
 
 func (h *Handler) GetAccount(w http.ResponseWriter, r *http.Request) {

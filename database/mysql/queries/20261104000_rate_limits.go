@@ -11,13 +11,13 @@ func (q *MysqlQuerier) TakeRateLimit(ctx context.Context, scope, key string, now
 	if windowSeconds <= 0 || maxRequests <= 0 {
 		return 0, fmt.Errorf("rate limit window and request limit must be positive")
 	}
+	// Release expiration range locks before inserting/updating a budget bucket.
+	if err := q.queries.DeleteExpiredRateLimits(ctx, now); err != nil {
+		return 0, err
+	}
 
 	var retryAfter int64
 	err := q.withTx(ctx, func(q *MysqlQuerier) error {
-		// Bound cleanup work and retain active windows even after OTP consumption.
-		if err := q.queries.DeleteExpiredRateLimits(ctx, db.DeleteExpiredRateLimitsParams{Now: now}); err != nil {
-			return err
-		}
 		if err := q.queries.TakeRateLimit(ctx, db.TakeRateLimitParams{
 			Scope:       scope,
 			BucketKey:   key,

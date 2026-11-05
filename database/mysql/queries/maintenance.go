@@ -13,6 +13,6 @@ func (q *MysqlQuerier) DeleteExpiredRecords(ctx context.Context, now int64) erro
 		q.queries.DeleteExpiredLoginRequests(ctx, db.DeleteExpiredLoginRequestsParams{Now: now}),
 		q.queries.DeleteExpiredEmailChangeRequests(ctx, db.DeleteExpiredEmailChangeRequestsParams{Now: now}),
 		q.queries.DeleteExpiredRefreshTokens(ctx, db.DeleteExpiredRefreshTokensParams{Now: now}),
-		q.queries.DeleteExpiredRateLimits(ctx, db.DeleteExpiredRateLimitsParams{Now: now}),
+		q.queries.DeleteExpiredRateLimits(ctx, now),
 	)
 }

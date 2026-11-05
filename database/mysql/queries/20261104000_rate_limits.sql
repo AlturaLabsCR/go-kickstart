@@ -27,12 +27,6 @@ WHERE scope = ? AND bucket_key = ?;
 
 -- name: DeleteExpiredRateLimits :exec
 DELETE FROM rate_limits
-WHERE rate_limits.expires_at <= sqlc.arg(now)
-  AND (scope, bucket_key) IN (
-    SELECT scope, bucket_key FROM (
-      SELECT scope, bucket_key FROM rate_limits
-      WHERE rate_limits.expires_at <= sqlc.arg(now)
-      ORDER BY expires_at
-      LIMIT 100
-    ) AS expired_rate_limits
-  );
+WHERE expires_at <= sqlc.arg(now)
+ORDER BY expires_at
+LIMIT 100;
