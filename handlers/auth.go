@@ -50,6 +50,10 @@ func (h *Handler) LoginOrCreateAccount(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	if !h.allowOTPRequest(w, r, "login.issue", email, 1, time.Minute) {
+		return
+	}
+
 	otp, err := secrets.RandOTP()
 	if err != nil {
 		h.writeError(
@@ -119,6 +123,10 @@ func (h *Handler) VerifyAuthenticationCode(w http.ResponseWriter, r *http.Reques
 			"email",
 			req.Email,
 		)
+		return
+	}
+
+	if !h.allowOTPRequest(w, r, "login.verify", email, 5, 10*time.Minute) {
 		return
 	}
 

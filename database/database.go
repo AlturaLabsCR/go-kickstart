@@ -11,6 +11,11 @@ type Database interface {
 }
 
 type Querier interface {
+	// TakeRateLimit atomically charges a request to a fixed window. Zero means
+	// allowed; a positive result is the retry delay in seconds. For failed
+	// authentication attempts to persist, call outside the business transaction.
+	TakeRateLimit(ctx context.Context, scope, key string, now, windowSeconds, maxRequests int64) (int64, error)
+
 	// OncesertAccountByEmail creates an account by email if not yet exists.
 	// It returns the email's subject.
 	OncesertAccountByEmail(ctx context.Context, email string, createdAt int64) (sub int64, err error)

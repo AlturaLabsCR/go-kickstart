@@ -5,6 +5,9 @@ func init() {
 }
 
 var en = map[string]string{
+	"err.check_otp_limit":  "Failed to check the verification code request limit.",
+	"err.otp_rate_limited": "Too many verification code requests. Try again later.",
+
 	"perm.change_email": "Change account email",
 	"role.default":      "Default user",
 	"root.greeting":     "Hello, world!",

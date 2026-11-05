@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"net/http"
+	"strconv"
 	"time"
 
 	"app/database"
@@ -202,6 +203,10 @@ func (h *Handler) RequestEmailChange(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	if !h.allowOTPRequest(w, r, "email_change.issue", strconv.FormatInt(sub, 10), 1, time.Minute) {
+		return
+	}
+
 	otp, err := secrets.RandOTP()
 	if err != nil {
 		h.writeError(
@@ -258,6 +263,10 @@ func (h *Handler) ConfirmEmailChange(w http.ResponseWriter, r *http.Request) {
 			"err.invalid_email_confirm_body",
 			"invalid account email confirm request body",
 		)
+		return
+	}
+
+	if !h.allowOTPRequest(w, r, "email_change.verify", strconv.FormatInt(sub, 10), 5, 10*time.Minute) {
 		return
 	}
 

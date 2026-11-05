@@ -5,6 +5,9 @@ func init() {
 }
 
 var es = map[string]string{
+	"err.check_otp_limit":  "No se pudo verificar el limite de solicitudes del codigo.",
+	"err.otp_rate_limited": "Demasiadas solicitudes de codigo de verificacion. Intentalo mas tarde.",
+
 	"perm.change_email": "Cambiar correo de cuenta",
 	"role.default":      "Usuario predeterminado",
 	"root.greeting":     "Hola, mundo!",
