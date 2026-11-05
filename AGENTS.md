@@ -63,7 +63,7 @@ This repository is a Go web server template for REST APIs and small HTML surface
    - Migrations are sorted by version and applied when `version > schema_migrations.version`.
    - Do not reuse a version. The migration loader rejects duplicates.
    - Use a monotonic timestamp-style version. If adding multiple migrations on the same day, increment the suffix: `20260722000`, `20260722001`, etc.
-   - The migration SQL does not need to update `schema_migrations`; the migration runner does that after a successful transaction.
+   - The runner locks before reading the version and applies all pending migrations in one transaction, including version updates. A failure rolls back the entire pending batch; a competing startup may fail with a lock error and must be retried after the first finishes.
 
 3. Add sqlc queries.
    - Postgres query files go in `database/postgres/queries`.

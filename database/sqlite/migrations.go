@@ -14,8 +14,18 @@ import (
 var migrationFiles embed.FS
 
 func applyMigrations(ctx context.Context, conn *sql.DB) error {
-	if err := ensureMigrationTable(ctx, conn); err != nil {
+	tx, err := conn.BeginTx(ctx, nil)
+	if err != nil {
 		return err
+	}
+	defer func() { _ = tx.Rollback() }()
+
+	if err := ensureMigrationTable(ctx, tx); err != nil {
+		return err
+	}
+	// Acquire SQLite's writer lock even if the table already exists or is empty.
+	if _, err := tx.ExecContext(ctx, "UPDATE schema_migrations SET version = version WHERE id = 1"); err != nil {
+		return fmt.Errorf("lock sqlite migrations: %w", err)
 	}
 
 	migrations, err := database.ReadMigrations(migrationFiles)
@@ -23,7 +33,7 @@ func applyMigrations(ctx context.Context, conn *sql.DB) error {
 		return err
 	}
 
-	queries := db.New(conn)
+	queries := db.New(tx)
 	currentVersion, err := queries.GetSchemaMigrationVersion(ctx)
 	if err != nil {
 		return err
@@ -34,35 +44,24 @@ func applyMigrations(ctx context.Context, conn *sql.DB) error {
 			continue
 		}
 
-		tx, err := conn.BeginTx(ctx, nil)
-		if err != nil {
-			return err
-		}
-
 		if _, err := tx.ExecContext(ctx, migration.SQL); err != nil {
-			_ = tx.Rollback()
 			return fmt.Errorf("apply sqlite migration %q: %w", migration.Name, err)
 		}
 
-		if err := db.New(tx).SetSchemaMigrationVersion(ctx, migration.Version); err != nil {
-			_ = tx.Rollback()
+		if err := queries.SetSchemaMigrationVersion(ctx, migration.Version); err != nil {
 			return fmt.Errorf("set sqlite migration version %d: %w", migration.Version, err)
-		}
-
-		if err := tx.Commit(); err != nil {
-			return err
 		}
 	}
 
-	return nil
+	return tx.Commit()
 }
 
-func ensureMigrationTable(ctx context.Context, conn *sql.DB) error {
+func ensureMigrationTable(ctx context.Context, tx *sql.Tx) error {
 	schema, err := migrationFiles.ReadFile("migrations/schema_migrations.sql")
 	if err != nil {
 		return err
 	}
 
-	_, err = conn.ExecContext(ctx, string(schema))
+	_, err = tx.ExecContext(ctx, string(schema))
 	return err
 }
