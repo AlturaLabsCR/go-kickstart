@@ -36,7 +36,3 @@ func (q *PostgresQuerier) DeleteRefreshTokenByHash(ctx context.Context, tokenHas
 func (q *PostgresQuerier) DeleteRefreshTokensBySub(ctx context.Context, sub int64) error {
 	return q.queries.DeleteRefreshTokensBySub(ctx, sub)
 }
-
-func (q *PostgresQuerier) DeleteExpiredRefreshTokens(ctx context.Context, now int64) error {
-	return q.queries.DeleteExpiredRefreshTokens(ctx, now)
-}

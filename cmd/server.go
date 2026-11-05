@@ -81,9 +81,6 @@ func runServer(cfg serverConfig) error {
 	if err != nil {
 		return err
 	}
-	if err := authenticator.CleanExpiredRefreshTokens(context.Background()); err != nil {
-		return err
-	}
 
 	// Replace the noop provider below with a go-email SMTP or Mailgun client.
 	h := handlers.NewHandler(handlers.Options{
@@ -114,6 +111,8 @@ func runServer(cfg serverConfig) error {
 
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer stop()
+	stopMaintenance := startDatabaseMaintenance(ctx, db, logger)
+	defer stopMaintenance()
 
 	logger.Info("listening", "addr", listener.Addr().String())
 	return serveHTTP(ctx, srv, listener)

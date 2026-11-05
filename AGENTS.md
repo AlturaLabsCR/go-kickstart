@@ -160,6 +160,8 @@ h.writeError(
 
 ## Configuration
 
+- Database maintenance runs at startup and every minute, outside HTTP handlers. Each pass deletes up to 1000 expired rows per OTP/refresh-token table and 100 rate-limit rows, with a five-second context deadline. Failures are logged and retried on the next pass; shutdown cancels and joins the worker before closing the database. Cleanup is retention maintenance, not an abuse quota.
+
 - Add new runtime settings in `cmd/serve.go`.
 - Keep Viper defaults, flags, flag binding, `runServerFromConfig`, and the `serverConfig` fields in `cmd/server.go` aligned.
 - Avoid adding configuration until the code path actually needs it.

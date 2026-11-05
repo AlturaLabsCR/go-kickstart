@@ -16,6 +16,10 @@ type Querier interface {
 	// authentication attempts to persist, call outside the business transaction.
 	TakeRateLimit(ctx context.Context, scope, key string, now, windowSeconds, maxRequests int64) (int64, error)
 
+	// DeleteExpiredRecords removes at most 1000 expired rows per OTP/token table
+	// and 100 expired rate-limit windows. Active records are left untouched.
+	DeleteExpiredRecords(ctx context.Context, now int64) error
+
 	// OncesertAccountByEmail creates an account by email if not yet exists.
 	// It returns the email's subject.
 	OncesertAccountByEmail(ctx context.Context, email string, createdAt int64) (sub int64, err error)
@@ -50,9 +54,6 @@ type Querier interface {
 
 	// DeleteRefreshTokensBySub deletes every refresh token for an account.
 	DeleteRefreshTokensBySub(ctx context.Context, sub int64) error
-
-	// DeleteExpiredRefreshTokens deletes every expired refresh token.
-	DeleteExpiredRefreshTokens(ctx context.Context, now int64) error
 
 	// RoleHasPermission reports whether a role includes a permission.
 	RoleHasPermission(ctx context.Context, roleKey string, permissionKey string) (bool, error)

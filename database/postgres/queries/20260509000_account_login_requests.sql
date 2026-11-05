@@ -13,3 +13,13 @@ RETURNING email, otp, expires_at;
 -- name: DeleteAccountLoginRequest :exec
 DELETE FROM account_login_requests
 WHERE email = $1;
+
+-- name: DeleteExpiredLoginRequests :exec
+DELETE FROM account_login_requests
+WHERE account_login_requests.expires_at <= sqlc.arg(now)
+  AND email IN (
+    SELECT email FROM account_login_requests
+    WHERE account_login_requests.expires_at <= sqlc.arg(now)
+    ORDER BY expires_at
+    LIMIT 1000
+  );

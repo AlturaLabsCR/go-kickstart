@@ -17,4 +17,10 @@ WHERE sub = ?;
 
 -- name: DeleteExpiredRefreshTokens :exec
 DELETE FROM refresh_tokens
-WHERE expires_at != 0 AND expires_at <= ?;
+WHERE refresh_tokens.expires_at != 0 AND refresh_tokens.expires_at <= sqlc.arg(now)
+  AND token_hash IN (
+    SELECT token_hash FROM refresh_tokens
+    WHERE refresh_tokens.expires_at != 0 AND refresh_tokens.expires_at <= sqlc.arg(now)
+    ORDER BY expires_at
+    LIMIT 1000
+  );
