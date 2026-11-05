@@ -18,7 +18,7 @@ paths:
         - Authentication
       operationId: loginOrCreateAccount
       summary: Trigger login or account creation
-      description: Creates a temporary 6-digit verification code. Email delivery is not implemented; development mode can log the code. Limited to ten requests per minute per normalized email; reissuing does not reset the verification budget.
+      description: Creates a temporary 6-digit verification code. Email delivery is not implemented; development mode can log the code. Limited to one request every 60 seconds and five requests per ten-minute window per normalized email; reissuing does not reset the verification budget.
       requestBody:
         required: true
         content:
@@ -133,7 +133,7 @@ paths:
         - Account
       operationId: requestEmailChange
       summary: Request an email address change
-      description: Limited to ten requests per minute per account, regardless of target email. Reissuing does not reset the verification budget.
+      description: Limited to one request every 60 seconds and five requests per ten-minute window per account, regardless of target email. Reissuing does not reset the verification budget.
       security:
         - bearerAuth: []
       requestBody:

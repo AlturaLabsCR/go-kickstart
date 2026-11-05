@@ -50,7 +50,7 @@ func (h *Handler) LoginOrCreateAccount(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if !h.allowOTPRequest(w, r, "login.issue", email, 10, time.Minute) {
+	if !h.allowOTPIssuance(w, r, "login", email) {
 		return
 	}
 

@@ -38,3 +38,9 @@ func (h *Handler) allowOTPRequest(w http.ResponseWriter, r *http.Request, scope,
 	}
 	return true
 }
+
+// Separate budgets prevent both rapid resends and sustained email flooding.
+func (h *Handler) allowOTPIssuance(w http.ResponseWriter, r *http.Request, scope, key string) bool {
+	return h.allowOTPRequest(w, r, scope+".issue.minute", key, 1, time.Minute) &&
+		h.allowOTPRequest(w, r, scope+".issue.window", key, 5, 10*time.Minute)
+}
