@@ -10,6 +10,7 @@ import (
 type Querier struct {
 	database.Querier
 	store      cache.Store
+	state      *cacheState
 	cacheRead  bool
 	invalidate func(keys ...string)
 }

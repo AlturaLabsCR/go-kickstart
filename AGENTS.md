@@ -105,6 +105,8 @@ Avoid caching:
 Implementation notes:
 
 - Keep cache keys in `database/cached/internal.go`.
+- Share one `cached.Database` wrapper per database in a process. Its bounded generation shards prevent reads from repopulating stale entries after invalidation, including when cache deletion fails. Transactions bypass cache reads and invalidate only after commit; cache failures fall back to the database.
+- The server always enables the cache. Invalidation is local to its wrapper: writes from other processes or directly to the database can leave cached profiles stale until expiry (TTL starts when the read is cached). Cross-instance immediate freshness would require distributed invalidation. Authentication identity, roles, permissions, OTPs, and refresh tokens currently bypass the cache.
 - `memory.New` defaults to 1024 entries, 8 MiB of key/value bytes, and a 20-second TTL. It evicts the oldest written entry and cleans expired entries in the background. Configure limits with constructor options; always close the store when its owner shuts down.
 - Cache JSON structs/slices inside `database/cached` when useful; keep the public `cache.Store` byte-oriented.
 - Invalidate related cache keys immediately after successful writes outside transactions. Inside transactions, collect keys and invalidate only after a successful commit.

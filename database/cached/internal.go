@@ -3,7 +3,6 @@ package cached
 import (
 	"context"
 	"encoding/json"
-	"errors"
 	"strconv"
 
 	"app/cache"
@@ -11,10 +10,6 @@ import (
 
 func accountKey(sub int64) string {
 	return "db:account:" + strconv.FormatInt(sub, 10)
-}
-
-func cacheMiss(err error) bool {
-	return errors.Is(err, cache.ErrNotFound)
 }
 
 func setJSON(ctx context.Context, store cache.Store, key string, value any) {
@@ -26,26 +21,22 @@ func setJSON(ctx context.Context, store cache.Store, key string, value any) {
 	_ = store.Set(ctx, key, data)
 }
 
-func getJSON[T any](ctx context.Context, store cache.Store, key string) (T, bool, error) {
+func getJSON[T any](ctx context.Context, store cache.Store, key string) (T, bool) {
 	var zero T
 
 	data, err := store.Get(ctx, key)
 	if err != nil {
-		if cacheMiss(err) {
-			return zero, false, nil
-		}
-
-		return zero, false, err
+		return zero, false
 	}
 
 	var value T
 	err = json.Unmarshal(data, &value)
 	if err != nil {
 		_ = store.Delete(ctx, key)
-		return zero, false, nil
+		return zero, false
 	}
 
-	return value, true, nil
+	return value, true
 }
 
 func readThrough[T any](ctx context.Context, q *Querier, key string, load func() (T, error)) (T, error) {
@@ -53,16 +44,30 @@ func readThrough[T any](ctx context.Context, q *Querier, key string, load func()
 		return load()
 	}
 
-	value, ok, err := getJSON[T](ctx, q.store, key)
-	if err != nil || ok {
-		return value, err
+	shard := q.state.shard(key)
+	shard.mu.RLock()
+	generation := shard.generation
+	cacheKey := q.state.key(key, generation)
+	value, ok := getJSON[T](ctx, q.store, cacheKey)
+	shard.mu.RUnlock()
+	if err := ctx.Err(); err != nil {
+		var zero T
+		return zero, err
+	}
+	if ok {
+		return value, nil
 	}
 
-	value, err = load()
+	// Cache failures fall back to the database; no lock spans a database query.
+	value, err := load()
 	if err != nil {
 		return value, err
 	}
 
-	setJSON(ctx, q.store, key, value)
+	shard.mu.RLock()
+	if generation == shard.generation {
+		setJSON(ctx, q.store, cacheKey, value)
+	}
+	shard.mu.RUnlock()
 	return value, nil
 }

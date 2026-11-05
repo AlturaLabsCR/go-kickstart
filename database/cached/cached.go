@@ -3,6 +3,7 @@ package cached
 
 import (
 	"context"
+	"time"
 
 	"app/cache"
 	"app/database"
@@ -11,10 +12,15 @@ import (
 type Database struct {
 	next  database.Database
 	store cache.Store
+	state *cacheState
 }
 
 var _ database.Database = (*Database)(nil)
 
+// New coordinates cache reads and invalidations within this wrapper only.
+// Share one wrapper per database in a process. Other processes and direct writes
+// are not coordinated; their changes become visible after cached entries expire.
+// The caller owns the store and must close it if needed.
 func New(next database.Database, store cache.Store) database.Database {
 	if next == nil || store == nil {
 		return next
@@ -23,6 +29,7 @@ func New(next database.Database, store cache.Store) database.Database {
 	return &Database{
 		next:  next,
 		store: store,
+		state: newCacheState(),
 	}
 }
 
@@ -30,6 +37,7 @@ func (d *Database) Querier() database.Querier {
 	return &Querier{
 		Querier:    d.next.Querier(),
 		store:      d.store,
+		state:      d.state,
 		cacheRead:  true,
 		invalidate: d.invalidate,
 	}
@@ -68,7 +76,15 @@ func (d *Database) Close() error {
 
 func (d *Database) invalidate(keys ...string) {
 	// A successful write must invalidate even if the request was canceled.
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
+	defer cancel()
 	for _, key := range keys {
-		_ = d.store.Delete(context.Background(), key)
+		shard := d.state.shard(key)
+		shard.mu.Lock()
+		oldKey := d.state.key(key, shard.generation)
+		shard.generation++
+		shard.mu.Unlock()
+		// Old generations are unreachable even when deletion fails.
+		_ = d.store.Delete(ctx, oldKey)
 	}
 }
