@@ -105,6 +105,7 @@ Avoid caching:
 Implementation notes:
 
 - Keep cache keys in `database/cached/internal.go`.
+- `memory.New` defaults to 1024 entries, 8 MiB of key/value bytes, and a 20-second TTL. It evicts the oldest written entry and cleans expired entries in the background. Configure limits with constructor options; always close the store when its owner shuts down.
 - Cache JSON structs/slices inside `database/cached` when useful; keep the public `cache.Store` byte-oriented.
 - Invalidate related cache keys immediately after successful writes outside transactions. Inside transactions, collect keys and invalidate only after a successful commit.
 - Ignore best-effort invalidation errors only after the database write succeeds.
