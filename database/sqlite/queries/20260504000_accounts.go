@@ -42,3 +42,7 @@ func (q *SqliteQuerier) SelectAccountBySub(ctx context.Context, sub int64) (*dat
 		CreatedAt: account.CreatedAt,
 	}, nil
 }
+
+func (q *SqliteQuerier) SelectAccountAuthID(ctx context.Context, sub int64) (string, error) {
+	return q.queries.SelectAccountAuthID(ctx, sub)
+}

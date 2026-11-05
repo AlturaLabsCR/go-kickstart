@@ -26,6 +26,10 @@ type Querier interface {
 	// DeleteAccount deletes the account for the account subject.
 	DeleteAccount(ctx context.Context, sub int64) error
 
+	// SelectAccountAuthID returns the current account authentication identity.
+	// Authorization must read this directly from the database, never from cache.
+	SelectAccountAuthID(ctx context.Context, sub int64) (string, error)
+
 	// SelectAccountBySub returns the account for the account subject.
 	SelectAccountBySub(ctx context.Context, sub int64) (*Account, error)
 

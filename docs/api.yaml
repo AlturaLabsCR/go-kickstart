@@ -119,7 +119,7 @@ paths:
         - Account
       operationId: deleteAccount
       summary: Delete account
-      description: Deletes the authenticated account.
+      description: Deletes the authenticated account. Subsequent requests with its access tokens are rejected and its refresh tokens are removed.
       security:
         - bearerAuth: []
       responses:
@@ -181,6 +181,7 @@ components:
       type: http
       scheme: bearer
       bearerFormat: JWT
+      description: Access tokens must contain an expiration and the current account authentication identity. Tokens for deleted accounts and tokens issued before the account identity migration are rejected.
   responses:
     OTPRateLimited:
       description: OTP budget exhausted. Wait for Retry-After seconds before retrying. Limits are shared by server instances using the same database and are not reset by requesting another code.

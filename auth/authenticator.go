@@ -81,7 +81,7 @@ func (a *Authenticator) Refresh(ctx context.Context, refreshToken string) (at *g
 	return at, rt, nil
 }
 
-func (a *Authenticator) Verify(_ context.Context, accessToken string) (*Claims, error) {
+func (a *Authenticator) Verify(ctx context.Context, accessToken string) (*Claims, error) {
 	claims, err := a.tokener.Verify(accessToken)
 	if err != nil {
 		switch err {
@@ -93,7 +93,22 @@ func (a *Authenticator) Verify(_ context.Context, accessToken string) (*Claims, 
 			return nil, err
 		}
 	}
-	if claims == nil || claims.Subject() == "" {
+	if claims == nil || claims.AuthID == "" || claims.ExpiresAt() <= 0 {
+		return nil, goauth.ErrInvalidToken
+	}
+
+	sub, err := subject(claims)
+	if err != nil {
+		return nil, goauth.ErrInvalidToken
+	}
+	authID, err := a.db.Querier().SelectAccountAuthID(ctx, sub)
+	if a.db.IsErrNotFound(err) {
+		return nil, goauth.ErrInvalidToken
+	}
+	if err != nil {
+		return nil, err
+	}
+	if authID != claims.AuthID {
 		return nil, goauth.ErrInvalidToken
 	}
 
@@ -123,14 +138,26 @@ func (a *Authenticator) CleanExpiredRefreshTokens(ctx context.Context) error {
 }
 
 func (a *Authenticator) issueForSub(ctx context.Context, q database.Querier, sub int64) (*goauth.Token, *goauth.Token, error) {
+	authID, err := q.SelectAccountAuthID(ctx, sub)
+	if a.db.IsErrNotFound(err) {
+		return nil, nil, goauth.ErrInvalidIdentity
+	}
+	if err != nil {
+		return nil, nil, err
+	}
+	if authID == "" {
+		return nil, nil, goauth.ErrInvalidIdentity
+	}
+
 	roles, err := q.SelectAccountRolesBySub(ctx, sub)
 	if err != nil {
 		return nil, nil, err
 	}
 
 	claims := &Claims{
-		Sub:   strconv.FormatInt(sub, 10),
-		Roles: roles,
+		AuthID: authID,
+		Sub:    strconv.FormatInt(sub, 10),
+		Roles:  roles,
 	}
 	accessToken, err := a.tokener.Sign(claims)
 	if err != nil {

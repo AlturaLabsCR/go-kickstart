@@ -42,3 +42,7 @@ func (q *PostgresQuerier) SelectAccountBySub(ctx context.Context, sub int64) (*d
 		CreatedAt: account.CreatedAt,
 	}, nil
 }
+
+func (q *PostgresQuerier) SelectAccountAuthID(ctx context.Context, sub int64) (string, error) {
+	return q.queries.SelectAccountAuthID(ctx, sub)
+}

@@ -17,3 +17,6 @@ WHERE sub = $1;
 SELECT sub, email, created_at
 FROM accounts_meta
 WHERE sub = $1;
+
+-- name: SelectAccountAuthID :one
+SELECT auth_id FROM accounts WHERE sub = $1;
