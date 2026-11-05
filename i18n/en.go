@@ -5,6 +5,12 @@ func init() {
 }
 
 var en = map[string]string{
+	"mail.login.subject":        "Your sign-in code",
+	"mail.login.body":           "Your sign-in code is {{.Code}}. It expires in {{.Minutes}} minutes. If you did not request it, ignore this message.",
+	"mail.email_change.subject": "Confirm your new email address",
+	"mail.email_change.body":    "Your email change code is {{.Code}}. It expires in {{.Minutes}} minutes. If you did not request it, ignore this message.",
+	"err.send_otp":              "Failed to send the verification email. Please try again later.",
+
 	"err.check_otp_limit":  "Failed to check the verification code request limit.",
 	"err.otp_rate_limited": "Too many verification code requests. Try again later.",
 

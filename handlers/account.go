@@ -221,7 +221,7 @@ func (h *Handler) RequestEmailChange(w http.ResponseWriter, r *http.Request) {
 		)
 		return
 	}
-	expiresAt := time.Now().UTC().Add(10 * time.Minute).Unix()
+	expiresAt := time.Now().UTC().Add(otpLifetime).Unix()
 	if err := h.db.Querier().UpsertAccountEmailChangeRequest(r.Context(), sub, newEmail, otp, expiresAt); err != nil {
 		h.writeError(
 			w,
@@ -235,6 +235,10 @@ func (h *Handler) RequestEmailChange(w http.ResponseWriter, r *http.Request) {
 			"email",
 			newEmail,
 		)
+		return
+	}
+
+	if !h.sendOTP(w, r, newEmail, otp, "email_change") {
 		return
 	}
 

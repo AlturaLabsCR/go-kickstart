@@ -148,6 +148,13 @@ h.writeError(
 - Run `go generate ./templates` after template changes.
 - Generated `*_templ.go` files are ignored and should not be hand-edited.
 
+## Email delivery
+
+- Handlers receive `github.com/tavocg/go-email/mailer.Mailer` through `handlers.Options`.
+- `cmd/server.go` injects `app/mailer/noop.Mailer` by default. Replace that provider with an SMTP or Mailgun client to deliver messages; handlers remain unchanged.
+- Configure the sender with `mail.from` / `--mail-from` / `APP_MAIL_FROM`.
+- OTP messages use localized plain text and the request context with a delivery timeout. Save the challenge before sending; do not delete it on ambiguous delivery failures or reset abuse limits.
+
 ## Configuration
 
 - Add new runtime settings in `cmd/serve.go`.

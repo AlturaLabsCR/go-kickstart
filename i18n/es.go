@@ -5,6 +5,12 @@ func init() {
 }
 
 var es = map[string]string{
+	"mail.login.subject":        "Tu codigo de inicio de sesion",
+	"mail.login.body":           "Tu codigo de inicio de sesion es {{.Code}}. Caduca en {{.Minutes}} minutos. Si no lo solicitaste, ignora este mensaje.",
+	"mail.email_change.subject": "Confirma tu nuevo correo",
+	"mail.email_change.body":    "Tu codigo de cambio de correo es {{.Code}}. Caduca en {{.Minutes}} minutos. Si no lo solicitaste, ignora este mensaje.",
+	"err.send_otp":              "No se pudo enviar el correo de verificacion. Intentalo mas tarde.",
+
 	"err.check_otp_limit":  "No se pudo verificar el limite de solicitudes del codigo.",
 	"err.otp_rate_limited": "Demasiadas solicitudes de codigo de verificacion. Intentalo mas tarde.",
 

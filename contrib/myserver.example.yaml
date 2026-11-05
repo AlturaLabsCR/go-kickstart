@@ -57,3 +57,9 @@ loglvl: info
 #   APP_DB=data/custom.sqlite app serve
 #   app serve --db data/custom.sqlite
 db: data/app.sqlite
+
+# Sender used when building emails. The default noop mailer discards messages.
+# Replace the mailer injected in cmd/server.go to enable actual delivery.
+# Override with APP_MAIL_FROM or --mail-from.
+mail:
+  from: no-reply@example.com

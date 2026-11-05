@@ -67,7 +67,7 @@ func (h *Handler) LoginOrCreateAccount(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	expiresAt := time.Now().UTC().Add(10 * time.Minute).Unix()
+	expiresAt := time.Now().UTC().Add(otpLifetime).Unix()
 	if err := h.db.Querier().UpsertAccountLoginRequest(r.Context(), email, otp, expiresAt); err != nil {
 		h.writeError(
 			w,
@@ -79,6 +79,10 @@ func (h *Handler) LoginOrCreateAccount(w http.ResponseWriter, r *http.Request) {
 			"email",
 			email,
 		)
+		return
+	}
+
+	if !h.sendOTP(w, r, email, otp, "login") {
 		return
 	}
 

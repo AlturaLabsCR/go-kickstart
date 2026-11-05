@@ -6,6 +6,8 @@ import (
 	"time"
 )
 
+const otpLifetime = 10 * time.Minute
+
 // Budgets are independent of challenge rows: reissuing or consuming an OTP
 // must not reset the verification limit. Database failures deny the request.
 func (h *Handler) allowOTPRequest(w http.ResponseWriter, r *http.Request, scope, key string, limit int64, window time.Duration) bool {

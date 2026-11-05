@@ -28,6 +28,7 @@ func init() {
 	viper.SetDefault("auth.secret", "")
 	viper.SetDefault("auth.access-token-ttl", 15*time.Minute)
 	viper.SetDefault("auth.refresh-token-ttl", 30*24*time.Hour)
+	viper.SetDefault("mail.from", "no-reply@example.com")
 	viper.SetDefault("root", "")
 	viper.SetDefault("db", "data/app.sqlite")
 
@@ -41,6 +42,7 @@ func init() {
 	flags.String("auth-secret", "", "JWT signing secret")
 	flags.Duration("auth-access-ttl", 15*time.Minute, "access token TTL")
 	flags.Duration("auth-refresh-ttl", 30*24*time.Hour, "refresh token TTL")
+	flags.String("mail-from", "no-reply@example.com", "sender address for application emails")
 	flags.String("root", "", "route prefix to mount the app under")
 
 	mustBindPersistentFlag("db", rootCmd, "db")
@@ -52,6 +54,7 @@ func init() {
 	mustBindPersistentFlag("auth.secret", rootCmd, "auth-secret")
 	mustBindPersistentFlag("auth.access-token-ttl", rootCmd, "auth-access-ttl")
 	mustBindPersistentFlag("auth.refresh-token-ttl", rootCmd, "auth-refresh-ttl")
+	mustBindPersistentFlag("mail.from", rootCmd, "mail-from")
 	mustBindPersistentFlag("root", rootCmd, "root")
 }
 
@@ -65,6 +68,7 @@ func runServerFromConfig() error {
 		AccessTokenTTL:  viper.GetDuration("auth.access-token-ttl"),
 		RefreshTokenTTL: viper.GetDuration("auth.refresh-token-ttl"),
 		RootPrefix:      viper.GetString("root"),
+		MailFrom:        viper.GetString("mail.from"),
 		Host:            viper.GetString("host"),
 		Port:            viper.GetInt("port"),
 	})

@@ -18,7 +18,7 @@ paths:
         - Authentication
       operationId: loginOrCreateAccount
       summary: Trigger login or account creation
-      description: Creates a temporary 6-digit verification code. Email delivery is not implemented; development mode can log the code. Limited to one request every 60 seconds and five requests per ten-minute window per normalized email; reissuing does not reset the verification budget.
+      description: Creates a temporary 6-digit verification code. The message is submitted to the configured mailer; the default noop mailer discards it without delivery. Development mode can log the code. Limited to one request every 60 seconds and five requests per ten-minute window per normalized email; reissuing does not reset the verification budget.
       requestBody:
         required: true
         content:
@@ -28,10 +28,12 @@ paths:
             example:
               email: john@doe.com
       responses:
+        '502':
+          $ref: '#/components/responses/OTPMailFailure'
         '429':
           $ref: '#/components/responses/OTPRateLimited'
         '204':
-          description: Verification request stored.
+          description: Verification request stored and accepted by the mailer. The default noop mailer does not deliver email.
         default:
           $ref: '#/components/responses/Error'
   /auth/verify:
@@ -145,10 +147,12 @@ paths:
             example:
               new_email: new@email.com
       responses:
+        '502':
+          $ref: '#/components/responses/OTPMailFailure'
         '429':
           $ref: '#/components/responses/OTPRateLimited'
         '204':
-          description: Email change request accepted.
+          description: Email change request stored and submitted to the new address through the configured mailer. The default noop mailer does not deliver email.
         default:
           $ref: '#/components/responses/Error'
   /account/email/change/confirm:
@@ -183,6 +187,12 @@ components:
       bearerFormat: JWT
       description: Access tokens must contain an expiration and the current account authentication identity. Tokens for deleted accounts and tokens issued before the account identity migration are rejected.
   responses:
+    OTPMailFailure:
+      description: The configured mailer reported a failure. The saved code expires normally and request limits remain in effect; a delivery error can occur after a provider has accepted the message.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
     OTPRateLimited:
       description: OTP budget exhausted. Wait for Retry-After seconds before retrying. Limits are shared by server instances using the same database and are not reset by requesting another code.
       headers:

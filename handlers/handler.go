@@ -4,6 +4,7 @@ package handlers
 import (
 	"log/slog"
 	"net/http"
+	"net/mail"
 	"os"
 	"strings"
 
@@ -11,6 +12,7 @@ import (
 	"app/database"
 	"app/middleware"
 	"github.com/tavocg/go-auth"
+	"github.com/tavocg/go-email/mailer"
 	"github.com/tavocg/go-i18n"
 )
 
@@ -29,6 +31,8 @@ type Handler struct {
 	authenticator auth.Authenticator[*appauth.Claims]
 	localizer     *i18n.Localizer
 	rootPrefix    string
+	mailer        mailer.Mailer
+	mailFrom      string
 
 	mux   *http.ServeMux
 	entry http.Handler
@@ -41,6 +45,8 @@ type Options struct {
 	Authenticator auth.Authenticator[*appauth.Claims]
 	Localizer     *i18n.Localizer
 	RootPrefix    string
+	Mailer        mailer.Mailer
+	MailFrom      string
 }
 
 func NewHandler(opts Options) *Handler {
@@ -59,6 +65,14 @@ func NewHandler(opts Options) *Handler {
 		panic("handler authenticator is required")
 	}
 
+	if opts.Mailer == nil {
+		panic("handler mailer is required")
+	}
+	sender, err := mail.ParseAddress(opts.MailFrom)
+	if err != nil {
+		panic("handler mail sender must be a valid email address")
+	}
+
 	rootPrefix := normalizeRootPrefix(opts.RootPrefix)
 
 	next := &Handler{
@@ -68,6 +82,8 @@ func NewHandler(opts Options) *Handler {
 		authenticator: authenticator,
 		localizer:     localizer,
 		rootPrefix:    rootPrefix,
+		mailer:        opts.Mailer,
+		mailFrom:      sender.Address,
 		mux:           http.NewServeMux(),
 	}
 

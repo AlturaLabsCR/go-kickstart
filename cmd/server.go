@@ -5,8 +5,10 @@ package cmd
 import (
 	"context"
 	"errors"
+	"fmt"
 	"net"
 	"net/http"
+	"net/mail"
 	"os"
 	"os/signal"
 	"strconv"
@@ -20,6 +22,7 @@ import (
 	"app/database/provider"
 	"app/handlers"
 	locales "app/i18n"
+	"app/mailer/noop"
 	"github.com/tavocg/go-i18n"
 )
 
@@ -32,6 +35,7 @@ type serverConfig struct {
 	AccessTokenTTL  time.Duration
 	RefreshTokenTTL time.Duration
 	RootPrefix      string
+	MailFrom        string
 	Host            string
 	Port            int
 }
@@ -48,6 +52,10 @@ func runServer(cfg serverConfig) error {
 
 	if cfg.DatabaseDSN == "" {
 		return errors.New("database DSN is required")
+	}
+
+	if _, err := mail.ParseAddress(cfg.MailFrom); err != nil {
+		return fmt.Errorf("invalid mail sender: %w", err)
 	}
 
 	var db database.Database
@@ -75,6 +83,7 @@ func runServer(cfg serverConfig) error {
 		return err
 	}
 
+	// Replace the noop provider below with a go-email SMTP or Mailgun client.
 	h := handlers.NewHandler(handlers.Options{
 		Logger:        logger,
 		Dev:           cfg.Dev,
@@ -82,6 +91,8 @@ func runServer(cfg serverConfig) error {
 		Authenticator: authenticator,
 		Localizer:     localizer,
 		RootPrefix:    cfg.RootPrefix,
+		Mailer:        noop.Mailer{},
+		MailFrom:      cfg.MailFrom,
 	})
 
 	srv := &http.Server{
