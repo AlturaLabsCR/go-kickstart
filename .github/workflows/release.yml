@@ -25,6 +25,9 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y upx-ucl
 
+      - name: Test
+        run: go test ./...
+
       - name: Build
         run: |
           for arch in arm64 amd64; do
