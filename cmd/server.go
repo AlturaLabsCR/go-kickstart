@@ -115,22 +115,6 @@ func runServer(cfg serverConfig) error {
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer stop()
 
-	go func() {
-		logger.Info("listening", "addr", listener.Addr().String())
-		if err := srv.Serve(listener); err != nil && err != http.ErrServerClosed {
-			logger.Error("server error", "error", err)
-			os.Exit(1)
-		}
-	}()
-
-	<-ctx.Done()
-
-	shutdownCtx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-	defer cancel()
-
-	if err := srv.Shutdown(shutdownCtx); err != nil {
-		logger.Error("shutdown error", "error", err)
-	}
-
-	return nil
+	logger.Info("listening", "addr", listener.Addr().String())
+	return serveHTTP(ctx, srv, listener)
 }
