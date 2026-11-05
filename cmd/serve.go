@@ -26,6 +26,7 @@ func init() {
 	viper.SetDefault("logfmt", "json")
 	viper.SetDefault("loglvl", "info")
 	viper.SetDefault("auth.secret", "")
+	viper.SetDefault("otp.secret", "")
 	viper.SetDefault("auth.access-token-ttl", 15*time.Minute)
 	viper.SetDefault("auth.refresh-token-ttl", 30*24*time.Hour)
 	viper.SetDefault("mail.from", "no-reply@example.com")
@@ -40,6 +41,7 @@ func init() {
 	flags.String("logfmt", "json", "log format")
 	flags.String("loglvl", "info", "log level")
 	flags.String("auth-secret", "", "JWT signing secret")
+	flags.String("otp-secret", "", "independent HMAC secret for verification codes")
 	flags.Duration("auth-access-ttl", 15*time.Minute, "access token TTL")
 	flags.Duration("auth-refresh-ttl", 30*24*time.Hour, "refresh token TTL")
 	flags.String("mail-from", "no-reply@example.com", "sender address for application emails")
@@ -52,6 +54,7 @@ func init() {
 	mustBindPersistentFlag("logfmt", rootCmd, "logfmt")
 	mustBindPersistentFlag("loglvl", rootCmd, "loglvl")
 	mustBindPersistentFlag("auth.secret", rootCmd, "auth-secret")
+	mustBindPersistentFlag("otp.secret", rootCmd, "otp-secret")
 	mustBindPersistentFlag("auth.access-token-ttl", rootCmd, "auth-access-ttl")
 	mustBindPersistentFlag("auth.refresh-token-ttl", rootCmd, "auth-refresh-ttl")
 	mustBindPersistentFlag("mail.from", rootCmd, "mail-from")
@@ -65,6 +68,7 @@ func runServerFromConfig() error {
 		LogLevel:        viper.GetString("loglvl"),
 		LogFormat:       viper.GetString("logfmt"),
 		AuthSecret:      viper.GetString("auth.secret"),
+		OTPSecret:       viper.GetString("otp.secret"),
 		AccessTokenTTL:  viper.GetDuration("auth.access-token-ttl"),
 		RefreshTokenTTL: viper.GetDuration("auth.refresh-token-ttl"),
 		RootPrefix:      viper.GetString("root"),

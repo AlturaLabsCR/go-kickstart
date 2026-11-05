@@ -13,14 +13,14 @@ type Account struct {
 
 type AccountLoginRequest struct {
 	Email     string
-	Otp       string
+	OtpHash   string
 	ExpiresAt int64
 }
 
 type AccountEmailChangeRequest struct {
 	Sub       int64
 	Email     string
-	Otp       string
+	OtpHash   string
 	ExpiresAt int64
 }
 

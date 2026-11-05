@@ -208,7 +208,7 @@ func (h *Handler) RequestEmailChange(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	otp, err := secrets.RandOTP()
+	code, err := secrets.RandOTP()
 	if err != nil {
 		h.writeError(
 			w,
@@ -222,8 +222,9 @@ func (h *Handler) RequestEmailChange(w http.ResponseWriter, r *http.Request) {
 		)
 		return
 	}
+	codeHash := h.otpSigner.Sign(otpPurposeEmailChange, strconv.FormatInt(sub, 10), code)
 	expiresAt := time.Now().UTC().Add(otpLifetime).Unix()
-	if err := h.db.Querier().UpsertAccountEmailChangeRequest(r.Context(), sub, newEmail, otp, expiresAt); err != nil {
+	if err := h.db.Querier().UpsertAccountEmailChangeRequest(r.Context(), sub, newEmail, codeHash, expiresAt); err != nil {
 		h.writeError(
 			w,
 			r,
@@ -239,11 +240,11 @@ func (h *Handler) RequestEmailChange(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if !h.sendOTP(w, r, newEmail, otp, "email_change") {
+	if !h.sendOTP(w, r, newEmail, code, otpPurposeEmailChange) {
 		return
 	}
 
-	h.logger.Debug("generated account email change otp", "sub", sub, "email", newEmail, "otp", maskedOTP(h.dev, otp), "expires_at", expiresAt)
+	h.logger.Debug("generated account email change otp", "sub", sub, "email", newEmail, "otp", maskedOTP(h.dev, code), "expires_at", expiresAt)
 	w.WriteHeader(http.StatusNoContent)
 }
 
@@ -275,8 +276,9 @@ func (h *Handler) ConfirmEmailChange(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	codeHash := h.otpSigner.Sign(otpPurposeEmailChange, strconv.FormatInt(sub, 10), req.OTP)
 	if err := h.db.WithTx(r.Context(), func(q database.Querier) error {
-		saved, err := q.ConsumeAccountEmailChangeRequest(r.Context(), sub, req.OTP, time.Now().Unix())
+		saved, err := q.ConsumeAccountEmailChangeRequest(r.Context(), sub, codeHash, time.Now().Unix())
 		if err != nil {
 			return err
 		}

@@ -14,6 +14,7 @@ import (
 	"github.com/tavocg/go-auth"
 	"github.com/tavocg/go-email/mailer"
 	"github.com/tavocg/go-i18n"
+	"github.com/tavocg/go-secrets/otp"
 )
 
 type Logger interface {
@@ -33,6 +34,7 @@ type Handler struct {
 	rootPrefix    string
 	mailer        mailer.Mailer
 	mailFrom      string
+	otpSigner     *otp.Signer
 
 	mux   *http.ServeMux
 	entry http.Handler
@@ -47,6 +49,7 @@ type Options struct {
 	RootPrefix    string
 	Mailer        mailer.Mailer
 	MailFrom      string
+	OTPSigner     *otp.Signer
 }
 
 func NewHandler(opts Options) *Handler {
@@ -73,6 +76,10 @@ func NewHandler(opts Options) *Handler {
 		panic("handler mail sender must be a valid email address")
 	}
 
+	if opts.OTPSigner == nil {
+		panic("handler OTP signer is required")
+	}
+
 	rootPrefix := normalizeRootPrefix(opts.RootPrefix)
 
 	next := &Handler{
@@ -84,6 +91,7 @@ func NewHandler(opts Options) *Handler {
 		rootPrefix:    rootPrefix,
 		mailer:        opts.Mailer,
 		mailFrom:      sender.Address,
+		otpSigner:     opts.OTPSigner,
 		mux:           http.NewServeMux(),
 	}
 

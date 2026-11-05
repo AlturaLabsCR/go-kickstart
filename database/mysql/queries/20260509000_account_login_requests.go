@@ -7,20 +7,20 @@ import (
 	"app/database/mysql/db"
 )
 
-func (q *MysqlQuerier) UpsertAccountLoginRequest(ctx context.Context, email string, otp string, expiresAt int64) error {
+func (q *MysqlQuerier) UpsertAccountLoginRequest(ctx context.Context, email string, otpHash string, expiresAt int64) error {
 	return q.queries.UpsertAccountLoginRequest(ctx, db.UpsertAccountLoginRequestParams{
 		Email:     email,
-		Otp:       otp,
+		OtpHash:   otpHash,
 		ExpiresAt: expiresAt,
 	})
 }
 
-func (q *MysqlQuerier) ConsumeAccountLoginRequest(ctx context.Context, email string, otp string, now int64) (*database.AccountLoginRequest, error) {
+func (q *MysqlQuerier) ConsumeAccountLoginRequest(ctx context.Context, email string, otpHash string, now int64) (*database.AccountLoginRequest, error) {
 	var request *database.AccountLoginRequest
 	err := q.withTx(ctx, func(q *MysqlQuerier) error {
 		saved, err := q.queries.SelectAccountLoginRequestForUpdate(ctx, db.SelectAccountLoginRequestForUpdateParams{
 			Email:     email,
-			Otp:       otp,
+			OtpHash:   otpHash,
 			ExpiresAt: now,
 		})
 		if err != nil {
@@ -33,7 +33,7 @@ func (q *MysqlQuerier) ConsumeAccountLoginRequest(ctx context.Context, email str
 
 		request = &database.AccountLoginRequest{
 			Email:     saved.Email,
-			Otp:       saved.Otp,
+			OtpHash:   saved.OtpHash,
 			ExpiresAt: saved.ExpiresAt,
 		}
 		return nil

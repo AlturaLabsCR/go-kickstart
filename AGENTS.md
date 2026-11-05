@@ -169,6 +169,7 @@ h.writeError(
 - Add new runtime settings in `cmd/serve.go`.
 - Keep Viper defaults, flags, flag binding, `runServerFromConfig`, and the `serverConfig` fields in `cmd/server.go` aligned.
 - Avoid adding configuration until the code path actually needs it.
+- Verification codes are stored only as HMAC-SHA-256 digests bound to purpose and identity using `github.com/tavocg/go-secrets/otp`. Configure an independent `otp.secret`; never reuse the JWT signing secret.
 
 ## Verification
 

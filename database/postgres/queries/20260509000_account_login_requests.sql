@@ -1,14 +1,14 @@
 -- name: UpsertAccountLoginRequest :exec
-INSERT INTO account_login_requests (email, otp, expires_at)
+INSERT INTO account_login_requests (email, otp_hash, expires_at)
 VALUES ($1, $2, $3)
 ON CONFLICT (email) DO UPDATE SET
-  otp = EXCLUDED.otp,
+  otp_hash = EXCLUDED.otp_hash,
   expires_at = EXCLUDED.expires_at;
 
 -- name: ConsumeAccountLoginRequest :one
 DELETE FROM account_login_requests
-WHERE email = $1 AND otp = $2 AND expires_at > $3
-RETURNING email, otp, expires_at;
+WHERE email = $1 AND otp_hash = $2 AND expires_at > $3
+RETURNING email, otp_hash, expires_at;
 
 -- name: DeleteAccountLoginRequest :exec
 DELETE FROM account_login_requests

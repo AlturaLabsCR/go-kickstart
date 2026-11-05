@@ -6,7 +6,11 @@ import (
 	"time"
 )
 
-const otpLifetime = 10 * time.Minute
+const (
+	otpLifetime           = 10 * time.Minute
+	otpPurposeLogin       = "login"
+	otpPurposeEmailChange = "email_change"
+)
 
 // Budgets are independent of challenge rows: reissuing or consuming an OTP
 // must not reset the verification limit. Database failures deny the request.

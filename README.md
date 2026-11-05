@@ -16,7 +16,11 @@ Very opinionated, your mileage may vary.
 
 - `npm ci`
 - `go generate ./...`
-- `go run .`
+- `APP_OTP_SECRET=$(openssl rand -hex 32) go run .`
+
+Verification codes are stored as keyed HMAC digests, so the server requires an
+independent `APP_OTP_SECRET` (or `otp.secret` / `--otp-secret`). It must differ
+from `APP_AUTH_SECRET`. Use a stable value across restarts and instances.
 
 There are several places where placeholder strings are used,
 update with your preferred details.

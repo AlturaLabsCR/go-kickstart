@@ -11,7 +11,9 @@ info:
     OTP limits in the application are per normalized email for login and per
     authenticated account for email changes. Per-client-IP throttling belongs
     in the deployment's reverse proxy; the application does not impose IP or
-    global OTP limits.
+    global OTP limits. Verification codes are stored only as HMAC-SHA-256
+    digests bound to their purpose and identity; plaintext codes are never
+    persisted.
 servers:
   - url: http://localhost:3080
     description: Local development server

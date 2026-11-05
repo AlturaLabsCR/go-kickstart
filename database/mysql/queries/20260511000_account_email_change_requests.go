@@ -7,21 +7,21 @@ import (
 	"app/database/mysql/db"
 )
 
-func (q *MysqlQuerier) UpsertAccountEmailChangeRequest(ctx context.Context, sub int64, email string, otp string, expiresAt int64) error {
+func (q *MysqlQuerier) UpsertAccountEmailChangeRequest(ctx context.Context, sub int64, email string, otpHash string, expiresAt int64) error {
 	return q.queries.UpsertAccountEmailChangeRequest(ctx, db.UpsertAccountEmailChangeRequestParams{
 		Sub:       sub,
 		Email:     email,
-		Otp:       otp,
+		OtpHash:   otpHash,
 		ExpiresAt: expiresAt,
 	})
 }
 
-func (q *MysqlQuerier) ConsumeAccountEmailChangeRequest(ctx context.Context, sub int64, otp string, now int64) (*database.AccountEmailChangeRequest, error) {
+func (q *MysqlQuerier) ConsumeAccountEmailChangeRequest(ctx context.Context, sub int64, otpHash string, now int64) (*database.AccountEmailChangeRequest, error) {
 	var request *database.AccountEmailChangeRequest
 	err := q.withTx(ctx, func(q *MysqlQuerier) error {
 		saved, err := q.queries.SelectAccountEmailChangeRequestForUpdate(ctx, db.SelectAccountEmailChangeRequestForUpdateParams{
 			Sub:       sub,
-			Otp:       otp,
+			OtpHash:   otpHash,
 			ExpiresAt: now,
 		})
 		if err != nil {
@@ -35,7 +35,7 @@ func (q *MysqlQuerier) ConsumeAccountEmailChangeRequest(ctx context.Context, sub
 		request = &database.AccountEmailChangeRequest{
 			Sub:       saved.Sub,
 			Email:     saved.Email,
-			Otp:       saved.Otp,
+			OtpHash:   saved.OtpHash,
 			ExpiresAt: saved.ExpiresAt,
 		}
 		return nil

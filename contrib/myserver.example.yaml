@@ -34,6 +34,15 @@ auth:
   access-token-ttl: 15m
   refresh-token-ttl: 720h
 
+# Independent HMAC key used to store verification codes as keyed digests.
+# It must be set and must differ from auth.secret. Use at least 32 random bytes.
+# Rotating this key invalidates every pending verification code.
+# Override with:
+#   APP_OTP_SECRET=change-me app serve
+#   app serve --otp-secret change-me
+otp:
+  secret: ""
+
 # Route prefix to mount the app under.
 # Override with:
 #   APP_ROOT=/app app serve

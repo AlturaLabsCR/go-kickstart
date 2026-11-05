@@ -60,19 +60,21 @@ type Querier interface {
 	RoleHasPermission(ctx context.Context, roleKey string, permissionKey string) (bool, error)
 
 	// UpsertAccountEmailChangeRequest creates or updates the pending email change request for an account.
-	UpsertAccountEmailChangeRequest(ctx context.Context, sub int64, email string, otp string, expiresAt int64) error
+	// otpHash is a keyed digest; plaintext codes are never stored.
+	UpsertAccountEmailChangeRequest(ctx context.Context, sub int64, email string, otpHash string, expiresAt int64) error
 
 	// ConsumeAccountEmailChangeRequest atomically consumes a matching, unexpired request.
-	ConsumeAccountEmailChangeRequest(ctx context.Context, sub int64, otp string, now int64) (*AccountEmailChangeRequest, error)
+	ConsumeAccountEmailChangeRequest(ctx context.Context, sub int64, otpHash string, now int64) (*AccountEmailChangeRequest, error)
 
 	// DeleteAccountEmailChangeRequest deletes the pending email change request for an account.
 	DeleteAccountEmailChangeRequest(ctx context.Context, sub int64) error
 
 	// UpsertAccountLoginRequest creates or updates the login request for an email.
-	UpsertAccountLoginRequest(ctx context.Context, email string, otp string, expiresAt int64) error
+	// otpHash is a keyed digest; plaintext codes are never stored.
+	UpsertAccountLoginRequest(ctx context.Context, email string, otpHash string, expiresAt int64) error
 
 	// ConsumeAccountLoginRequest atomically consumes a matching, unexpired request.
-	ConsumeAccountLoginRequest(ctx context.Context, email string, otp string, now int64) (*AccountLoginRequest, error)
+	ConsumeAccountLoginRequest(ctx context.Context, email string, otpHash string, now int64) (*AccountLoginRequest, error)
 
 	// DeleteAccountLoginRequest deletes the login request for an email.
 	DeleteAccountLoginRequest(ctx context.Context, email string) error

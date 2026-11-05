@@ -1,14 +1,14 @@
 -- name: UpsertAccountLoginRequest :exec
-INSERT INTO account_login_requests (email, otp, expires_at)
+INSERT INTO account_login_requests (email, otp_hash, expires_at)
 VALUES (?, ?, ?)
 ON DUPLICATE KEY UPDATE
-  otp = VALUES(otp),
+  otp_hash = VALUES(otp_hash),
   expires_at = VALUES(expires_at);
 
 -- name: SelectAccountLoginRequestForUpdate :one
-SELECT email, otp, expires_at
+SELECT email, otp_hash, expires_at
 FROM account_login_requests
-WHERE email = ? AND otp = ? AND expires_at > ?
+WHERE email = ? AND otp_hash = ? AND expires_at > ?
 FOR UPDATE;
 
 -- name: DeleteAccountLoginRequest :exec

@@ -7,17 +7,17 @@ import (
 	"app/database/postgres/db"
 )
 
-func (q *PostgresQuerier) UpsertAccountEmailChangeRequest(ctx context.Context, sub int64, email string, otp string, expiresAt int64) error {
+func (q *PostgresQuerier) UpsertAccountEmailChangeRequest(ctx context.Context, sub int64, email string, otpHash string, expiresAt int64) error {
 	return q.queries.UpsertAccountEmailChangeRequest(ctx, db.UpsertAccountEmailChangeRequestParams{
 		Sub:       sub,
 		Email:     email,
-		Otp:       otp,
+		OtpHash:   otpHash,
 		ExpiresAt: expiresAt,
 	})
 }
 
-func (q *PostgresQuerier) ConsumeAccountEmailChangeRequest(ctx context.Context, sub int64, otp string, now int64) (*database.AccountEmailChangeRequest, error) {
-	request, err := q.queries.ConsumeAccountEmailChangeRequest(ctx, db.ConsumeAccountEmailChangeRequestParams{Sub: sub, Otp: otp, ExpiresAt: now})
+func (q *PostgresQuerier) ConsumeAccountEmailChangeRequest(ctx context.Context, sub int64, otpHash string, now int64) (*database.AccountEmailChangeRequest, error) {
+	request, err := q.queries.ConsumeAccountEmailChangeRequest(ctx, db.ConsumeAccountEmailChangeRequestParams{Sub: sub, OtpHash: otpHash, ExpiresAt: now})
 	if err != nil {
 		return nil, err
 	}
@@ -25,7 +25,7 @@ func (q *PostgresQuerier) ConsumeAccountEmailChangeRequest(ctx context.Context, 
 	return &database.AccountEmailChangeRequest{
 		Sub:       request.Sub,
 		Email:     request.Email,
-		Otp:       request.Otp,
+		OtpHash:   request.OtpHash,
 		ExpiresAt: request.ExpiresAt,
 	}, nil
 }

@@ -24,6 +24,7 @@ import (
 	locales "app/i18n"
 	"app/mailer/noop"
 	"github.com/tavocg/go-i18n"
+	"github.com/tavocg/go-secrets/otp"
 )
 
 type serverConfig struct {
@@ -32,6 +33,7 @@ type serverConfig struct {
 	LogLevel        string
 	LogFormat       string
 	AuthSecret      string
+	OTPSecret       string
 	AccessTokenTTL  time.Duration
 	RefreshTokenTTL time.Duration
 	RootPrefix      string
@@ -48,6 +50,21 @@ func runServer(cfg serverConfig) error {
 
 	if len(cfg.AuthSecret) < 32 {
 		logger.Warn("JWT signing secret is shorter than the recommended 32 random bytes; tokens may be forged", "secret_bytes", len(cfg.AuthSecret))
+	}
+
+	if cfg.OTPSecret == "" {
+		return errors.New("OTP HMAC secret is required")
+	}
+	if cfg.OTPSecret == cfg.AuthSecret {
+		return errors.New("OTP HMAC secret must differ from the JWT signing secret")
+	}
+	if len(cfg.OTPSecret) < 32 {
+		logger.Warn("OTP HMAC secret is shorter than the recommended 32 random bytes; codes may be guessed offline", "secret_bytes", len(cfg.OTPSecret))
+	}
+
+	otpSigner, err := otp.NewSigner(cfg.OTPSecret)
+	if err != nil {
+		return err
 	}
 
 	if cfg.DatabaseDSN == "" {
@@ -92,6 +109,7 @@ func runServer(cfg serverConfig) error {
 		RootPrefix:    cfg.RootPrefix,
 		Mailer:        noop.Mailer{},
 		MailFrom:      cfg.MailFrom,
+		OTPSigner:     otpSigner,
 	})
 
 	srv := &http.Server{

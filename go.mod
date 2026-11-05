@@ -13,6 +13,7 @@ require (
 	github.com/tavocg/go-email v1.0.1
 	github.com/tavocg/go-i18n v1.0.4
 	github.com/tavocg/go-secrets v1.0.1
+	github.com/tavocg/go-secrets/otp v1.0.0
 	modernc.org/sqlite v1.61.1
 )
 

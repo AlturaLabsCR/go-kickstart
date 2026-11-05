@@ -1,15 +1,15 @@
 -- name: UpsertAccountEmailChangeRequest :exec
-INSERT INTO account_email_change_requests (sub, email, otp, expires_at)
+INSERT INTO account_email_change_requests (sub, email, otp_hash, expires_at)
 VALUES (?, ?, ?, ?)
 ON DUPLICATE KEY UPDATE
   email = VALUES(email),
-  otp = VALUES(otp),
+  otp_hash = VALUES(otp_hash),
   expires_at = VALUES(expires_at);
 
 -- name: SelectAccountEmailChangeRequestForUpdate :one
-SELECT sub, email, otp, expires_at
+SELECT sub, email, otp_hash, expires_at
 FROM account_email_change_requests
-WHERE sub = ? AND otp = ? AND expires_at > ?
+WHERE sub = ? AND otp_hash = ? AND expires_at > ?
 FOR UPDATE;
 
 -- name: DeleteAccountEmailChangeRequest :exec
