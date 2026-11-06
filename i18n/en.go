@@ -17,7 +17,7 @@ var en = map[string]string{
 	"root.greeting":     "Hello, world!",
 
 	"err.account_not_found":          "Account not found.",
-	"err.check_role_permission":      "Failed to check role permission.",
+	"err.check_role_permission":      "Failed to check account permission.",
 	"err.confirm_email_change":       "Failed to confirm account email change.",
 	"err.delete_account":             "Failed to delete account.",
 	"err.email_change_same":          "Account email change target matches current email.",

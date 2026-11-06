@@ -6,10 +6,14 @@ import (
 	"time"
 )
 
+type otpPurpose string
+
 const (
-	otpLifetime           = 10 * time.Minute
-	otpPurposeLogin       = "login"
-	otpPurposeEmailChange = "email_change"
+	otpLifetime                      = 10 * time.Minute
+	otpPurposeLogin       otpPurpose = "login"
+	otpPurposeEmailChange otpPurpose = "email_change"
+	otpVerifyLimit                   = 5
+	otpVerifyWindow                  = 10 * time.Minute
 )
 
 // Budgets are independent of challenge rows: reissuing or consuming an OTP
@@ -46,7 +50,16 @@ func (h *Handler) allowOTPRequest(w http.ResponseWriter, r *http.Request, scope,
 }
 
 // Separate budgets prevent both rapid resends and sustained email flooding.
-func (h *Handler) allowOTPIssuance(w http.ResponseWriter, r *http.Request, scope, key string) bool {
+func (h *Handler) allowOTPIssuance(w http.ResponseWriter, r *http.Request, purpose otpPurpose, key string) bool {
+	scope := string(purpose)
 	return h.allowOTPRequest(w, r, scope+".issue.minute", key, 1, time.Minute) &&
 		h.allowOTPRequest(w, r, scope+".issue.window", key, 5, 10*time.Minute)
+}
+
+func (h *Handler) allowOTPVerification(w http.ResponseWriter, r *http.Request, purpose otpPurpose, key string) bool {
+	return h.allowOTPRequest(w, r, string(purpose)+".verify", key, otpVerifyLimit, otpVerifyWindow)
+}
+
+func (h *Handler) signOTP(purpose otpPurpose, identity, code string) string {
+	return h.otpSigner.Sign(string(purpose), identity, code)
 }

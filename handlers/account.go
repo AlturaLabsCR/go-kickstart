@@ -107,6 +107,7 @@ func (h *Handler) RequestEmailChange(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	sub := identity.Sub
+	subject := strconv.FormatInt(sub, 10)
 
 	req, ok := decodeBody[changeEmailRequest](h, w, r,
 		"err.invalid_email_change_body",
@@ -152,7 +153,7 @@ func (h *Handler) RequestEmailChange(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if !h.allowOTPIssuance(w, r, "email_change", strconv.FormatInt(sub, 10)) {
+	if !h.allowOTPIssuance(w, r, otpPurposeEmailChange, subject) {
 		return
 	}
 
@@ -170,7 +171,7 @@ func (h *Handler) RequestEmailChange(w http.ResponseWriter, r *http.Request) {
 		)
 		return
 	}
-	codeHash := h.otpSigner.Sign(otpPurposeEmailChange, strconv.FormatInt(sub, 10), code)
+	codeHash := h.signOTP(otpPurposeEmailChange, subject, code)
 	expiresAt := time.Now().UTC().Add(otpLifetime).Unix()
 	if err := h.db.Querier().UpsertAccountEmailChangeRequest(r.Context(), sub, newEmail, codeHash, expiresAt); err != nil {
 		h.writeError(
@@ -202,6 +203,7 @@ func (h *Handler) ConfirmEmailChange(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	sub := identity.Sub
+	subject := strconv.FormatInt(sub, 10)
 
 	req, ok := decodeBody[changeEmailConfirmRequest](h, w, r,
 		"err.invalid_email_confirm_body",
@@ -211,11 +213,11 @@ func (h *Handler) ConfirmEmailChange(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if !h.allowOTPRequest(w, r, "email_change.verify", strconv.FormatInt(sub, 10), 5, 10*time.Minute) {
+	if !h.allowOTPVerification(w, r, otpPurposeEmailChange, subject) {
 		return
 	}
 
-	codeHash := h.otpSigner.Sign(otpPurposeEmailChange, strconv.FormatInt(sub, 10), req.OTP)
+	codeHash := h.signOTP(otpPurposeEmailChange, subject, req.OTP)
 	if err := h.db.WithTx(r.Context(), func(q database.Querier) error {
 		saved, err := q.ConsumeAccountEmailChangeRequest(r.Context(), sub, codeHash, time.Now().Unix())
 		if err != nil {

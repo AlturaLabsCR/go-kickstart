@@ -13,7 +13,7 @@ This repository is a Go web server template for REST APIs and small HTML surface
 - `cache/`: small byte-oriented key-value cache interface and memory implementation.
 - `auth/`: JWT claims and authenticator construction.
 - `database/models.go`: application-facing models and role and permission keys.
-- `i18n/`: locale maps. User-facing strings and error messages should be represented by stable keys.
+- `i18n/`: locale maps exposed through copying `Locales()`. User-facing strings and error messages should be represented by stable keys.
 - `docs/api.yaml`: OpenAPI source. `handlers/static/api/index.html` is generated and ignored.
 - `templates/`: `templ` HTML templates.
 
@@ -40,7 +40,8 @@ This repository is a Go web server template for REST APIs and small HTML surface
    - Format `h.writeStatus` and `h.writeError` calls one argument per line when they have localization keys or log args.
 
 4. Localize messages and errors.
-   - Error keys should be stable and concise, for example `err.select_account`, `err.invalid_login_body`, or `err.permission_denied`.
+   - Keep localization keys stable; request-body and confirmation-body keys represent different operations and need not be renamed just for symmetry. Use normal Spanish accents in translations.
+- Error keys should be stable and concise, for example `err.select_account`, `err.invalid_login_body`, or `err.permission_denied`.
    - Add every new error key to both `i18n/en.go` and `i18n/es.go`.
    - Add user-visible role or permission labels as keys like `role.default` or `perm.change_email`.
    - Keep logs as clear English messages; keep response bodies localized through keys.
@@ -225,3 +226,5 @@ The authentication integration suite always runs SQLite. Set `TEST_POSTGRES_DSN`
 Use `EnsureAccountByEmail` for create-if-missing semantics and Go initialisms `SQLite`, `MySQL` and `OTPHash`. sqlc renames `otp_hash` to `OTPHash` for every backend. Convert compatible generated row structs explicitly to application models; keep driver-specific error mapping in each adapter. `database.Querier` composes account, session, permission, OTP, rate-limit and maintenance interfaces.
 
 Account-owned email-change challenges, roles and refresh tokens cascade on account deletion on every backend. Migration `20261106001` preserves valid pending SQLite challenges, discards orphaned ones and removes `accounts_meta`; profile queries read explicit columns from `accounts` directly.
+
+OTP routes use the typed purposes in `handlers/otp.go` for signing, mail keys and persistent quota scopes. Issuance remains one per minute and five per ten minutes; verification remains five per ten minutes, independent of challenge replacement or consumption.

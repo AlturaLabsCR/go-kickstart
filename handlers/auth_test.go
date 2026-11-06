@@ -51,7 +51,7 @@ func newHarness(t *testing.T, db database.Database, deliveryErr error) harness {
 	if err != nil {
 		t.Fatal(err)
 	}
-	l, err := i18n.NewLocalizer(locales.Locales)
+	l, err := i18n.NewLocalizer(locales.Locales())
 	if err != nil {
 		t.Fatal(err)
 	}

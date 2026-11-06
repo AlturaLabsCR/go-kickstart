@@ -10,7 +10,7 @@ import (
 
 // Persist the challenge before sending: a delivered code must already be usable.
 // Failed or ambiguous delivery does not delete it or reset the request budget.
-func (h *Handler) sendOTP(w http.ResponseWriter, r *http.Request, to, code, purpose string) bool {
+func (h *Handler) sendOTP(w http.ResponseWriter, r *http.Request, to, code string, purpose otpPurpose) bool {
 	data := struct {
 		Code    string
 		Minutes int
@@ -18,8 +18,8 @@ func (h *Handler) sendOTP(w http.ResponseWriter, r *http.Request, to, code, purp
 	message := mailer.NewPlainMessage(
 		h.mailFrom,
 		[]string{to},
-		h.localize(r, "mail."+purpose+".subject"),
-		h.localize(r, "mail."+purpose+".body", data),
+		h.localize(r, "mail."+string(purpose)+".subject"),
+		h.localize(r, "mail."+string(purpose)+".body", data),
 	)
 	ctx, cancel := context.WithTimeout(r.Context(), 10*time.Second)
 	defer cancel()

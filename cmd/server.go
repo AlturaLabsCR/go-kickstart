@@ -83,7 +83,7 @@ func runServer(cfg serverConfig) error {
 		}
 	}()
 
-	localizer, err := i18n.NewLocalizer(locales.Locales)
+	localizer, err := i18n.NewLocalizer(locales.Locales())
 	if err != nil {
 		return err
 	}

@@ -56,7 +56,7 @@ func (h *Handler) LoginOrCreateAccount(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if !h.allowOTPIssuance(w, r, "login", email) {
+	if !h.allowOTPIssuance(w, r, otpPurposeLogin, email) {
 		return
 	}
 
@@ -73,7 +73,7 @@ func (h *Handler) LoginOrCreateAccount(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	codeHash := h.otpSigner.Sign(otpPurposeLogin, email, code)
+	codeHash := h.signOTP(otpPurposeLogin, email, code)
 	expiresAt := time.Now().UTC().Add(otpLifetime).Unix()
 	if err := h.db.Querier().UpsertAccountLoginRequest(r.Context(), email, codeHash, expiresAt); err != nil {
 		h.writeError(
@@ -128,11 +128,11 @@ func (h *Handler) VerifyAuthenticationCode(w http.ResponseWriter, r *http.Reques
 		return
 	}
 
-	if !h.allowOTPRequest(w, r, "login.verify", email, 5, 10*time.Minute) {
+	if !h.allowOTPVerification(w, r, otpPurposeLogin, email) {
 		return
 	}
 
-	codeHash := h.otpSigner.Sign(otpPurposeLogin, email, req.OTP)
+	codeHash := h.signOTP(otpPurposeLogin, email, req.OTP)
 	var subject int64
 	if err := h.db.WithTx(r.Context(), func(q database.Querier) error {
 		if _, err := q.ConsumeAccountLoginRequest(r.Context(), email, codeHash, time.Now().Unix()); err != nil {
