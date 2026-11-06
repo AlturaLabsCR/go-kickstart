@@ -37,6 +37,10 @@ and prefix with `APP_` (for example, `APP_AUTH_ACCESS_TOKEN_TTL=15m`).
 
 `app` and `app serve` both start the server; `serve` is optional.
 
+Use a clean, unescaped path for `--root`, such as `/app/v1`. Startup rejects
+wildcards, dot segments, repeated interior slashes, whitespace, backslashes,
+query strings and fragments in the prefix.
+
 Reverse proxy examples for Nginx, Caddy and Apache are in [the reverse proxy guide](docs/reverse-proxy.md).
 
 The repository is named **go-kickstart**; the starter application's name is

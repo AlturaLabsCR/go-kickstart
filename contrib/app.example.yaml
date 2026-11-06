@@ -47,6 +47,8 @@ otp:
   secret: ""
 
 # Route prefix to mount the app under.
+# Use a clean literal path such as /app/v1, without wildcards, percent encoding,
+# dot segments, repeated interior slashes, whitespace, backslashes, query or fragment.
 # Override with:
 #   APP_ROOT=/app app serve
 #   app serve --root /prefix

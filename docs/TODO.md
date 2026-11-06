@@ -215,3 +215,10 @@ El orden estabiliza primero los contratos, después cambia comportamiento y esqu
 9. [x] **Documentación y cierre:** nombres y licencias coherentes, guía de extensión actualizada, revisión de todas las filas del TODO y verificación con SQLite, PostgreSQL y MySQL.
 
 Las propuestas se evalúan por su beneficio: no se introducirán abstracciones solo para reducir líneas. Las decisiones de conservar código se explicarán en el punto correspondiente. No se añadirán tests nuevos sin petición explícita, según AGENTS.md; se adaptarán los existentes y se comprobarán manualmente los escenarios sin cobertura.
+
+## 7. Fixes posteriores al plan
+
+- [x] **Secretos según el modo de ejecución** (`c6fa6f5`): ambos requieren al menos 32 bytes fuera de desarrollo. `--dev` acepta valores vacíos o cortos con warnings; un OTP secret vacío usa una clave temporal. Los valores no vacíos deben ser distintos. README y ejemplo actualizados.
+- [x] **Validación del prefijo de rutas**: `NewHandler` rechaza prefijos que provocarían un panic de ServeMux (`/api//v1`) o romperían los estáticos (`/v%31`). Solo se admiten rutas literales limpias; se conservan la normalización de barra inicial/final y los parámetros en rutas de endpoints. Documentación actualizada.
+
+Verificación del prefijo: tests existentes con `-race`, vet, lint y compilación correctos; 20 formas inválidas y 9 válidas comprobadas manualmente, además del error de configuración en el ejecutable CLI. No se añadieron tests permanentes.

@@ -26,6 +26,7 @@ This repository is a Go web server template for REST APIs and small HTML surface
 
 2. Choose route protection.
    - Public endpoints can use `h.Add(method, "/path", h.HandlerFunc)`. `Add` and `AddHandler` apply the configured root prefix; pass application-relative paths.
+   - `NewHandler` validates the configured root prefix before registering routes. Prefixes must be clean literal paths without wildcards, percent encoding, dot segments, repeated interior slashes, whitespace, control characters, backslashes, query strings or fragments. Surrounding whitespace and trailing slashes are normalized; a missing leading slash is added.
    - Authenticated endpoints should use `middleware.AuthenticateBearer(h.logger, h.localize, h.authenticator, next)`.
    - Authentication stores a validated `middleware.Identity`. Account handlers use `h.requireIdentity(w, r)` to retrieve its claims and numeric subject.
    - Permission-protected endpoints should wrap authentication plus `middleware.RequirePermission(...)`.

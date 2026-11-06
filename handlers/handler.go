@@ -8,7 +8,9 @@ import (
 	"net/http"
 	"net/mail"
 	"os"
+	"path"
 	"strings"
+	"unicode"
 
 	appauth "app/auth"
 	"app/database"
@@ -77,7 +79,10 @@ func NewHandler(opts Options) (*Handler, error) {
 		return nil, errors.New("handler OTP signer is required")
 	}
 
-	rootPrefix := normalizeRootPrefix(opts.RootPrefix)
+	rootPrefix, err := normalizeRootPrefix(opts.RootPrefix)
+	if err != nil {
+		return nil, err
+	}
 
 	next := &Handler{
 		dev:           opts.Dev,
@@ -145,15 +150,25 @@ func (h *Handler) routePath(route string) string {
 	return h.rootPrefix + route
 }
 
-func normalizeRootPrefix(prefix string) string {
+func normalizeRootPrefix(prefix string) (string, error) {
 	prefix = strings.TrimSpace(prefix)
 	if prefix == "" || prefix == "/" {
-		return ""
+		return "", nil
 	}
 
 	if !strings.HasPrefix(prefix, "/") {
 		prefix = "/" + prefix
 	}
 
-	return strings.TrimRight(prefix, "/")
+	prefix = strings.TrimRight(prefix, "/")
+	if prefix == "" {
+		return "", nil
+	}
+	if path.Clean(prefix) != prefix || strings.ContainsAny(prefix, "{}%?#\\") {
+		return "", errors.New("root prefix must be a clean literal URL path without wildcards, escapes, query strings or fragments")
+	}
+	if strings.ContainsFunc(prefix, func(r rune) bool { return unicode.IsSpace(r) || unicode.IsControl(r) }) {
+		return "", errors.New("root prefix cannot contain whitespace or control characters")
+	}
+	return prefix, nil
 }
