@@ -22,6 +22,8 @@ Verification codes are stored as keyed HMAC digests, so the server requires an
 independent `APP_OTP_SECRET` (or `otp.secret` / `--otp-secret`). It must differ
 from `APP_AUTH_SECRET`. Use a stable value across restarts and instances.
 
+Reverse proxy examples for Nginx, Caddy and Apache are in [the reverse proxy guide](docs/reverse-proxy.md).
+
 There are several places where placeholder strings are used,
 update with your preferred details.
 
