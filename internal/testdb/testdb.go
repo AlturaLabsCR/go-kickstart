@@ -24,12 +24,23 @@ import (
 // Each case creates and drops only its own randomly named database.
 func Run(t *testing.T, test func(*testing.T, database.Database)) {
 	t.Helper()
+	run(t, test, true)
+}
+
+// RunUncached supplies a raw database for tests of the cache wrapper itself.
+func RunUncached(t *testing.T, test func(*testing.T, database.Database)) {
+	t.Helper()
+	run(t, test, false)
+}
+
+func run(t *testing.T, test func(*testing.T, database.Database), cacheReads bool) {
+	t.Helper()
 	for _, backend := range []string{"sqlite", "postgres", "mysql"} {
-		t.Run(backend, func(t *testing.T) { test(t, open(t, backend)) })
+		t.Run(backend, func(t *testing.T) { test(t, open(t, backend, cacheReads)) })
 	}
 }
 
-func open(t *testing.T, backend string) database.Database {
+func open(t *testing.T, backend string, cacheReads bool) database.Database {
 	t.Helper()
 	dsn := filepath.Join(t.TempDir(), "app.sqlite")
 	if backend != "sqlite" {
@@ -82,6 +93,9 @@ func open(t *testing.T, backend string) database.Database {
 		t.Fatal(err)
 	}
 	t.Cleanup(func() { checkClose(t, db.Close()) })
+	if !cacheReads {
+		return db
+	}
 	store := memory.New()
 	t.Cleanup(func() { checkClose(t, store.Close()) })
 	return cached.New(db, store)
