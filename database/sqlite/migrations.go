@@ -28,36 +28,18 @@ func applyMigrations(ctx context.Context, conn *sql.DB) error {
 		return fmt.Errorf("lock sqlite migrations: %w", err)
 	}
 
-	migrations, err := database.ReadMigrations(migrationFiles)
-	if err != nil {
+	if err := database.ApplyMigrations(ctx, migrationFiles, db.New(tx), func(ctx context.Context, statement string) error {
+		_, err := tx.ExecContext(ctx, statement)
 		return err
-	}
-
-	queries := db.New(tx)
-	currentVersion, err := queries.GetSchemaMigrationVersion(ctx)
-	if err != nil {
-		return err
-	}
-
-	for _, migration := range migrations {
-		if migration.Version <= currentVersion {
-			continue
-		}
-
-		if _, err := tx.ExecContext(ctx, migration.SQL); err != nil {
-			return fmt.Errorf("apply sqlite migration %q: %w", migration.Name, err)
-		}
-
-		if err := queries.SetSchemaMigrationVersion(ctx, migration.Version); err != nil {
-			return fmt.Errorf("set sqlite migration version %d: %w", migration.Version, err)
-		}
+	}); err != nil {
+		return fmt.Errorf("migrate sqlite: %w", err)
 	}
 
 	return tx.Commit()
 }
 
 func ensureMigrationTable(ctx context.Context, tx *sql.Tx) error {
-	schema, err := migrationFiles.ReadFile("migrations/20260503000_schema_migrations.sql")
+	schema, err := migrationFiles.ReadFile(database.MigrationBootstrap)
 	if err != nil {
 		return err
 	}

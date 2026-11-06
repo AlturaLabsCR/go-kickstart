@@ -33,36 +33,18 @@ func applyMigrations(ctx context.Context, pool *pgxpool.Pool) error {
 		return err
 	}
 
-	migrations, err := database.ReadMigrations(migrationFiles)
-	if err != nil {
+	if err := database.ApplyMigrations(ctx, migrationFiles, db.New(tx), func(ctx context.Context, statement string) error {
+		_, err := tx.Exec(ctx, statement)
 		return err
-	}
-
-	queries := db.New(tx)
-	currentVersion, err := queries.GetSchemaMigrationVersion(ctx)
-	if err != nil {
-		return err
-	}
-
-	for _, migration := range migrations {
-		if migration.Version <= currentVersion {
-			continue
-		}
-
-		if _, err := tx.Exec(ctx, migration.SQL); err != nil {
-			return fmt.Errorf("apply postgres migration %q: %w", migration.Name, err)
-		}
-
-		if err := queries.SetSchemaMigrationVersion(ctx, migration.Version); err != nil {
-			return fmt.Errorf("set postgres migration version %d: %w", migration.Version, err)
-		}
+	}); err != nil {
+		return fmt.Errorf("migrate postgres: %w", err)
 	}
 
 	return tx.Commit(ctx)
 }
 
 func ensureMigrationTable(ctx context.Context, tx pgx.Tx) error {
-	schema, err := migrationFiles.ReadFile("migrations/20260503000_schema_migrations.sql")
+	schema, err := migrationFiles.ReadFile(database.MigrationBootstrap)
 	if err != nil {
 		return err
 	}

@@ -2,6 +2,7 @@ package database
 
 import (
 	"cmp"
+	"context"
 	"fmt"
 	"io/fs"
 	"path"
@@ -9,6 +10,15 @@ import (
 	"strconv"
 	"strings"
 )
+
+// MigrationBootstrap is applied separately before reading migration versions.
+const MigrationBootstrap = "migrations/20260503000_schema_migrations.sql"
+
+// MigrationVersions is implemented by sqlc queries bound to the migration transaction.
+type MigrationVersions interface {
+	GetSchemaMigrationVersion(context.Context) (int64, error)
+	SetSchemaMigrationVersion(context.Context, int64) error
+}
 
 type Migration struct {
 	Version int64
@@ -61,4 +71,31 @@ func ReadMigrations(fsys fs.FS) ([]Migration, error) {
 	}
 
 	return migrations, nil
+}
+
+// ApplyMigrations applies pending files and records each version. The caller must
+// already hold the backend lock and initialize bookkeeping, then commit or roll
+// back the entire transaction. MySQL uses a separate runner for implicit DDL
+// commits and its persistent pending marker.
+func ApplyMigrations(ctx context.Context, files fs.FS, versions MigrationVersions, exec func(context.Context, string) error) error {
+	migrations, err := ReadMigrations(files)
+	if err != nil {
+		return err
+	}
+	currentVersion, err := versions.GetSchemaMigrationVersion(ctx)
+	if err != nil {
+		return err
+	}
+	for _, migration := range migrations {
+		if migration.Version <= currentVersion {
+			continue
+		}
+		if err := exec(ctx, migration.SQL); err != nil {
+			return fmt.Errorf("apply migration %q: %w", migration.Name, err)
+		}
+		if err := versions.SetSchemaMigrationVersion(ctx, migration.Version); err != nil {
+			return fmt.Errorf("set migration version %d: %w", migration.Version, err)
+		}
+	}
+	return nil
 }

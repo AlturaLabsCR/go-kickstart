@@ -105,7 +105,7 @@ func migrationMetadataTx(ctx context.Context, conn *sql.Conn, fn func(*db.Querie
 }
 
 func ensureMigrationTable(ctx context.Context, conn *sql.Conn) error {
-	schema, err := migrationFiles.ReadFile("migrations/20260503000_schema_migrations.sql")
+	schema, err := migrationFiles.ReadFile(database.MigrationBootstrap)
 	if err != nil {
 		return err
 	}

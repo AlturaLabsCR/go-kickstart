@@ -65,7 +65,7 @@ This repository is a Go web server template for REST APIs and small HTML surface
    - Migrations are sorted by version and applied when `version > schema_migrations.version`.
    - Do not reuse a version. The migration loader rejects duplicates.
    - Use a monotonic timestamp-style version. If adding multiple migrations on the same day, increment the suffix: `20260722000`, `20260722001`, etc.
-   - Every runner locks before reading the version. Postgres and SQLite apply the pending batch in one transaction, including version updates; a failure rolls back the entire batch. MySQL DDL commits implicitly, so its runner uses `GET_LOCK` on a dedicated connection and commits a pending marker before each migration. It records completion and clears the marker atomically. An unfinished marker blocks startup; follow the MySQL migration recovery procedure below. A competing startup may fail with a lock error and must be retried after the first finishes.
+   - Every runner locks before reading the version. PostgreSQL and SQLite share `database.ApplyMigrations` for the pending-file loop only; each backend keeps lock acquisition, bootstrap and transaction ownership explicit. Postgres and SQLite apply the pending batch in one transaction, including version updates; a failure rolls back the entire batch. MySQL DDL commits implicitly, so its runner uses `GET_LOCK` on a dedicated connection and commits a pending marker before each migration. It records completion and clears the marker atomically. An unfinished marker blocks startup; follow the MySQL migration recovery procedure below. A competing startup may fail with a lock error and must be retried after the first finishes.
 
 3. Add sqlc queries.
    - Postgres query files go in `database/postgres/queries`.
@@ -230,3 +230,5 @@ Account-owned email-change challenges, roles and refresh tokens cascade on accou
 OTP routes use the typed purposes in `handlers/otp.go` for signing, mail keys and persistent quota scopes. Issuance remains one per minute and five per ten minutes; verification remains five per ten minutes, independent of challenge replacement or consumption.
 
 Cache operations require a non-nil context, as does the mailer; `cache.ErrNilContext` reports invalid calls without a panic. SQLite path parsing, private creation and existing-file validation are separate helpers; URI `mode=ro/rw` does not create missing files or directories.
+
+Published migrations are immutable. The stored version prevents replay; do not add `IF NOT EXISTS` retroactively or hide schema drift. On MySQL, inspect and repair partial DDL using the pending-marker recovery procedure instead of rerunning a migration blindly.
