@@ -22,3 +22,11 @@ WHERE sub = ?;
 
 -- name: SelectAccountAuthID :one
 SELECT auth_id FROM accounts WHERE sub = ?;
+
+-- name: LockAccountAuthID :one
+SELECT auth_id FROM accounts WHERE sub = ? FOR UPDATE;
+
+-- name: SetAccountAuthID :exec
+UPDATE accounts
+SET auth_id = ?
+WHERE sub = ?;

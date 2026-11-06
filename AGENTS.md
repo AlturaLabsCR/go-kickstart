@@ -117,6 +117,9 @@ Implementation notes:
 
 ## Permissions and Roles
 
+- `auth.Authenticator.RevokeAll` rotates the account's `auth_id` and removes its refresh tokens atomically. Issue and Refresh lock the account before writing/consuming refresh tokens; each refresh token carries the generation that issued it. Keep these reads uncached. A fresh Issue ordered after revocation creates a new valid session; requests authenticated before revocation may finish.
+- Session migration `20261105002` backfills existing refresh tokens with their account's generation, preserving existing sessions. Stop old application versions during deployment; old token writers do not populate the new column. This change does not add token-family replay detection or a new logout endpoint.
+
 - Role and permission identifiers are i18n keys, defined in `database/models.go`.
 - Add locale labels for new keys in `i18n/en.go` and `i18n/es.go`.
 - Store role and permission relationships in the database through migrations.

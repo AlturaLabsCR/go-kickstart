@@ -48,7 +48,16 @@ func (a *Authenticator) Issue(ctx context.Context, identity *Claims) (at *goauth
 		return nil, nil, err
 	}
 
-	return a.issueForSub(ctx, a.db.Querier(), sub)
+	err = a.db.WithTx(ctx, func(q database.Querier) error {
+		var err error
+		at, rt, err = a.issueLocked(ctx, q, sub)
+		return err
+	})
+	if err != nil {
+		return nil, nil, err
+	}
+
+	return at, rt, nil
 }
 
 func (a *Authenticator) Refresh(ctx context.Context, refreshToken string) (at *goauth.Token, rt *goauth.Token, err error) {
@@ -58,20 +67,48 @@ func (a *Authenticator) Refresh(ctx context.Context, refreshToken string) (at *g
 	}
 
 	tokenHash := hashRefreshToken(refreshToken)
+	// Discover the subject outside the transaction. SQLite can then acquire its
+	// write lock without upgrading a read snapshot that may have become stale.
+	saved, err := a.db.Querier().SelectRefreshTokenByHash(ctx, tokenHash)
+	if a.db.IsErrNotFound(err) {
+		return nil, nil, goauth.ErrInvalidToken
+	}
+	if err != nil {
+		return nil, nil, err
+	}
+	if saved.ExpiresAt != 0 && time.Now().UTC().Unix() >= saved.ExpiresAt {
+		return nil, nil, goauth.ErrExpiredToken
+	}
+
 	err = a.db.WithTx(ctx, func(q database.Querier) error {
-		saved, err := q.ConsumeRefreshTokenByHash(ctx, tokenHash)
+		// Match Issue/RevokeAll's lock order: account, then refresh token.
+		authID, err := q.LockAccountAuthID(ctx, saved.Sub)
+		if a.db.IsErrNotFound(err) {
+			return goauth.ErrInvalidToken
+		}
+		if err != nil {
+			return err
+		}
+		if authID == "" || saved.AuthID != authID {
+			return goauth.ErrInvalidToken
+		}
+
+		consumed, err := q.ConsumeRefreshTokenByHash(ctx, tokenHash)
 		if err != nil {
 			if a.db.IsErrNotFound(err) {
 				return goauth.ErrInvalidToken
 			}
 			return err
 		}
-
-		if saved.ExpiresAt != 0 && time.Now().UTC().Unix() >= saved.ExpiresAt {
+		if consumed.Sub != saved.Sub || consumed.AuthID != authID {
+			return goauth.ErrInvalidToken
+		}
+		// The token may have expired while waiting for either lock.
+		if consumed.ExpiresAt != 0 && time.Now().UTC().Unix() >= consumed.ExpiresAt {
 			return goauth.ErrExpiredToken
 		}
 
-		at, rt, err = a.issueForSub(ctx, q, saved.Sub)
+		at, rt, err = a.signSession(ctx, q, saved.Sub, authID)
 		return err
 	})
 	if err != nil {
@@ -130,11 +167,32 @@ func (a *Authenticator) RevokeAll(ctx context.Context, identity *Claims) error {
 		return err
 	}
 
-	return a.db.Querier().DeleteRefreshTokensBySub(ctx, sub)
+	// Rotate instead of clearing so every access token carrying the previous
+	// generation fails verification, not just future refreshes.
+	authID, err := secrets.RandStr(128)
+	if err != nil {
+		return err
+	}
+
+	return a.db.WithTx(ctx, func(q database.Querier) error {
+		if _, err := q.LockAccountAuthID(ctx, sub); err != nil {
+			// Account deletion is idempotent: nothing remains to revoke.
+			if a.db.IsErrNotFound(err) {
+				return nil
+			}
+			return err
+		}
+
+		if err := q.SetAccountAuthID(ctx, sub, authID); err != nil {
+			return err
+		}
+
+		return q.DeleteRefreshTokensBySub(ctx, sub)
+	})
 }
 
-func (a *Authenticator) issueForSub(ctx context.Context, q database.Querier, sub int64) (*goauth.Token, *goauth.Token, error) {
-	authID, err := q.SelectAccountAuthID(ctx, sub)
+func (a *Authenticator) issueLocked(ctx context.Context, q database.Querier, sub int64) (*goauth.Token, *goauth.Token, error) {
+	authID, err := q.LockAccountAuthID(ctx, sub)
 	if a.db.IsErrNotFound(err) {
 		return nil, nil, goauth.ErrInvalidIdentity
 	}
@@ -145,6 +203,10 @@ func (a *Authenticator) issueForSub(ctx context.Context, q database.Querier, sub
 		return nil, nil, goauth.ErrInvalidIdentity
 	}
 
+	return a.signSession(ctx, q, sub, authID)
+}
+
+func (a *Authenticator) signSession(ctx context.Context, q database.Querier, sub int64, authID string) (*goauth.Token, *goauth.Token, error) {
 	roles, err := q.SelectAccountRolesBySub(ctx, sub)
 	if err != nil {
 		return nil, nil, err
@@ -170,7 +232,7 @@ func (a *Authenticator) issueForSub(ctx context.Context, q database.Querier, sub
 		refreshExpiresAt = time.Now().UTC().Add(a.refreshTTL).Unix()
 	}
 
-	if err := q.InsertRefreshToken(ctx, hashRefreshToken(refreshToken), sub, refreshExpiresAt); err != nil {
+	if err := q.InsertRefreshToken(ctx, hashRefreshToken(refreshToken), sub, authID, refreshExpiresAt); err != nil {
 		return nil, nil, err
 	}
 

@@ -83,6 +83,7 @@ paths:
         - Authentication
       operationId: refreshSession
       summary: Refresh session tokens
+      description: Atomically consumes a refresh token and issues a replacement for the same account session generation. Tokens from a revoked generation or expired while waiting for a database lock are rejected. Account-wide revocation invalidates both access and refresh tokens; requests already authenticated may finish.
       requestBody:
         required: true
         content:
@@ -200,7 +201,7 @@ components:
       type: http
       scheme: bearer
       bearerFormat: JWT
-      description: Access tokens must contain an expiration and the current account authentication identity. Tokens for deleted accounts and tokens issued before the account identity migration are rejected.
+      description: Access tokens must contain an expiration and the current account authentication identity. Account-wide session revocation rotates this identity, rejecting previous tokens immediately on subsequent verification. Tokens for deleted accounts and tokens issued before the account identity migration are rejected.
   responses:
     OTPMailFailure:
       description: The configured mailer reported a failure. The saved code expires normally and request limits remain in effect; a delivery error can occur after a provider has accepted the message.

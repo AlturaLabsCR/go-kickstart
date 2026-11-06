@@ -1,11 +1,16 @@
 -- name: InsertRefreshToken :exec
-INSERT INTO refresh_tokens (token_hash, sub, expires_at)
-VALUES (?, ?, ?);
+INSERT INTO refresh_tokens (token_hash, sub, auth_id, expires_at)
+VALUES (?, ?, ?, ?);
+
+-- name: SelectRefreshTokenByHash :one
+SELECT token_hash, sub, auth_id, expires_at, created_at
+FROM refresh_tokens
+WHERE token_hash = ?;
 
 -- name: ConsumeRefreshTokenByHash :one
 DELETE FROM refresh_tokens
 WHERE token_hash = ?
-RETURNING token_hash, sub, expires_at, created_at;
+RETURNING token_hash, sub, auth_id, expires_at, created_at;
 
 -- name: DeleteRefreshTokenByHash :exec
 DELETE FROM refresh_tokens

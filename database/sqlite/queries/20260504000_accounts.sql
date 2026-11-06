@@ -20,3 +20,14 @@ WHERE sub = ?;
 
 -- name: SelectAccountAuthID :one
 SELECT auth_id FROM accounts WHERE sub = ?;
+
+-- name: LockAccountAuthID :one
+UPDATE accounts
+SET auth_id = auth_id
+WHERE sub = ?
+RETURNING auth_id;
+
+-- name: SetAccountAuthID :exec
+UPDATE accounts
+SET auth_id = ?
+WHERE sub = ?;

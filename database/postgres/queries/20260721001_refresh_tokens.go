@@ -7,12 +7,28 @@ import (
 	"app/database/postgres/db"
 )
 
-func (q *PostgresQuerier) InsertRefreshToken(ctx context.Context, tokenHash string, sub int64, expiresAt int64) error {
+func (q *PostgresQuerier) InsertRefreshToken(ctx context.Context, tokenHash string, sub int64, authID string, expiresAt int64) error {
 	return q.queries.InsertRefreshToken(ctx, db.InsertRefreshTokenParams{
 		TokenHash: tokenHash,
 		Sub:       sub,
+		AuthID:    authID,
 		ExpiresAt: expiresAt,
 	})
+}
+
+func (q *PostgresQuerier) SelectRefreshTokenByHash(ctx context.Context, tokenHash string) (*database.RefreshToken, error) {
+	token, err := q.queries.SelectRefreshTokenByHash(ctx, tokenHash)
+	if err != nil {
+		return nil, err
+	}
+
+	return &database.RefreshToken{
+		TokenHash: token.TokenHash,
+		Sub:       token.Sub,
+		AuthID:    token.AuthID,
+		ExpiresAt: token.ExpiresAt,
+		CreatedAt: token.CreatedAt,
+	}, nil
 }
 
 func (q *PostgresQuerier) ConsumeRefreshTokenByHash(ctx context.Context, tokenHash string) (*database.RefreshToken, error) {
@@ -24,6 +40,7 @@ func (q *PostgresQuerier) ConsumeRefreshTokenByHash(ctx context.Context, tokenHa
 	return &database.RefreshToken{
 		TokenHash: token.TokenHash,
 		Sub:       token.Sub,
+		AuthID:    token.AuthID,
 		ExpiresAt: token.ExpiresAt,
 		CreatedAt: token.CreatedAt,
 	}, nil

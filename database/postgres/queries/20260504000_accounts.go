@@ -53,3 +53,14 @@ func (q *PostgresQuerier) SelectAccountBySub(ctx context.Context, sub int64) (*d
 func (q *PostgresQuerier) SelectAccountAuthID(ctx context.Context, sub int64) (string, error) {
 	return q.queries.SelectAccountAuthID(ctx, sub)
 }
+
+func (q *PostgresQuerier) LockAccountAuthID(ctx context.Context, sub int64) (string, error) {
+	return q.queries.LockAccountAuthID(ctx, sub)
+}
+
+func (q *PostgresQuerier) SetAccountAuthID(ctx context.Context, sub int64, authID string) error {
+	return q.queries.SetAccountAuthID(ctx, db.SetAccountAuthIDParams{
+		Sub:    sub,
+		AuthID: authID,
+	})
+}

@@ -55,3 +55,14 @@ func (q *SqliteQuerier) SelectAccountBySub(ctx context.Context, sub int64) (*dat
 func (q *SqliteQuerier) SelectAccountAuthID(ctx context.Context, sub int64) (string, error) {
 	return q.queries.SelectAccountAuthID(ctx, sub)
 }
+
+func (q *SqliteQuerier) LockAccountAuthID(ctx context.Context, sub int64) (string, error) {
+	return q.queries.LockAccountAuthID(ctx, sub)
+}
+
+func (q *SqliteQuerier) SetAccountAuthID(ctx context.Context, sub int64, authID string) error {
+	return q.queries.SetAccountAuthID(ctx, db.SetAccountAuthIDParams{
+		AuthID: authID,
+		Sub:    sub,
+	})
+}

@@ -27,6 +27,7 @@ type AccountEmailChangeRequest struct {
 type RefreshToken struct {
 	TokenHash string
 	Sub       int64
+	AuthID    string
 	ExpiresAt int64
 	CreatedAt int64
 }

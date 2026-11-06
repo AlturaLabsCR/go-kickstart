@@ -20,3 +20,11 @@ WHERE sub = $1;
 
 -- name: SelectAccountAuthID :one
 SELECT auth_id FROM accounts WHERE sub = $1;
+
+-- name: LockAccountAuthID :one
+SELECT auth_id FROM accounts WHERE sub = $1 FOR UPDATE;
+
+-- name: SetAccountAuthID :exec
+UPDATE accounts
+SET auth_id = $2
+WHERE sub = $1;

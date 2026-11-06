@@ -35,6 +35,15 @@ type Querier interface {
 	// Authorization must read this directly from the database, never from cache.
 	SelectAccountAuthID(ctx context.Context, sub int64) (string, error)
 
+	// LockAccountAuthID locks the account row and returns its current
+	// authentication identity. Call it inside WithTx; session issuance,
+	// refresh and revocation use this lock order before touching refresh tokens.
+	LockAccountAuthID(ctx context.Context, sub int64) (string, error)
+
+	// SetAccountAuthID replaces the account authentication identity, which
+	// invalidates every access token carrying the previous value.
+	SetAccountAuthID(ctx context.Context, sub int64, authID string) error
+
 	// SelectAccountBySub returns the account for the account subject.
 	SelectAccountBySub(ctx context.Context, sub int64) (*Account, error)
 
@@ -44,8 +53,11 @@ type Querier interface {
 	// SelectAccountRolesBySub returns role keys assigned to an account.
 	SelectAccountRolesBySub(ctx context.Context, sub int64) ([]string, error)
 
-	// InsertRefreshToken stores a hashed refresh token for an account.
-	InsertRefreshToken(ctx context.Context, tokenHash string, sub int64, expiresAt int64) error
+	// InsertRefreshToken stores a hashed refresh token for an account session.
+	InsertRefreshToken(ctx context.Context, tokenHash string, sub int64, authID string, expiresAt int64) error
+
+	// SelectRefreshTokenByHash returns a refresh token record without locking it.
+	SelectRefreshTokenByHash(ctx context.Context, tokenHash string) (*RefreshToken, error)
 
 	// ConsumeRefreshTokenByHash deletes and returns a refresh token record by token hash.
 	ConsumeRefreshTokenByHash(ctx context.Context, tokenHash string) (*RefreshToken, error)

@@ -62,3 +62,16 @@ func (q *MysqlQuerier) SelectAccountBySub(ctx context.Context, sub int64) (*data
 func (q *MysqlQuerier) SelectAccountAuthID(ctx context.Context, sub int64) (string, error) {
 	return q.queries.SelectAccountAuthID(ctx, sub)
 }
+
+// LockAccountAuthID must run inside WithTx: MySQL releases row locks at the
+// end of the surrounding transaction.
+func (q *MysqlQuerier) LockAccountAuthID(ctx context.Context, sub int64) (string, error) {
+	return q.queries.LockAccountAuthID(ctx, sub)
+}
+
+func (q *MysqlQuerier) SetAccountAuthID(ctx context.Context, sub int64, authID string) error {
+	return q.queries.SetAccountAuthID(ctx, db.SetAccountAuthIDParams{
+		Sub:    sub,
+		AuthID: authID,
+	})
+}
