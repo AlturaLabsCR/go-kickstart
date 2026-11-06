@@ -15,7 +15,7 @@ WHERE sub = ?;
 
 -- name: SelectAccountBySub :one
 SELECT sub, email, created_at
-FROM accounts_meta
+FROM accounts
 WHERE sub = ?;
 
 -- name: SelectAccountAuthID :one

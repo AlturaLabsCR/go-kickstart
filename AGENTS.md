@@ -222,3 +222,5 @@ The authentication integration suite always runs SQLite. Set `TEST_POSTGRES_DSN`
 ## Naming and adapters
 
 Use `EnsureAccountByEmail` for create-if-missing semantics and Go initialisms `SQLite`, `MySQL` and `OTPHash`. sqlc renames `otp_hash` to `OTPHash` for every backend. Convert compatible generated row structs explicitly to application models; keep driver-specific error mapping in each adapter. `database.Querier` composes account, session, permission, OTP, rate-limit and maintenance interfaces.
+
+Account-owned email-change challenges, roles and refresh tokens cascade on account deletion on every backend. Migration `20261106001` preserves valid pending SQLite challenges, discards orphaned ones and removes `accounts_meta`; profile queries read explicit columns from `accounts` directly.

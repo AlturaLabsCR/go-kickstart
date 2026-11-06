@@ -98,13 +98,7 @@ func (h *Handler) DeleteAccount(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err := h.db.WithTx(r.Context(), func(q database.Querier) error {
-		if err := q.DeleteAccountEmailChangeRequest(r.Context(), sub); err != nil {
-			return err
-		}
-
-		return q.DeleteAccount(r.Context(), sub)
-	}); err != nil {
+	if err := h.db.Querier().DeleteAccount(r.Context(), sub); err != nil {
 		h.writeError(
 			w,
 			r,
