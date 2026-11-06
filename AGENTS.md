@@ -206,6 +206,8 @@ go test ./...
 
 Only run the generation commands relevant to the files changed. Do not add new tests unless explicitly requested, but do run existing tests before reporting completion.
 
+CI runs the existing tests with `-race` and checks Go vulnerabilities before building release artifacts. Keep build/test jobs at `contents: read` with checkout credentials disabled; only the tag-push publication job may request `contents: write`, and it must depend on the successful build job and consume that run's artifacts.
+
 ## Dependency Updates
 
 - Use `go get -u ./...` and `go mod tidy` for Go modules.

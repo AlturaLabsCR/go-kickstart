@@ -3,13 +3,16 @@ on:
   push:
   pull_request:
 permissions:
-  contents: write
+  contents: read
 
 jobs:
   build:
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
       - uses: actions/setup-go@v5
         with:
           go-version-file: go.mod
@@ -26,7 +29,10 @@ jobs:
           sudo apt-get install -y upx-ucl
 
       - name: Test
-        run: go test ./...
+        run: go test -race ./...
+
+      - name: Check Go vulnerabilities
+        run: go run golang.org/x/vuln/cmd/govulncheck@v1.9.0 ./...
 
       - name: Build
         run: |
@@ -35,10 +41,29 @@ jobs:
             upx --best app-linux-$arch
           done
 
-      - name: Upload
-        uses: softprops/action-gh-release@v2
-        if: github.ref_type == 'tag'
+      - name: Store release binaries
+        if: github.event_name == 'push' && github.ref_type == 'tag'
+        uses: actions/upload-artifact@v4
         with:
+          name: app-linux
+          path: app-linux-*
+          if-no-files-found: error
+
+  publish:
+    if: github.event_name == 'push' && github.ref_type == 'tag'
+    needs: build
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: app-linux
+          path: dist
+      - uses: softprops/action-gh-release@v2
+        with:
+          fail_on_unmatched_files: true
           files: |
-            app-linux-arm64
-            app-linux-amd64
+            dist/app-linux-arm64
+            dist/app-linux-amd64
