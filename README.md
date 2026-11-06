@@ -64,5 +64,4 @@ copyright headers. Keep project-specific attribution accurate when adapting it.
   permissions, OTPs or refresh tokens.
 - Add messages to both locales, update `docs/api.yaml`, and run `npm run redocly`.
 
-See [AGENTS.md](AGENTS.md) for conventions and [docs/TODO.md](docs/TODO.md) for
-review decisions and remaining automated coverage gaps.
+See [AGENTS.md](AGENTS.md) for project conventions and verification commands.

@@ -17,8 +17,12 @@ var serveCmd = &cobra.Command{
 
 func init() {
 	rootCmd.AddCommand(serveCmd)
+	registerSettings(rootCmd)
+}
 
-	// Each row owns the Viper key, CLI spelling, help and default value.
+// registerSettings owns the Viper key, CLI spelling, help and default value for
+// every runtime setting.
+func registerSettings(cmd *cobra.Command) {
 	settings := []struct {
 		key, flag, usage string
 		value            any
@@ -36,7 +40,7 @@ func init() {
 		{"root", "root", "route prefix to mount the app under", ""},
 		{"db", "db", "database DSN", "data/app.sqlite"},
 	}
-	flags := rootCmd.PersistentFlags()
+	flags := cmd.PersistentFlags()
 	for _, setting := range settings {
 		viper.SetDefault(setting.key, setting.value)
 		switch value := setting.value.(type) {
@@ -51,7 +55,7 @@ func init() {
 		default:
 			panic("unsupported configuration default: " + setting.key)
 		}
-		mustBindPersistentFlag(setting.key, rootCmd, setting.flag)
+		mustBindPersistentFlag(setting.key, cmd, setting.flag)
 	}
 }
 

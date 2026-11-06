@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"log/slog"
 	"net"
 	"net/http"
 	"os"
@@ -46,30 +47,9 @@ func runServer(cfg serverConfig) error {
 		return err
 	}
 
-	for _, secret := range []struct{ name, value string }{
-		{"auth.secret", cfg.AuthSecret},
-		{"otp.secret", cfg.OTPSecret},
-	} {
-		if len(secret.value) >= 32 {
-			continue
-		}
-		if !cfg.Dev {
-			return fmt.Errorf("%s must contain at least 32 bytes outside development mode", secret.name)
-		}
-		logger.Warn("short signing secret allowed only in development", "setting", secret.name, "secret_bytes", len(secret.value))
-	}
-	if cfg.OTPSecret != "" && cfg.OTPSecret == cfg.AuthSecret {
-		return errors.New("OTP HMAC secret must differ from the JWT signing secret")
-	}
-
-	otpSecret := cfg.OTPSecret
-	if otpSecret == "" {
-		// Development only: the signer requires a key. Pending codes will not
-		// survive a restart unless a stable OTP secret is configured.
-		otpSecret, err = secrets.RandStr()
-		if err != nil {
-			return err
-		}
+	otpSecret, err := resolveOTPSecret(cfg, logger)
+	if err != nil {
+		return err
 	}
 
 	otpSigner, err := otp.NewSigner(otpSecret)
@@ -143,4 +123,31 @@ func runServer(cfg serverConfig) error {
 
 	logger.Info("listening", "addr", listener.Addr().String())
 	return serveHTTP(ctx, srv, listener)
+}
+
+// resolveOTPSecret enforces the signing-secret policy and returns the effective
+// OTP key. Development may omit it, in which case pending codes do not survive
+// a restart.
+func resolveOTPSecret(cfg serverConfig, logger *slog.Logger) (string, error) {
+	for _, secret := range []struct{ name, value string }{
+		{"auth.secret", cfg.AuthSecret},
+		{"otp.secret", cfg.OTPSecret},
+	} {
+		if len(secret.value) >= 32 {
+			continue
+		}
+		if !cfg.Dev {
+			return "", fmt.Errorf("%s must contain at least 32 bytes outside development mode", secret.name)
+		}
+		logger.Warn("short signing secret allowed only in development", "setting", secret.name, "secret_bytes", len(secret.value))
+	}
+	if cfg.OTPSecret != "" && cfg.OTPSecret == cfg.AuthSecret {
+		return "", errors.New("OTP HMAC secret must differ from the JWT signing secret")
+	}
+
+	if cfg.OTPSecret != "" {
+		return cfg.OTPSecret, nil
+	}
+
+	return secrets.RandStr()
 }
