@@ -6,7 +6,7 @@
   "type": "commonjs",
   "private": true,
   "scripts": {
-    "redocly": "redocly build-docs docs/api.yaml --output handlers/static/api/index.html",
+    "redocly": "redocly build-docs docs/api.yaml --output handlers/static/api/index.html >/dev/null 2>&1",
     "test": "go test ./..."
   },
   "devDependencies": {
