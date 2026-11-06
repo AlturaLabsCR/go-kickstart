@@ -195,10 +195,18 @@ Hoy todo cabe, pero es inconsistente y frágil. Si se cambia la generación a 25
 
 ---
 
-## 6. Orden recomendado
+## 6. Plan de implementación por commits
 
-1. [x] **Alta:** corregir el reemplazo de variables de entorno, validar `DB` en `NewHandler`, unificar el contrato de errores de constructores y añadir `no-store` al JSON de middleware.
-2. [ ] **Media:** `expiresIn`, tabla de configuración, helpers de handlers, reducción de adaptadores/migraciones, unificación de `auth_id`, N+1 de permisos, naming (`Oncesert`, `SQLite`, `MySQL`), i18n y lint.
-3. [ ] **Baja:** limpiar templates, ejemplos OpenAPI, placeholders de marca, cabeceras de licencia, `package.json` y pruebas de pulido.
+El orden estabiliza primero los contratos, después cambia comportamiento y esquema, y finalmente simplifica consumidores y documentación. Cada commit actualiza este seguimiento y ejecuta generación pertinente y tests existentes.
 
-La pasada pequeña resuelve los puntos marcados; las refactorizaciones más amplias y los cambios de esquema siguen pendientes. En los puntos agrupados de prioridad media/baja ya se resolvieron duraciones, limpieza de i18n, lint, plantillas, ejemplos OpenAPI y `package.json`. En la fila general de i18n quedan por revisar nombres de claves y exposición mutable de `Locales`.
+1. [ ] **Contratos de base de datos:** `EnsureAccountByEmail`, iniciales `SQLite`/`MySQL`/`OTP`, interfaces por dominio y adaptadores más directos.
+2. [ ] **Permisos:** una consulta `EXISTS` por cuenta y permiso; mantener autorización fuera de caché.
+3. [ ] **Generaciones de sesión:** generar identidades nuevas de 256 bits en la aplicación, ampliar columnas MySQL y conservar identidades y sesiones existentes.
+4. [ ] **Ciclo de vida de cuentas:** FK con cascade para cambios de correo, preservar solicitudes válidas y eliminar la vista innecesaria `accounts_meta` mediante migraciones nuevas.
+5. [ ] **HTTP y handlers:** JSON compartido, logger mínimo compartido, validación de cuerpos y carga de cuentas reutilizables; documentar la distinción entre `Add` y `AddHandler`.
+6. [ ] **OTP e idiomas:** propósitos tipados y scopes derivados, presupuestos de verificación centralizados, locales sin mapa público mutable y español con tildes; mantener claves estables cuando ya distinguen bien su propósito.
+7. [ ] **Configuración y almacenamiento:** tabla de ajustes, validación de caché compartida con contrato de contexto explícito, y preparación SQLite dividida en funciones pequeñas.
+8. [ ] **Migraciones:** compartir solo el recorrido de migraciones donde reduzca duplicación y mantenga visibles locks, transacciones y recuperación MySQL. Conservar migraciones publicadas sin alteraciones.
+9. [ ] **Documentación y cierre:** nombres y licencias coherentes, guía de extensión actualizada, revisión de todas las filas del TODO y verificación con SQLite, PostgreSQL y MySQL.
+
+Las propuestas se evalúan por su beneficio: no se introducirán abstracciones solo para reducir líneas. Las decisiones de conservar código se explicarán en el punto correspondiente. No se añadirán tests nuevos sin petición explícita, según AGENTS.md; se adaptarán los existentes y se comprobarán manualmente los escenarios sin cobertura.
