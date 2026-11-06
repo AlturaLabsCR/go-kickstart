@@ -66,6 +66,9 @@ type SessionQuerier interface {
 }
 
 type PermissionQuerier interface {
+	// AccountHasPermission checks current role membership and permissions in one uncached query.
+	AccountHasPermission(ctx context.Context, sub int64, permissionKey string) (bool, error)
+
 	// AssignRoleToAccount assigns a role key to an account.
 	AssignRoleToAccount(ctx context.Context, sub int64, roleKey string) error
 

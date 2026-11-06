@@ -15,3 +15,11 @@ SELECT EXISTS (
   FROM role_permissions
   WHERE role_key = $1 AND permission_key = $2
 );
+
+-- name: AccountHasPermission :one
+SELECT EXISTS (
+  SELECT 1
+  FROM account_roles ar
+  JOIN role_permissions rp ON rp.role_key = ar.role_key
+  WHERE ar.sub = sqlc.arg(sub) AND rp.permission_key = sqlc.arg(permission_key)
+) AS has_permission;

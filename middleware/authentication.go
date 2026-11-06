@@ -67,8 +67,7 @@ func AuthenticatedIdentity(ctx context.Context) (Identity, bool) {
 }
 
 type PermissionChecker interface {
-	SelectAccountRolesBySub(ctx context.Context, sub int64) ([]string, error)
-	RoleHasPermission(ctx context.Context, roleKey string, permissionKey string) (bool, error)
+	AccountHasPermission(ctx context.Context, sub int64, permissionKey string) (bool, error)
 }
 
 func RequirePermission(logger Logger, localize LocalizeFunc, permissions PermissionChecker, permission string, next http.Handler) http.Handler {
@@ -82,32 +81,18 @@ func RequirePermission(logger Logger, localize LocalizeFunc, permissions Permiss
 
 		sub := identity.Sub
 
-		roles, err := permissions.SelectAccountRolesBySub(r.Context(), sub)
+		allowed, err := permissions.AccountHasPermission(r.Context(), sub, permission)
 		if err != nil {
-			logger.Error("failed to load account roles", "sub", sub, "error", err)
+			logger.Error("failed to check account permission", "status", http.StatusInternalServerError, "method", r.Method, "path", r.URL.Path, "sub", sub, "permission", permission, "error", err)
 			writeJSONError(w, r, localize, http.StatusInternalServerError, "err.check_role_permission")
 			return
 		}
-
-		for _, role := range roles {
-			role = strings.TrimSpace(role)
-			if role == "" {
-				continue
-			}
-
-			allowed, err := permissions.RoleHasPermission(r.Context(), role, permission)
-			if err != nil {
-				logger.Error("failed to check role permission", "status", http.StatusInternalServerError, "method", r.Method, "path", r.URL.Path, "sub", sub, "role", role, "permission", permission, "error", err)
-				writeJSONError(w, r, localize, http.StatusInternalServerError, "err.check_role_permission")
-				return
-			}
-			if allowed {
-				next.ServeHTTP(w, r)
-				return
-			}
+		if allowed {
+			next.ServeHTTP(w, r)
+			return
 		}
 
-		logger.Debug("permission denied", "status", http.StatusForbidden, "method", r.Method, "path", r.URL.Path, "sub", sub, "permission", permission, "roles", roles)
+		logger.Debug("permission denied", "status", http.StatusForbidden, "method", r.Method, "path", r.URL.Path, "sub", sub, "permission", permission)
 		writeJSONError(w, r, localize, http.StatusForbidden, "err.permission_denied")
 	})
 }

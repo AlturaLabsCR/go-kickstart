@@ -23,3 +23,10 @@ func (q *PostgresQuerier) RoleHasPermission(ctx context.Context, roleKey string,
 		PermissionKey: permissionKey,
 	})
 }
+
+func (q *PostgresQuerier) AccountHasPermission(ctx context.Context, sub int64, permissionKey string) (bool, error) {
+	return q.queries.AccountHasPermission(ctx, db.AccountHasPermissionParams{
+		Sub:           sub,
+		PermissionKey: permissionKey,
+	})
+}

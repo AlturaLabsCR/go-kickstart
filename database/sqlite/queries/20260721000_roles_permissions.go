@@ -23,3 +23,10 @@ func (q *SQLiteQuerier) RoleHasPermission(ctx context.Context, roleKey string, p
 		PermissionKey: permissionKey,
 	})
 }
+
+func (q *SQLiteQuerier) AccountHasPermission(ctx context.Context, sub int64, permissionKey string) (bool, error) {
+	return q.queries.AccountHasPermission(ctx, db.AccountHasPermissionParams{
+		Sub:           sub,
+		PermissionKey: permissionKey,
+	})
+}

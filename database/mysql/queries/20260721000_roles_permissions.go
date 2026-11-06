@@ -23,3 +23,10 @@ func (q *MySQLQuerier) RoleHasPermission(ctx context.Context, roleKey string, pe
 		PermissionKey: permissionKey,
 	})
 }
+
+func (q *MySQLQuerier) AccountHasPermission(ctx context.Context, sub int64, permissionKey string) (bool, error) {
+	return q.queries.AccountHasPermission(ctx, db.AccountHasPermissionParams{
+		Sub:           sub,
+		PermissionKey: permissionKey,
+	})
+}
