@@ -20,45 +20,42 @@ var serveCmd = &cobra.Command{
 func init() {
 	rootCmd.AddCommand(serveCmd)
 
-	viper.SetDefault("dev", false)
-	viper.SetDefault("host", "")
-	viper.SetDefault("port", 3080)
-	viper.SetDefault("logfmt", "json")
-	viper.SetDefault("loglvl", "info")
-	viper.SetDefault("auth.secret", "")
-	viper.SetDefault("otp.secret", "")
-	viper.SetDefault("auth.access-token-ttl", 15*time.Minute)
-	viper.SetDefault("auth.refresh-token-ttl", 30*24*time.Hour)
-	viper.SetDefault("mail.from", "no-reply@example.com")
-	viper.SetDefault("root", "")
-	viper.SetDefault("db", "data/app.sqlite")
-
+	// Each row owns the Viper key, CLI spelling, help and default value.
+	settings := []struct {
+		key, flag, usage string
+		value            any
+	}{
+		{"dev", "dev", "enable dev mode", false},
+		{"host", "host", "bind host", ""},
+		{"port", "port", "bind port", 3080},
+		{"logfmt", "logfmt", "log format", "json"},
+		{"loglvl", "loglvl", "log level", "info"},
+		{"auth.secret", "auth-secret", "JWT signing secret", ""},
+		{"otp.secret", "otp-secret", "independent HMAC secret for verification codes", ""},
+		{"auth.access-token-ttl", "auth-access-ttl", "access token TTL", 15 * time.Minute},
+		{"auth.refresh-token-ttl", "auth-refresh-ttl", "refresh token TTL", 30 * 24 * time.Hour},
+		{"mail.from", "mail-from", "sender address for application emails", "no-reply@example.com"},
+		{"root", "root", "route prefix to mount the app under", ""},
+		{"db", "db", "database DSN", "data/app.sqlite"},
+	}
 	flags := rootCmd.PersistentFlags()
-	flags.String("db", "data/app.sqlite", "database DSN")
-	flags.Bool("dev", false, "enable dev mode")
-	flags.String("host", "", "bind host")
-	flags.Int("port", 3080, "bind port")
-	flags.String("logfmt", "json", "log format")
-	flags.String("loglvl", "info", "log level")
-	flags.String("auth-secret", "", "JWT signing secret")
-	flags.String("otp-secret", "", "independent HMAC secret for verification codes")
-	flags.Duration("auth-access-ttl", 15*time.Minute, "access token TTL")
-	flags.Duration("auth-refresh-ttl", 30*24*time.Hour, "refresh token TTL")
-	flags.String("mail-from", "no-reply@example.com", "sender address for application emails")
-	flags.String("root", "", "route prefix to mount the app under")
+	for _, setting := range settings {
+		viper.SetDefault(setting.key, setting.value)
+		switch value := setting.value.(type) {
+		case string:
+			flags.String(setting.flag, value, setting.usage)
+		case bool:
+			flags.Bool(setting.flag, value, setting.usage)
+		case int:
+			flags.Int(setting.flag, value, setting.usage)
+		case time.Duration:
+			flags.Duration(setting.flag, value, setting.usage)
+		default:
+			panic("unsupported configuration default: " + setting.key)
+		}
+		mustBindPersistentFlag(setting.key, rootCmd, setting.flag)
+	}
 
-	mustBindPersistentFlag("db", rootCmd, "db")
-	mustBindPersistentFlag("dev", rootCmd, "dev")
-	mustBindPersistentFlag("host", rootCmd, "host")
-	mustBindPersistentFlag("port", rootCmd, "port")
-	mustBindPersistentFlag("logfmt", rootCmd, "logfmt")
-	mustBindPersistentFlag("loglvl", rootCmd, "loglvl")
-	mustBindPersistentFlag("auth.secret", rootCmd, "auth-secret")
-	mustBindPersistentFlag("otp.secret", rootCmd, "otp-secret")
-	mustBindPersistentFlag("auth.access-token-ttl", rootCmd, "auth-access-ttl")
-	mustBindPersistentFlag("auth.refresh-token-ttl", rootCmd, "auth-refresh-ttl")
-	mustBindPersistentFlag("mail.from", rootCmd, "mail-from")
-	mustBindPersistentFlag("root", rootCmd, "root")
 }
 
 func runServerFromConfig() error {

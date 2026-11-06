@@ -3,6 +3,9 @@ package memory
 import (
 	"container/list"
 	"context"
+	"strings"
+
+	"app/cache"
 	"time"
 )
 
@@ -52,9 +55,15 @@ func (c *Store) clean(interval time.Duration) {
 	}
 }
 
-func checkContext(ctx context.Context) error {
+func validateRequest(ctx context.Context, key string) error {
 	if ctx == nil {
-		return nil
+		return cache.ErrNilContext
 	}
-	return ctx.Err()
+	if err := ctx.Err(); err != nil {
+		return err
+	}
+	if strings.TrimSpace(key) == "" {
+		return cache.ErrInvalidKey
+	}
+	return nil
 }

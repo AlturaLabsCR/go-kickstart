@@ -77,11 +77,8 @@ func WithMaxBytes(limit int) OptFunc {
 }
 
 func (c *Store) Set(ctx context.Context, key string, value []byte) error {
-	if err := checkContext(ctx); err != nil {
+	if err := validateRequest(ctx, key); err != nil {
 		return err
-	}
-	if strings.TrimSpace(key) == "" {
-		return cache.ErrInvalidKey
 	}
 	c.mu.Lock()
 	defer c.mu.Unlock()
@@ -108,11 +105,8 @@ func (c *Store) Set(ctx context.Context, key string, value []byte) error {
 }
 
 func (c *Store) Get(ctx context.Context, key string) ([]byte, error) {
-	if err := checkContext(ctx); err != nil {
+	if err := validateRequest(ctx, key); err != nil {
 		return nil, err
-	}
-	if strings.TrimSpace(key) == "" {
-		return nil, cache.ErrInvalidKey
 	}
 	c.mu.Lock()
 	defer c.mu.Unlock()
@@ -128,11 +122,8 @@ func (c *Store) Get(ctx context.Context, key string) ([]byte, error) {
 }
 
 func (c *Store) Delete(ctx context.Context, key string) error {
-	if err := checkContext(ctx); err != nil {
+	if err := validateRequest(ctx, key); err != nil {
 		return err
-	}
-	if strings.TrimSpace(key) == "" {
-		return cache.ErrInvalidKey
 	}
 	c.mu.Lock()
 	defer c.mu.Unlock()

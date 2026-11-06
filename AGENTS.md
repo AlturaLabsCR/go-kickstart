@@ -195,7 +195,7 @@ h.writeError(
 - Database maintenance runs at startup and every minute, outside HTTP handlers. Each pass deletes up to 1000 expired rows per OTP/refresh-token table and 100 rate-limit rows, with a five-second context deadline. Failures are logged and retried on the next pass; shutdown cancels and joins the worker before closing the database. Cleanup is retention maintenance, not an abuse quota.
 
 - Add new runtime settings in `cmd/serve.go`.
-- Keep Viper defaults, flags, flag binding, `runServerFromConfig`, and the `serverConfig` fields in `cmd/server.go` aligned.
+- Add the key, flag, help and default together in the settings table. Keep `runServerFromConfig` and the `serverConfig` fields in `cmd/server.go` aligned with it.
 - Avoid adding configuration until the code path actually needs it.
 - Verification codes are stored only as HMAC-SHA-256 digests bound to purpose and identity using `github.com/tavocg/go-secrets/otp`. Configure an independent `otp.secret`; never reuse the JWT signing secret.
 
@@ -228,3 +228,5 @@ Use `EnsureAccountByEmail` for create-if-missing semantics and Go initialisms `S
 Account-owned email-change challenges, roles and refresh tokens cascade on account deletion on every backend. Migration `20261106001` preserves valid pending SQLite challenges, discards orphaned ones and removes `accounts_meta`; profile queries read explicit columns from `accounts` directly.
 
 OTP routes use the typed purposes in `handlers/otp.go` for signing, mail keys and persistent quota scopes. Issuance remains one per minute and five per ten minutes; verification remains five per ten minutes, independent of challenge replacement or consumption.
+
+Cache operations require a non-nil context, as does the mailer; `cache.ErrNilContext` reports invalid calls without a panic. SQLite path parsing, private creation and existing-file validation are separate helpers; URI `mode=ro/rw` does not create missing files or directories.
