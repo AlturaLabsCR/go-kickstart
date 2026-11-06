@@ -4,6 +4,7 @@ import (
 	"net/http"
 	"strings"
 
+	"app/internal/httpx"
 	"app/templates/base"
 	"app/templates/meta"
 	"app/templates/root"
@@ -48,7 +49,7 @@ func (h *Handler) Root(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	writeJSON(w, http.StatusOK, map[string]string{
+	httpx.WriteJSON(w, http.StatusOK, map[string]string{
 		"message": L("root.greeting"),
 	})
 }

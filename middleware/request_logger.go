@@ -4,12 +4,9 @@ package middleware
 import (
 	"net/http"
 	"time"
-)
 
-type Logger interface {
-	Debug(msg string, args ...any)
-	Error(msg string, args ...any)
-}
+	"app/internal/logging"
+)
 
 type statusWriter struct {
 	http.ResponseWriter
@@ -42,7 +39,7 @@ func (w *statusWriter) Write(p []byte) (int, error) {
 	return w.ResponseWriter.Write(p)
 }
 
-func RequestLogger(logger Logger, next http.Handler) http.Handler {
+func RequestLogger(logger logging.Logger, next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		start := time.Now()
 		sw := &statusWriter{
@@ -52,13 +49,10 @@ func RequestLogger(logger Logger, next http.Handler) http.Handler {
 
 		next.ServeHTTP(sw, r)
 
-		args := []any{
+		args := logging.RequestArgs(r, sw.status,
 			"pattern", r.Pattern,
-			"method", r.Method,
-			"path", r.URL.Path,
-			"status", sw.status,
 			"took", time.Since(start),
-		}
+		)
 
 		if sw.status >= http.StatusInternalServerError {
 			logger.Error("hit", args...)

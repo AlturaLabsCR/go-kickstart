@@ -1,8 +1,9 @@
 package middleware
 
 import (
-	"encoding/json"
 	"net/http"
+
+	"app/internal/httpx"
 )
 
 type LocalizeFunc func(r *http.Request, key string, args ...any) string
@@ -13,8 +14,5 @@ func writeJSONError(w http.ResponseWriter, r *http.Request, localize LocalizeFun
 		msg = localize(r, key)
 	}
 
-	w.Header().Set("Cache-Control", "no-store")
-	w.Header().Set("Content-Type", "application/json; charset=utf-8")
-	w.WriteHeader(status)
-	_ = json.NewEncoder(w).Encode(map[string]string{"error": msg})
+	httpx.WriteJSONError(w, status, msg)
 }

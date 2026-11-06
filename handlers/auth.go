@@ -9,9 +9,23 @@ import (
 
 	appauth "app/auth"
 	"app/database"
+	"app/internal/httpx"
 	auth "github.com/tavocg/go-auth"
 	secrets "github.com/tavocg/go-secrets"
 )
+
+type loginRequest struct {
+	Email string `json:"email"`
+}
+
+type verifyRequest struct {
+	Email string `json:"email"`
+	OTP   string `json:"otp"`
+}
+
+type refreshRequest struct {
+	RefreshToken string `json:"refresh_token"`
+}
 
 func (h *Handler) registerAuthRoutes() {
 	h.Add(http.MethodPost, "/auth/login", h.LoginOrCreateAccount)
@@ -20,19 +34,11 @@ func (h *Handler) registerAuthRoutes() {
 }
 
 func (h *Handler) LoginOrCreateAccount(w http.ResponseWriter, r *http.Request) {
-	type loginRequest struct {
-		Email string `json:"email"`
-	}
-	var req loginRequest
-	if err := decodeJSON(w, r, &req); err != nil {
-		h.writeError(
-			w,
-			r,
-			http.StatusBadRequest,
-			err,
-			"err.invalid_login_body",
-			"invalid login request body",
-		)
+	req, ok := decodeBody[loginRequest](h, w, r,
+		"err.invalid_login_body",
+		"invalid login request body",
+	)
+	if !ok {
 		return
 	}
 
@@ -99,21 +105,12 @@ type sessionResponse struct {
 }
 
 func (h *Handler) VerifyAuthenticationCode(w http.ResponseWriter, r *http.Request) {
-	type verifyRequest struct {
-		Email string `json:"email"`
-		OTP   string `json:"otp"`
-	}
 
-	var req verifyRequest
-	if err := decodeJSON(w, r, &req); err != nil {
-		h.writeError(
-			w,
-			r,
-			http.StatusBadRequest,
-			err,
-			"err.invalid_verify_body",
-			"invalid verify request body",
-		)
+	req, ok := decodeBody[verifyRequest](h, w, r,
+		"err.invalid_verify_body",
+		"invalid verify request body",
+	)
+	if !ok {
 		return
 	}
 
@@ -194,24 +191,16 @@ func (h *Handler) VerifyAuthenticationCode(w http.ResponseWriter, r *http.Reques
 		return
 	}
 
-	writeJSON(w, http.StatusOK, newSessionResponse(accessToken, refreshToken))
+	httpx.WriteJSON(w, http.StatusOK, newSessionResponse(accessToken, refreshToken))
 }
 
 func (h *Handler) RefreshSession(w http.ResponseWriter, r *http.Request) {
-	type refreshRequest struct {
-		RefreshToken string `json:"refresh_token"`
-	}
 
-	var req refreshRequest
-	if err := decodeJSON(w, r, &req); err != nil {
-		h.writeError(
-			w,
-			r,
-			http.StatusBadRequest,
-			err,
-			"err.invalid_refresh_body",
-			"invalid refresh request body",
-		)
+	req, ok := decodeBody[refreshRequest](h, w, r,
+		"err.invalid_refresh_body",
+		"invalid refresh request body",
+	)
+	if !ok {
 		return
 	}
 
@@ -245,7 +234,7 @@ func (h *Handler) RefreshSession(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	writeJSON(w, http.StatusOK, newSessionResponse(accessToken, refreshToken))
+	httpx.WriteJSON(w, http.StatusOK, newSessionResponse(accessToken, refreshToken))
 }
 
 func newSessionResponse(accessToken *auth.Token, refreshToken *auth.Token) sessionResponse {

@@ -9,6 +9,7 @@ import (
 	"strings"
 
 	appauth "app/auth"
+	"app/internal/logging"
 	goauth "github.com/tavocg/go-auth"
 )
 
@@ -20,11 +21,11 @@ type Identity struct {
 	Sub    int64
 }
 
-func AuthenticateBearer(logger Logger, localize LocalizeFunc, authenticator goauth.Authenticator[*appauth.Claims], next http.Handler) http.Handler {
+func AuthenticateBearer(logger logging.Logger, localize LocalizeFunc, authenticator goauth.Authenticator[*appauth.Claims], next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		parts := strings.Fields(strings.TrimSpace(r.Header.Get("Authorization")))
 		if len(parts) != 2 || !strings.EqualFold(parts[0], "Bearer") || parts[1] == "" {
-			logger.Debug("missing bearer token", "status", http.StatusUnauthorized, "method", r.Method, "path", r.URL.Path)
+			logger.Debug("missing bearer token", logging.RequestArgs(r, http.StatusUnauthorized)...)
 			writeJSONError(w, r, localize, http.StatusUnauthorized, "err.missing_bearer")
 			return
 		}
@@ -32,25 +33,25 @@ func AuthenticateBearer(logger Logger, localize LocalizeFunc, authenticator goau
 		claims, err := authenticator.Verify(r.Context(), parts[1])
 		if err != nil {
 			if errors.Is(err, goauth.ErrInvalidToken) || errors.Is(err, goauth.ErrExpiredToken) {
-				logger.Debug("failed to verify bearer token", "status", http.StatusUnauthorized, "method", r.Method, "path", r.URL.Path, "error", err)
+				logger.Debug("failed to verify bearer token", logging.RequestArgs(r, http.StatusUnauthorized, "error", err)...)
 				writeJSONError(w, r, localize, http.StatusUnauthorized, "err.verify_bearer")
 				return
 			}
 
-			logger.Error("failed to verify bearer token", "status", http.StatusInternalServerError, "method", r.Method, "path", r.URL.Path, "error", err)
+			logger.Error("failed to verify bearer token", logging.RequestArgs(r, http.StatusInternalServerError, "error", err)...)
 			writeJSONError(w, r, localize, http.StatusInternalServerError, "err.verify_bearer")
 			return
 		}
 
 		if claims == nil || claims.Subject() == "" {
-			logger.Debug("missing authenticated identity", "status", http.StatusUnauthorized, "method", r.Method, "path", r.URL.Path)
+			logger.Debug("missing authenticated identity", logging.RequestArgs(r, http.StatusUnauthorized)...)
 			writeJSONError(w, r, localize, http.StatusUnauthorized, "err.missing_identity")
 			return
 		}
 
 		sub, err := strconv.ParseInt(claims.Subject(), 10, 64)
 		if err != nil || sub <= 0 {
-			logger.Debug("invalid authenticated subject", "status", http.StatusUnauthorized, "method", r.Method, "path", r.URL.Path, "sub", claims.Subject())
+			logger.Debug("invalid authenticated subject", logging.RequestArgs(r, http.StatusUnauthorized, "sub", claims.Subject())...)
 			writeJSONError(w, r, localize, http.StatusUnauthorized, "err.invalid_subject")
 			return
 		}
@@ -70,11 +71,11 @@ type PermissionChecker interface {
 	AccountHasPermission(ctx context.Context, sub int64, permissionKey string) (bool, error)
 }
 
-func RequirePermission(logger Logger, localize LocalizeFunc, permissions PermissionChecker, permission string, next http.Handler) http.Handler {
+func RequirePermission(logger logging.Logger, localize LocalizeFunc, permissions PermissionChecker, permission string, next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		identity, ok := AuthenticatedIdentity(r.Context())
 		if !ok {
-			logger.Debug("missing authenticated identity", "status", http.StatusUnauthorized, "method", r.Method, "path", r.URL.Path)
+			logger.Debug("missing authenticated identity", logging.RequestArgs(r, http.StatusUnauthorized)...)
 			writeJSONError(w, r, localize, http.StatusUnauthorized, "err.missing_identity")
 			return
 		}
@@ -83,7 +84,7 @@ func RequirePermission(logger Logger, localize LocalizeFunc, permissions Permiss
 
 		allowed, err := permissions.AccountHasPermission(r.Context(), sub, permission)
 		if err != nil {
-			logger.Error("failed to check account permission", "status", http.StatusInternalServerError, "method", r.Method, "path", r.URL.Path, "sub", sub, "permission", permission, "error", err)
+			logger.Error("failed to check account permission", logging.RequestArgs(r, http.StatusInternalServerError, "sub", sub, "permission", permission, "error", err)...)
 			writeJSONError(w, r, localize, http.StatusInternalServerError, "err.check_role_permission")
 			return
 		}
@@ -92,7 +93,7 @@ func RequirePermission(logger Logger, localize LocalizeFunc, permissions Permiss
 			return
 		}
 
-		logger.Debug("permission denied", "status", http.StatusForbidden, "method", r.Method, "path", r.URL.Path, "sub", sub, "permission", permission)
+		logger.Debug("permission denied", logging.RequestArgs(r, http.StatusForbidden, "sub", sub, "permission", permission)...)
 		writeJSONError(w, r, localize, http.StatusForbidden, "err.permission_denied")
 	})
 }

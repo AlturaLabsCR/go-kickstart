@@ -7,9 +7,23 @@ import (
 	"time"
 
 	"app/database"
+	"app/internal/httpx"
 	"app/middleware"
 	secrets "github.com/tavocg/go-secrets"
 )
+
+type accountResponse struct {
+	Email     string `json:"email"`
+	CreatedAt int64  `json:"created_at"`
+}
+
+type changeEmailRequest struct {
+	NewEmail string `json:"new_email"`
+}
+
+type changeEmailConfirmRequest struct {
+	OTP string `json:"otp"`
+}
 
 func (h *Handler) registerAccountRoutes() {
 	authenticated := func(next http.Handler) http.Handler {
@@ -38,40 +52,12 @@ func (h *Handler) GetAccount(w http.ResponseWriter, r *http.Request) {
 	}
 	sub := identity.Sub
 
-	account, err := h.db.Querier().SelectAccountBySub(r.Context(), sub)
-	if h.db.IsErrNotFound(err) {
-		h.writeError(
-			w,
-			r,
-			http.StatusNotFound,
-			err,
-			"err.account_not_found",
-			"account not found",
-			"sub",
-			sub,
-		)
-		return
-	}
-	if err != nil {
-		h.writeError(
-			w,
-			r,
-			http.StatusInternalServerError,
-			err,
-			"err.select_account",
-			"failed to select account",
-			"sub",
-			sub,
-		)
+	account, ok := h.loadAccount(w, r, sub)
+	if !ok {
 		return
 	}
 
-	type accountResponse struct {
-		Email     string `json:"email"`
-		CreatedAt int64  `json:"created_at"`
-	}
-
-	writeJSON(w, http.StatusOK, accountResponse{
+	httpx.WriteJSON(w, http.StatusOK, accountResponse{
 		Email:     account.Email,
 		CreatedAt: account.CreatedAt,
 	})
@@ -122,20 +108,11 @@ func (h *Handler) RequestEmailChange(w http.ResponseWriter, r *http.Request) {
 	}
 	sub := identity.Sub
 
-	type changeEmailRequest struct {
-		NewEmail string `json:"new_email"`
-	}
-
-	var req changeEmailRequest
-	if err := decodeJSON(w, r, &req); err != nil {
-		h.writeError(
-			w,
-			r,
-			http.StatusBadRequest,
-			err,
-			"err.invalid_email_change_body",
-			"invalid account email change request body",
-		)
+	req, ok := decodeBody[changeEmailRequest](h, w, r,
+		"err.invalid_email_change_body",
+		"invalid account email change request body",
+	)
+	if !ok {
 		return
 	}
 
@@ -155,31 +132,8 @@ func (h *Handler) RequestEmailChange(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	account, err := h.db.Querier().SelectAccountBySub(r.Context(), sub)
-	if h.db.IsErrNotFound(err) {
-		h.writeError(
-			w,
-			r,
-			http.StatusNotFound,
-			err,
-			"err.account_not_found",
-			"account not found",
-			"sub",
-			sub,
-		)
-		return
-	}
-	if err != nil {
-		h.writeError(
-			w,
-			r,
-			http.StatusInternalServerError,
-			err,
-			"err.select_account",
-			"failed to select account",
-			"sub",
-			sub,
-		)
+	account, ok := h.loadAccount(w, r, sub)
+	if !ok {
 		return
 	}
 
@@ -249,20 +203,11 @@ func (h *Handler) ConfirmEmailChange(w http.ResponseWriter, r *http.Request) {
 	}
 	sub := identity.Sub
 
-	type changeEmailConfirmRequest struct {
-		OTP string `json:"otp"`
-	}
-
-	var req changeEmailConfirmRequest
-	if err := decodeJSON(w, r, &req); err != nil {
-		h.writeError(
-			w,
-			r,
-			http.StatusBadRequest,
-			err,
-			"err.invalid_email_confirm_body",
-			"invalid account email confirm request body",
-		)
+	req, ok := decodeBody[changeEmailConfirmRequest](h, w, r,
+		"err.invalid_email_confirm_body",
+		"invalid account email confirm request body",
+	)
+	if !ok {
 		return
 	}
 

@@ -1,46 +1,17 @@
 package handlers
 
 import (
-	"encoding/json"
-	"errors"
-	"io"
 	"net/http"
 
+	"app/database"
+	"app/internal/httpx"
+	"app/internal/logging"
 	"app/middleware"
 	email "github.com/tavocg/go-email"
 )
 
-func decodeJSON(w http.ResponseWriter, r *http.Request, dst any) error {
-	decoder := json.NewDecoder(http.MaxBytesReader(w, r.Body, 1<<20))
-	decoder.DisallowUnknownFields()
-
-	if err := decoder.Decode(dst); err != nil {
-		return err
-	}
-
-	var extra any
-	if err := decoder.Decode(&extra); err != io.EOF {
-		return errors.New("request body must contain a single JSON value")
-	}
-
-	return nil
-}
-
-func writeJSON(w http.ResponseWriter, status int, payload any) {
-	w.Header().Set("Cache-Control", "no-store")
-	w.Header().Set("Content-Type", "application/json; charset=utf-8")
-	w.WriteHeader(status)
-	_ = json.NewEncoder(w).Encode(payload)
-}
-
 func (h *Handler) writeStatus(w http.ResponseWriter, r *http.Request, status int, key string, msg string, args ...any) {
-	logArgs := make([]any, 0, 6+len(args))
-	logArgs = append(logArgs,
-		"status", status,
-		"method", r.Method,
-		"path", r.URL.Path,
-	)
-	logArgs = append(logArgs, args...)
+	logArgs := logging.RequestArgs(r, status, args...)
 
 	if status >= http.StatusInternalServerError {
 		h.logger.Error(msg, logArgs...)
@@ -48,7 +19,7 @@ func (h *Handler) writeStatus(w http.ResponseWriter, r *http.Request, status int
 		h.logger.Debug(msg, logArgs...)
 	}
 
-	writeJSON(w, status, map[string]string{"error": h.localize(r, key)})
+	httpx.WriteJSONError(w, status, h.localize(r, key))
 }
 
 func (h *Handler) writeError(w http.ResponseWriter, r *http.Request, status int, err error, key string, msg string, args ...any) {
@@ -91,4 +62,42 @@ func (h *Handler) requireIdentity(w http.ResponseWriter, r *http.Request) (middl
 		)
 	}
 	return identity, ok
+}
+
+func decodeBody[T any](h *Handler, w http.ResponseWriter, r *http.Request, key, message string) (T, bool) {
+	var body T
+	if err := httpx.DecodeJSON(w, r, &body); err != nil {
+		h.writeError(
+			w,
+			r,
+			http.StatusBadRequest,
+			err,
+			key,
+			message,
+		)
+		return body, false
+	}
+	return body, true
+}
+
+func (h *Handler) loadAccount(w http.ResponseWriter, r *http.Request, sub int64) (*database.Account, bool) {
+	account, err := h.db.Querier().SelectAccountBySub(r.Context(), sub)
+	if err != nil {
+		status, key, message := http.StatusInternalServerError, "err.select_account", "failed to select account"
+		if h.db.IsErrNotFound(err) {
+			status, key, message = http.StatusNotFound, "err.account_not_found", "account not found"
+		}
+		h.writeError(
+			w,
+			r,
+			status,
+			err,
+			key,
+			message,
+			"sub",
+			sub,
+		)
+		return nil, false
+	}
+	return account, true
 }

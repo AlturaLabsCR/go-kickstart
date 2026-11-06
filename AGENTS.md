@@ -34,8 +34,8 @@ This repository is a Go web server template for REST APIs and small HTML surface
 
 3. Keep request/response handling consistent.
    - Define request/response structs near the handler that uses them unless they are shared.
-   - Use `decodeJSON(w, r, &request)` for JSON bodies; it enforces a 1 MiB limit.
-   - Use `writeJSON` for JSON success responses.
+   - Use `decodeBody[Request](h, w, r, errorKey, logMessage)` in handlers; it uses `internal/httpx.DecodeJSON` to enforce a 1 MiB limit, unknown-field rejection and a single JSON value. Keep request/response types at package scope beside their handler.
+   - Use `httpx.WriteJSON` for JSON success responses. Handlers and middleware share the writer in `internal/httpx`, including `no-store`.
    - Use `h.writeStatus` or `h.writeError` for error responses so logs and localized JSON error bodies stay consistent.
    - Format `h.writeStatus` and `h.writeError` calls one argument per line when they have localization keys or log args.
 
@@ -152,6 +152,7 @@ Implementation notes:
 ## Localization and Errors
 
 - `handlers.Handler.localize` is the single handler-owned request localization helper.
+- Handlers and middleware receive the minimal `internal/logging.Logger` interface; use `logging.RequestArgs` for request log fields.
 - Middleware receives `middleware.LocalizeFunc`; do not pass the whole handler or full `*i18n.Localizer` into middleware.
 - API errors should be JSON objects shaped like `{"error":"..."}`.
 - Use `h.writeError` when there is an underlying error to log.

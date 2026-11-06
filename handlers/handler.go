@@ -12,6 +12,7 @@ import (
 
 	appauth "app/auth"
 	"app/database"
+	"app/internal/logging"
 	"app/middleware"
 	"github.com/tavocg/go-auth"
 	"github.com/tavocg/go-email/mailer"
@@ -19,17 +20,10 @@ import (
 	"github.com/tavocg/go-secrets/otp"
 )
 
-type Logger interface {
-	Debug(msg string, args ...any)
-	Info(msg string, args ...any)
-	Warn(msg string, args ...any)
-	Error(msg string, args ...any)
-}
-
 type Handler struct {
 	dev bool
 
-	logger        Logger
+	logger        logging.Logger
 	db            database.Database
 	authenticator auth.Authenticator[*appauth.Claims]
 	localizer     *i18n.Localizer
@@ -43,7 +37,7 @@ type Handler struct {
 }
 
 type Options struct {
-	Logger        Logger
+	Logger        logging.Logger
 	Dev           bool
 	DB            database.Database
 	Authenticator auth.Authenticator[*appauth.Claims]
@@ -104,10 +98,12 @@ func NewHandler(opts Options) (*Handler, error) {
 	return next, nil
 }
 
+// Add registers a handler function relative to the configured root prefix.
 func (h *Handler) Add(method, path string, fn http.HandlerFunc) {
 	h.AddHandler(method, path, fn)
 }
 
+// AddHandler registers an http.Handler, including middleware-wrapped routes.
 func (h *Handler) AddHandler(method, path string, handler http.Handler) {
 	pattern := h.routePath(path)
 	if method != "" {
