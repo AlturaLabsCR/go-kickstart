@@ -249,20 +249,20 @@ func (h *Handler) RefreshSession(w http.ResponseWriter, r *http.Request) {
 }
 
 func newSessionResponse(accessToken *auth.Token, refreshToken *auth.Token) sessionResponse {
+	now := time.Now().Unix()
 	return sessionResponse{
 		AccessToken:           accessToken.Value,
 		RefreshToken:          refreshToken.Value,
-		ExpiresIn:             expiresIn(accessToken.ExpiresAt),
-		RefreshTokenExpiresIn: expiresIn(refreshToken.ExpiresAt),
+		ExpiresIn:             expiresIn(accessToken.ExpiresAt, now),
+		RefreshTokenExpiresIn: expiresIn(refreshToken.ExpiresAt, now),
 	}
 }
 
-func expiresIn(expiresAt int64) int64 {
-	if expiresAt == 0 {
+func expiresIn(expiresAt, now int64) int64 {
+	if expiresAt <= now {
 		return 0
 	}
 
-	now := time.Now().Unix()
 	return expiresAt - now
 }
 

@@ -74,7 +74,7 @@ func initConfig() {
 	}
 
 	viper.SetEnvPrefix("APP")
-	viper.SetEnvKeyReplacer(strings.NewReplacer(".", "_"))
+	viper.SetEnvKeyReplacer(strings.NewReplacer(".", "_", "-", "_"))
 	viper.AutomaticEnv()
 
 	err := viper.ReadInConfig()

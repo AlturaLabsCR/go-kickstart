@@ -1,15 +1,17 @@
-# Revisión de `go-kickstart` (sin cambios)
+# Revisión y mejoras de `go-kickstart`
 
 > **Seguimiento:** marca `[x]` en la columna **Completado** (o en la casilla) cuando el punto esté resuelto. `[ ]` = pendiente.
 
-No modifiqué ningún archivo del repositorio. Revisé el código, migraciones, configuración, plantillas, documentación y estado de Git.
+Lista de seguimiento de la revisión del código, migraciones, configuración, plantillas y documentación. Las propuestas son orientativas; cada ajuste puede resolverse con una implementación más sencilla. Las descripciones de los hallazgos conservan el contexto original.
 
-**Verificación ejecutada**
+**Verificación de la pasada de fixes pequeños**
 
-- `go build ./...`: correcto.
+- `go build -o /tmp/go-kickstart-sweep .`: correcto.
 - `go vet ./...`: correcto.
-- `go test ./...`: correcto. Los backends PostgreSQL/MySQL se omiten si no hay `TEST_POSTGRES_DSN`/`TEST_MYSQL_DSN`.
-- `golangci-lint run ./...`: 4 avisos de `errcheck` (`cmd/server.go:84` y 3 cierres en `cache/memory/memory_test.go`).
+- `go test -race ./...`: correcto. Los backends PostgreSQL/MySQL se omiten si no hay `TEST_POSTGRES_DSN`/`TEST_MYSQL_DSN`.
+- `golangci-lint run ./...`: sin avisos.
+- Plantillas y OpenAPI regenerados.
+- Comprobación manual de precedencia flags > entorno > YAML y de cabeceras JSON en raíz y middleware.
 
 ---
 
@@ -17,9 +19,11 @@ No modifiqué ningún archivo del repositorio. Revisé el código, migraciones, 
 
 ### 1.1 Las variables de entorno documentadas con guion no funcionan — Urgencia: **Alta**
 
-**Completado:** [ ]
+**Completado:** [x]
 
-**Dónde:** `cmd/root.go:77`, `contrib/myserver.example.yaml:28-31`.
+**Resolución:** Se normalizan puntos y guiones a `_`. Verificados ambos TTL y la precedencia flags > entorno > archivo mediante el ejecutable.
+
+**Dónde:** `cmd/root.go:77`, `contrib/app.example.yaml:28-31`.
 
 `viper.SetEnvKeyReplacer(strings.NewReplacer(".", "_"))` solo sustituye puntos. Las claves:
 
@@ -42,7 +46,9 @@ o renombrar las claves a `auth.access_token_ttl`/`auth.refresh_token_ttl`. Añad
 
 ### 1.2 `NewHandler` no valida la base de datos y usa `panic` de forma inconsistente — Urgencia: **Alta**
 
-**Completado:** [ ]
+**Completado:** [x]
+
+**Resolución:** `NewHandler` devuelve `(*Handler, error)` y valida DB y dependencias obligatorias. Remitente y DSN se validan una sola vez en su constructor; llamadas y tests existentes adaptados.
 
 **Dónde:** `handlers/handler.go:55-81`.
 
@@ -61,7 +67,9 @@ Para una plantilla, esto es una trampa: un fallo de configuración debería prod
 
 ### 1.3 `expiresIn` puede devolver valores negativos — Urgencia: **Media**
 
-**Completado:** [ ]
+**Completado:** [x]
+
+**Resolución:** Se calcula `now` una sola vez para ambos tokens y las duraciones vencidas se limitan a cero.
 
 **Dónde:** `handlers/auth.go:260-267`; contrato en `docs/api.yaml:277-282`.
 
@@ -77,7 +85,9 @@ Si el token caduca entre la emisión y la respuesta, el resultado puede ser nega
 
 ### 1.4 Los errores JSON de middleware no envían `Cache-Control: no-store` — Urgencia: **Media**
 
-**Completado:** [ ]
+**Completado:** [x]
+
+**Resolución:** Se añadió `no-store` al escritor de errores del middleware y la raíz reutiliza `writeJSON`. Se mantienen helpers locales para evitar añadir un paquete por una cabecera.
 
 **Dónde:** `middleware/internal.go:10-18` frente a `handlers/internal.go:29-34`; `docs/api.yaml:7` promete `no-store` en respuestas JSON.
 
@@ -114,8 +124,8 @@ Hoy todo cabe, pero es inconsistente y frágil. Si se cambia la generación a 25
 | 4 | `database/postgres/queries`, `database/sqlite/queries`, `database/mysql/queries` | Muchos wrappers hacen variable temporal + `if err != nil` + `return`, y las conversiones a modelos de aplicación se repiten en los tres backends. | Retornos directos donde no haya lógica extra. Añadir conversores pequeños `toAccount`, `toRefreshToken`, `toLoginRequest`, `toEmailChangeRequest`. Mantener separado el mapeo de errores específico de cada driver. | 40–60 líneas | **Media/Baja** | [ ] |
 | 5 | `database/postgres/migrations.go`, `database/sqlite/migrations.go`, `database/mysql/migrations.go` | El bucle de migraciones pendientes y `ensureMigrationTable` están replicados. | Extraer un runner común en `database` con callbacks para leer/escribir versión y ejecutar SQL; conservar el flujo especial de MySQL con `schema_migration_pending`. | ~25 líneas | **Media** | [ ] |
 | 6 | `middleware/authentication.go` | Los argumentos de log `status`, `method`, `path` se repiten en casi todas las ramas; varias líneas superan 100 caracteres. | Helper `requestLogArgs(r, status, extra...)` y usarlo en autenticación y permisos. | ~10 líneas + legibilidad | **Baja** | [ ] |
-| 7 | `i18n/en.go`, `i18n/es.go` | Cuatro claves muertas: `err.missing_email_change`, `err.missing_login`, `err.select_email_change`, `err.select_login`. Además cada archivo registra la locale en un `init()`. | Eliminar las claves no usadas y declarar `var Locales = map[string]i18n.Locale{"en": en, "es": es}` en `i18n.go`, quitando los `init()`. | ~14 líneas | **Baja/Media** | [ ] |
-| 8 | `templates/base/body.templ`, `templates/base/head.templ` | `h(tr, active)` no usa ninguno de sus dos parámetros; `BodyParams.Active` se pasa desde `handlers/root.go` pero no se usa; hay HTML comentado que referencia un paquete `routes` inexistente. | Eliminar parámetros/campos no usados, borrar los comentarios muertos y renombrar `h/m/f` a `header/main/footer`. Si se quiere navegación activa, implementarla de verdad. | 10–15 líneas | **Baja** | [ ] |
+| 7 | `i18n/en.go`, `i18n/es.go` | Cuatro claves muertas: `err.missing_email_change`, `err.missing_login`, `err.select_email_change`, `err.select_login`. Además cada archivo registra la locale en un `init()`. | Eliminar las claves no usadas y declarar `var Locales = map[string]i18n.Locale{"en": en, "es": es}` en `i18n.go`, quitando los `init()`. | ~14 líneas | **Baja/Media** | [x] |
+| 8 | `templates/base/body.templ`, `templates/base/head.templ` | `h(tr, active)` no usa ninguno de sus dos parámetros; `BodyParams.Active` se pasa desde `handlers/root.go` pero no se usa; hay HTML comentado que referencia un paquete `routes` inexistente. | Eliminar parámetros/campos no usados, borrar los comentarios muertos y renombrar `h/m/f` a `header/main/footer`. Si se quiere navegación activa, implementarla de verdad. | 10–15 líneas | **Baja** | [x] |
 | 9 | `handlers/handler.go:104-106` | `Add` es solo un alias de `AddHandler`; unas rutas usan uno y otras el otro. | Elegir una API canónica (`AddHandler`) y usarla en todas las rutas, o mantener `Add` como azúcar pero documentarlo y usarlo consistentemente para `http.HandlerFunc`. | 3–8 líneas | **Baja** | [ ] |
 | 10 | `cache/memory/memory.go:78-145` | `Set`, `Get` y `Delete` repiten validación de contexto, clave vacía y estado cerrado. | Extraer `validateKey`/`validateContext` (sin intentar abstraer el lock) para reducir duplicación sin perder claridad. | ~10 líneas | **Baja** | [ ] |
 
@@ -133,10 +143,10 @@ Hoy todo cabe, pero es inconsistente y frágil. Si se cambia la generación a 25
 | 4 | Descriptor de propósito OTP | Hoy `login`/`email_change` se repiten como literales en scopes (`login.verify`, `email_change.verify`), claves de correo (`mail.<purpose>.subject`) y firmas. Un struct `otpPurpose{purpose, mailSubjectKey, mailBodyKey, issueScope, verifyScope}` evita erratas y permite validar claves. | **Media** | [ ] |
 | 5 | Evitar N+1 al comprobar permisos | `RequirePermission` consulta roles y luego hace una consulta por rol. Añadir una consulta `AccountHasPermission(sub, permission)` con `EXISTS`/join, o `SelectAccountPermissionsBySub`, y reducir la interfaz `PermissionChecker` a un método. | **Media** | [ ] |
 | 6 | Separar la preparación de almacenamiento SQLite | `storage.go` mezcla parseo de URI, decisiones de creación, comprobación de permisos y manejo de Windows. Dividir en `parseStoragePath`, `ensurePrivateFile` y `validateStorageFiles`, y envolver errores con la ruta (`fmt.Errorf("... %q: %w", path, err)`). | **Baja/Media** | [ ] |
-| 7 | `auth.Verify` | Usa `switch err` contra errores de JWT, mientras `Refresh` y los handlers usan `errors.Is`. Unificar con `errors.Is` para tolerar errores envueltos. | **Baja** | [ ] |
+| 7 | `auth.Verify` | Usa `switch err` contra errores de JWT, mientras `Refresh` y los handlers usan `errors.Is`. Unificar con `errors.Is` para tolerar errores envueltos. | **Baja** | [x] |
 | 8 | Tipos de request/response | `sessionResponse` está a nivel de paquete, pero `loginRequest`, `verifyRequest`, `refreshRequest`, `changeEmailRequest` y `accountResponse` están dentro de funciones. Para una plantilla conviene un criterio único: todos a nivel de paquete junto al handler, o todos locales. | **Baja** | [ ] |
-| 9 | Opciones de `cache/memory` | `OptFunc` es exportado pero recibe `*memoryCache`, un tipo no exportado; un consumidor externo no puede crear opciones propias. Valorar `type Option interface { apply(*config) }` o documentar que solo se usan las opciones proporcionadas. | **Baja** | [ ] |
-| 10 | `serve` duplicado en Cobra | `rootCmd.RunE` y `serveCmd.RunE` llaman a `runServerFromConfig`. Decidir si `app` sin subcomando arranca el servidor por comodidad o si el comando canónico es `app serve`; documentarlo. | **Baja** | [ ] |
+| 9 | Opciones de `cache/memory` | `OptFunc` es exportado pero recibe `*memoryCache`, un tipo no exportado; un consumidor externo no puede crear opciones propias. Valorar `type Option interface { apply(*config) }` o documentar que solo se usan las opciones proporcionadas. | **Baja** | [x] |
+| 10 | `serve` duplicado en Cobra | `rootCmd.RunE` y `serveCmd.RunE` llaman a `runServerFromConfig`. Decidir si `app` sin subcomando arranca el servidor por comodidad o si el comando canónico es `app serve`; documentarlo. | **Baja** | [x] |
 
 ---
 
@@ -144,51 +154,51 @@ Hoy todo cabe, pero es inconsistente y frágil. Si se cambia la generación a 25
 
 | Tema | Inconsistencia | Cómo unificarlo | Urgencia | Completado |
 |---|---|---|---|---|
-| Variables de entorno | `APP_AUTH_ACCESS_TOKEN_TTL` documentada, pero Viper espera `APP_AUTH_ACCESS-TOKEN-TTL`. | Reemplazar también `-` por `_` o renombrar claves. | **Alta** | [ ] |
-| Archivo de configuración de ejemplo | Viper busca `app.yaml` (`cmd/root.go:73`), pero el ejemplo se llama `contrib/myserver.example.yaml` y su cabecera dice `# app.yaml`. | Renombrar a `contrib/app.example.yaml` o cambiar `SetConfigName`; actualizar README. | **Media** | [ ] |
+| Variables de entorno | `APP_AUTH_ACCESS_TOKEN_TTL` documentada, pero Viper espera `APP_AUTH_ACCESS-TOKEN-TTL`. | Reemplazar también `-` por `_` o renombrar claves. | **Alta** | [x] |
+| Archivo de configuración de ejemplo | Viper busca `app.yaml` (`cmd/root.go:73`), pero el ejemplo se llamaba `contrib/myserver.example.yaml` y su cabecera dice `# app.yaml`. | Renombrar a `contrib/app.example.yaml` o cambiar `SetConfigName`; actualizar README. | **Media** | [x] |
 | Nombres de operaciones | `OncesertAccountByEmail` parece una errata de `Upsert`/`OnceInsert`. Se propaga a interfaz, adaptadores, queries SQL y tests. | Renombrar a `UpsertAccountByEmail` o `EnsureAccountByEmail` antes de publicar la plantilla; después es un cambio disruptivo. | **Media** | [ ] |
 | Iniciales Go | `Sqlite`, `NewSqlite`, `SqliteQuerier` frente a `Postgres`, `MySQL`, `MysqlQuerier`. | Usar `SQLite`, `NewSQLite`, `SQLiteQuerier` y `MySQLQuerier`; actualizar AGENTS.md. | **Media** | [ ] |
 | Iniciales en modelos | `OtpHash`, `Otp` deberían ser `OTPHash`, `OTP` en Go; los tags JSON pueden seguir siendo `otp`. | Renombrar campos de modelos y adaptadores; valorar `rename` en sqlc para código generado. | **Media/Baja** | [ ] |
 | Registro de rutas | `auth`/`root` usan `h.Add`; `account`/`static` usan `h.AddHandler`. | Elegir una API canónica. | **Baja** | [ ] |
-| Constructores | `NewHandler` hace panic; `NewAuthenticator`, `NewLocalizer`, `NewSigner` devuelven error; `initConfig` usa `cobra.CheckErr`. | Constructores de aplicación devuelven error; panic solo para invariantes internas. | **Alta** | [ ] |
-| Validación duplicada | `mail.from` se valida en `cmd/server.go` y en `NewHandler`; DSN vacío en `cmd/server.go` y `provider.Open`. | Validar una sola vez, preferiblemente en el constructor que posee el dato, y propagar error. | **Media** | [ ] |
-| Cabeceras JSON | Handlers ponen `Cache-Control: no-store`; middleware no; la raíz JSON escribe manualmente y tampoco. | Helper JSON único con cabeceras consistentes. | **Media** | [ ] |
-| Respuesta JSON de la raíz | `handlers/root.go:53-56` usa `json.NewEncoder` directamente en lugar de `writeJSON`. | Usar `writeJSON` para heredar cabeceras y formato. | **Baja** | [ ] |
+| Constructores | `NewHandler` hace panic; `NewAuthenticator`, `NewLocalizer`, `NewSigner` devuelven error; `initConfig` usa `cobra.CheckErr`. | Constructores de aplicación devuelven error; panic solo para invariantes internas. | **Alta** | [x] |
+| Validación duplicada | `mail.from` se valida en `cmd/server.go` y en `NewHandler`; DSN vacío en `cmd/server.go` y `provider.Open`. | Validar una sola vez, preferiblemente en el constructor que posee el dato, y propagar error. | **Media** | [x] |
+| Cabeceras JSON | Handlers ponen `Cache-Control: no-store`; middleware no; la raíz JSON escribe manualmente y tampoco. | Helper JSON único con cabeceras consistentes. | **Media** | [x] |
+| Respuesta JSON de la raíz | `handlers/root.go:53-56` usa `json.NewEncoder` directamente en lugar de `writeJSON`. | Usar `writeJSON` para heredar cabeceras y formato. | **Baja** | [x] |
 | Esquema entre backends | `account_email_change_requests` tiene FK con cascade en MySQL, FK sin cascade en PostgreSQL y sin FK explícita en SQLite. | Añadir `ON DELETE CASCADE` donde aplique o documentar que el handler borra manualmente; alinear migraciones. | **Media** | [ ] |
 | `auth_id` | UUID de 36 caracteres en PostgreSQL/MySQL, 64 hex en SQLite, 32 hex tras `RevokeAll`. | Estandarizar formato y longitud; ampliar MySQL si hace falta. | **Media** | [ ] |
 | Vista `accounts_meta` | PostgreSQL/SQLite usan `SELECT a.*` (incluye `auth_id`); MySQL enumera columnas (no incluye `auth_id`). Las queries seleccionan columnas explícitas, así que la vista no aporta. | Eliminar la vista y consultar `accounts`, o mantener columnas idénticas en los tres motores. | **Baja/Media** | [ ] |
 | Idempotencia de migraciones | `20261104000_rate_limits` y `20261105000_expiration_indexes` usan `CREATE INDEX` sin `IF NOT EXISTS`; otras migraciones sí lo usan. MySQL no soporta esa cláusula. | Usar `IF NOT EXISTS` donde el motor lo permita; documentar la limitación de MySQL en la recuperación. | **Baja** | [ ] |
 | i18n | Claves muertas, `err.invalid_email_change_body` frente a `err.invalid_email_confirm_body`, `init()` por locale y `Locales` global mutable. | Limpiar claves, unificar nombres, registrar locales en un solo sitio. | **Media/Baja** | [ ] |
 | Español | `codigo`, `sesion`, `verificacion`, `invalido` sin tildes; `misspell` las marca como errores en inglés. | Si el estilo ASCII es intencional, documentarlo y configurar `misspell`; si no, corregir tildes. | **Baja** | [ ] |
-| Ejemplos OpenAPI | `refresh_token_expires_in: 5184000` (60 días) no coincide con el default de 30 días (`2592000`). El `refresh_token` de ejemplo parece un JWT, pero se genera como cadena aleatoria. | Corregir ejemplos en `docs/api.yaml:77,106`. | **Baja** | [ ] |
-| Documentación de caché | AGENTS.md propone cachear listas de roles y comprobaciones de permisos, pero luego indica que roles/permisos se saltan la caché. | Decidir si se implementará o eliminar esas recomendaciones para que la guía no se contradiga. | **Baja** | [ ] |
+| Ejemplos OpenAPI | `refresh_token_expires_in: 5184000` (60 días) no coincide con el default de 30 días (`2592000`). El `refresh_token` de ejemplo parece un JWT, pero se genera como cadena aleatoria. | Corregir ejemplos en `docs/api.yaml:77,106`. | **Baja** | [x] |
+| Documentación de caché | AGENTS.md propone cachear listas de roles y comprobaciones de permisos, pero luego indica que roles/permisos se saltan la caché. | Decidir si se implementará o eliminar esas recomendaciones para que la guía no se contradiga. | **Baja** | [x] |
 | Placeholders de plantilla | Módulo y comando `app`, `package.json` `app`, título `App`, pero ejemplo `myserver`, README `go-kickstart` y textos Cobra de ejemplo. | Elegir un nombre/placeholder único y actualizar README, `package.json`, Cobra y configuración de ejemplo. | **Baja** | [ ] |
 | Cabeceras de licencia | `cmd/root.go` tiene la GPL completa, `cmd/serve.go`/`logging.go` solo copyright y la mayoría de archivos no tienen cabecera. | Aplicar la misma política a todos los archivos o eliminar las cabeceras parciales. | **Baja** | [ ] |
 | Contexto nulo | `cache/memory` acepta `nil`; `mailer/noop` devuelve `ErrNilContext`. | Documentar o normalizar la política. | **Baja** | [ ] |
-| Migración bootstrap | `20260503000_schema_migrations.sql` no usa `.up.sql`, a diferencia del resto. | Es intencional porque se aplica aparte, pero conviene documentarlo junto al formato de nombres. | **Baja** | [ ] |
+| Migración bootstrap | `20260503000_schema_migrations.sql` no usa `.up.sql`, a diferencia del resto. | Es intencional porque se aplica aparte, pero conviene documentarlo junto al formato de nombres. | **Baja** | [x] |
 
 ---
 
 ## 5. Quick wins
 
-- [ ] **Arreglar los 4 `errcheck`** — Urgencia **Media**:
+- [x] **Comprobar errores al cerrar la caché** — Urgencia **Media**:
   - `cmd/server.go:84`: cerrar el cache con log de error, igual que se hace con la base de datos.
-  - `cache/memory/memory_test.go`: usar `t.Cleanup` con comprobación de error en los tres `defer store.Close()`.
-- [ ] **`prealloc` en `handlers/internal.go:37`** — Urgencia **Baja**: `logArgs := make([]any, 0, 6+len(args))`.
-- [ ] **`package.json`** — Urgencia **Baja/Media**:
-  - `npm run redocly` usa `mkdir -p` (no portátil en Windows) y oculta todos los errores con `>/dev/null 2>&1`; conviene que un fallo de Redocly rompa la generación.
+  - `cache/memory/memory_test.go`: usar un helper con comprobación de error en los cierres, también en los concurrentes. Se conserva `defer` para cerrar dentro de la burbuja de `synctest`.
+- [x] **`prealloc` en `handlers/internal.go:37`** — Urgencia **Baja**: `logArgs := make([]any, 0, 6+len(args))`.
+- [x] **`package.json`** — Urgencia **Baja/Media**:
+  - `npm run redocly` usa `mkdir -p` (no portátil en Windows) y oculta todos los errores con `>/dev/null 2>&1`; se eliminaron `mkdir -p` y las redirecciones. Redocly crea el directorio de salida y sus errores quedan visibles.
   - El script `test` es un placeholder que siempre falla; cámbialo por `go test ./...` o elimínalo.
   - `main: "index.js"` apunta a un archivo inexistente; para un proyecto solo de documentación, considera `"private": true` y quitar `main`.
-- [ ] **README/configuración** — Urgencia **Baja**: corregir el nombre del archivo de ejemplo y explicar que `app serve` es opcional porque `app` ya arranca el servidor.
-- [ ] **`docs/api.yaml`** — Urgencia **Baja**: corregir TTL y ejemplo de refresh token.
+- [x] **README/configuración** — Urgencia **Baja**: corregir el nombre del archivo de ejemplo y explicar que `app serve` es opcional porque `app` ya arranca el servidor.
+- [x] **`docs/api.yaml`** — Urgencia **Baja**: corregir TTL y ejemplo de refresh token.
 - [ ] **Tests faltantes** — Urgencia **Media**: no hay cobertura de `middleware`, `cmd` (especialmente precedencia de variables de entorno), `routingErrorWriter` ni `sqlite/storage.go`. Respetando la política de AGENTS de no añadir tests salvo petición, al menos validar manualmente los casos de permisos/modos antes de publicar.
 
 ---
 
 ## 6. Orden recomendado
 
-1. [ ] **Alta:** corregir el reemplazo de variables de entorno, validar `DB` en `NewHandler`, unificar el contrato de errores de constructores y añadir `no-store` al JSON de middleware.
+1. [x] **Alta:** corregir el reemplazo de variables de entorno, validar `DB` en `NewHandler`, unificar el contrato de errores de constructores y añadir `no-store` al JSON de middleware.
 2. [ ] **Media:** `expiresIn`, tabla de configuración, helpers de handlers, reducción de adaptadores/migraciones, unificación de `auth_id`, N+1 de permisos, naming (`Oncesert`, `SQLite`, `MySQL`), i18n y lint.
 3. [ ] **Baja:** limpiar templates, ejemplos OpenAPI, placeholders de marca, cabeceras de licencia, `package.json` y pruebas de pulido.
 
-No apliqué ninguno de estos cambios; el reporte es solo de revisión.
+La pasada pequeña resuelve los puntos marcados; las refactorizaciones más amplias y los cambios de esquema siguen pendientes. En los puntos agrupados de prioridad media/baja ya se resolvieron duraciones, limpieza de i18n, lint, plantillas, ejemplos OpenAPI y `package.json`. En la fila general de i18n quedan por revisar nombres de claves y exposición mutable de `Locales`.

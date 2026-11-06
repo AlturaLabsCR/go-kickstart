@@ -3,6 +3,7 @@ package memory_test
 import (
 	"context"
 	"errors"
+	"io"
 	"strconv"
 	"sync"
 	"testing"
@@ -20,7 +21,7 @@ func TestCapacityEvictsOldestWrite(t *testing.T) {
 	}{{"entries", 2, 100}, {"bytes", 100, 8}} {
 		t.Run(limits.name, func(t *testing.T) {
 			store := memory.New(memory.WithMaxEntries(limits.entries), memory.WithMaxBytes(limits.bytes))
-			defer store.Close()
+			defer closeStore(t, store)
 			for _, key := range []string{"a", "b"} {
 				if err := store.Set(t.Context(), key, []byte("old")); err != nil {
 					t.Fatal(err)
@@ -56,7 +57,7 @@ func TestCapacityEvictsOldestWrite(t *testing.T) {
 
 func TestValuesAreCopiesAndCanceledWritesHaveNoEffect(t *testing.T) {
 	store := memory.New()
-	defer store.Close()
+	defer closeStore(t, store)
 	value := []byte("original")
 	if err := store.Set(t.Context(), "key", value); err != nil {
 		t.Fatal(err)
@@ -84,7 +85,7 @@ func TestValuesAreCopiesAndCanceledWritesHaveNoEffect(t *testing.T) {
 func TestIdleExpirationDoesNotRequireReads(t *testing.T) {
 	synctest.Test(t, func(t *testing.T) {
 		store := memory.New(memory.WithTTL(20 * time.Second))
-		defer store.Close()
+		defer closeStore(t, store)
 		for _, key := range []string{"idle", "read"} {
 			if err := store.Set(t.Context(), key, []byte("value")); err != nil {
 				t.Fatal(err)
@@ -114,7 +115,7 @@ func TestIdleExpirationDoesNotRequireReads(t *testing.T) {
 
 func TestConcurrentOperationsAndClose(t *testing.T) {
 	store := memory.New(memory.WithMaxEntries(4), memory.WithMaxBytes(32))
-	defer store.Close()
+	defer closeStore(t, store)
 	var workers sync.WaitGroup
 	ready, raceClose := make(chan struct{}, 12), make(chan struct{})
 	for i := range 12 {
@@ -146,7 +147,7 @@ func TestConcurrentOperationsAndClose(t *testing.T) {
 		<-ready
 	}
 	for range 4 {
-		workers.Go(func() { <-raceClose; _ = store.Close() })
+		workers.Go(func() { <-raceClose; closeStore(t, store) })
 	}
 	close(raceClose)
 	workers.Wait()
@@ -155,5 +156,12 @@ func TestConcurrentOperationsAndClose(t *testing.T) {
 	}
 	if _, err := store.Get(t.Context(), "key"); !errors.Is(err, cache.ErrClosed) {
 		t.Fatalf("closed get: %v", err)
+	}
+}
+
+func closeStore(t *testing.T, store io.Closer) {
+	t.Helper()
+	if err := store.Close(); err != nil {
+		t.Errorf("close cache: %v", err)
 	}
 }

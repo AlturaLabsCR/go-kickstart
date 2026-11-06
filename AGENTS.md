@@ -57,7 +57,7 @@ This repository is a Go web server template for REST APIs and small HTML surface
    - SQLite migrations go in `database/sqlite/migrations`.
    - MySQL migrations go in `database/mysql/migrations`.
    - Use matching version prefixes for the same logical migration in every backend.
-   - Filename format is `<version>_<name>.up.sql`, for example `20260722000_widgets.up.sql`.
+   - Filename format is `<version>_<name>.up.sql`, for example `20260722000_widgets.up.sql`. The bootstrap `20260503000_schema_migrations.sql` intentionally omits `.up`: it initializes migration bookkeeping separately from the versioned batch.
 
 2. Versioning rules.
    - Migration versions are parsed from the filename prefix as `int64`.
@@ -115,12 +115,11 @@ Cache only database reads that are stable, frequently reused, small, and have cl
 Good candidates:
 
 - Account profile lookups by subject.
-- Account role lists.
-- Role-permission checks.
 - Other read-only reference data or low-churn configuration rows.
 
 Avoid caching:
 
+- Authentication identity, account roles, and permission checks.
 - OTP/login/email-change requests.
 - Refresh-token consumption or revocation flows.
 - One-time, security-sensitive, or mutation-coupled reads.

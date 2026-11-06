@@ -4,6 +4,7 @@ import (
 	"context"
 	"crypto/sha256"
 	"encoding/hex"
+	"errors"
 	"fmt"
 	"strconv"
 	"strings"
@@ -121,10 +122,10 @@ func (a *Authenticator) Refresh(ctx context.Context, refreshToken string) (at *g
 func (a *Authenticator) Verify(ctx context.Context, accessToken string) (*Claims, error) {
 	claims, err := a.tokener.Verify(accessToken)
 	if err != nil {
-		switch err {
-		case jwt.ErrInvalidToken:
+		switch {
+		case errors.Is(err, jwt.ErrInvalidToken):
 			return nil, goauth.ErrInvalidToken
-		case jwt.ErrExpiredToken:
+		case errors.Is(err, jwt.ErrExpiredToken):
 			return nil, goauth.ErrExpiredToken
 		default:
 			return nil, err

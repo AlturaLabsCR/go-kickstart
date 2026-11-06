@@ -60,11 +60,14 @@ func newHarness(t *testing.T, db database.Database, deliveryErr error) harness {
 		t.Fatal(err)
 	}
 	mail := testMailer{make(chan *mailer.Message, 16), deliveryErr}
-	h := handlers.NewHandler(handlers.Options{
+	h, err := handlers.NewHandler(handlers.Options{
 		DB: db, Authenticator: a, Localizer: l, OTPSigner: signer,
 		Mailer: mail, MailFrom: "test@example.com",
 		Logger: slog.New(slog.NewTextHandler(io.Discard, nil)),
 	})
+	if err != nil {
+		t.Fatal(err)
+	}
 	return harness{h, a, signer, mail}
 }
 

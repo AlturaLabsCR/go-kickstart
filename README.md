@@ -22,6 +22,15 @@ Verification codes are stored as keyed HMAC digests, so the server requires an
 independent `APP_OTP_SECRET` (or `otp.secret` / `--otp-secret`). It must differ
 from `APP_AUTH_SECRET`. Use a stable value across restarts and instances.
 
+Copy [`contrib/app.example.yaml`](contrib/app.example.yaml) to `app.yaml` in the
+working directory to customize the defaults, or pass `--config /path/to/app.yaml`.
+Set `otp.secret` before starting; the example leaves it empty intentionally.
+Flags override environment variables, which override the configuration file.
+For environment variables, replace dots and hyphens in keys with underscores
+and prefix with `APP_` (for example, `APP_AUTH_ACCESS_TOKEN_TTL=15m`).
+
+`app` and `app serve` both start the server; `serve` is optional.
+
 Reverse proxy examples for Nginx, Caddy and Apache are in [the reverse proxy guide](docs/reverse-proxy.md).
 
 There are several places where placeholder strings are used,

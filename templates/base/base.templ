@@ -5,10 +5,10 @@ type PageParams struct {
 	Body BodyParams
 }
 
-templ Page(tr func(string, ...any) string, page PageParams) {
+templ Page(page PageParams) {
 	<!DOCTYPE html>
 	<html>
 		@head(page.Head)
-		@body(tr, page.Body)
+		@body(page.Body)
 	</html>
 }

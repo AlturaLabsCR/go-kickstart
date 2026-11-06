@@ -5,19 +5,18 @@ import "app/templates/meta"
 type BodyParams struct {
 	Content templ.Component
 	Aside   templ.Component
-	Active  string
 }
 
-templ body(tr func(string, ...any) string, params BodyParams) {
+templ body(params BodyParams) {
 	<body>
 		<div class="hidden" id={ RedirectID }></div>
-		@h(tr, params.Active)
-		@m(params.Content, params.Aside)
-		@f()
+		@header()
+		@main(params.Content, params.Aside)
+		@footer()
 	</body>
 }
 
-templ h(tr func(string, ...any) string, active string) {
+templ header() {
 	<header>
 		<nav>
 			<span>{ meta.AppTitle }</span>
@@ -25,7 +24,7 @@ templ h(tr func(string, ...any) string, active string) {
 	</header>
 }
 
-templ m(content, aside templ.Component) {
+templ main(content, aside templ.Component) {
 	<main>
 		if aside != nil {
 			<aside>
@@ -38,7 +37,7 @@ templ m(content, aside templ.Component) {
 	</main>
 }
 
-templ f() {
+templ footer() {
 	<footer>
 		© { meta.Year } { meta.AppTitle }
 	</footer>

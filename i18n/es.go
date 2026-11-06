@@ -1,9 +1,5 @@
 package i18n
 
-func init() {
-	Locales["es"] = es
-}
-
 var es = map[string]string{
 	"mail.login.subject":        "Tu codigo de inicio de sesion",
 	"mail.login.body":           "Tu codigo de inicio de sesion es {{.Code}}. Caduca en {{.Minutes}} minutos. Si no lo solicitaste, ignora este mensaje.",
@@ -43,9 +39,7 @@ var es = map[string]string{
 	"err.issue_tokens":               "No se pudieron emitir los tokens de sesion.",
 	"err.missing_account_subject":    "Falta el sujeto de la cuenta autenticada.",
 	"err.missing_bearer":             "Falta el token bearer.",
-	"err.missing_email_change":       "Falta la solicitud de cambio de correo.",
 	"err.missing_identity":           "Falta la identidad autenticada.",
-	"err.missing_login":              "Falta la solicitud de inicio de sesion.",
 	"err.missing_refresh":            "Falta el token de renovacion.",
 	"err.permission_denied":          "Permiso denegado.",
 	"err.refresh_session":            "No se pudo renovar la sesion.",
@@ -54,7 +48,5 @@ var es = map[string]string{
 	"err.save_email_change":          "No se pudo guardar la solicitud de cambio de correo.",
 	"err.save_login":                 "No se pudo guardar la solicitud de inicio de sesion.",
 	"err.select_account":             "No se pudo consultar la cuenta.",
-	"err.select_email_change":        "No se pudo consultar la solicitud de cambio de correo.",
-	"err.select_login":               "No se pudo consultar la solicitud de inicio de sesion.",
 	"err.verify_bearer":              "No se pudo verificar el token bearer.",
 }

@@ -34,11 +34,12 @@ func writeJSON(w http.ResponseWriter, status int, payload any) {
 }
 
 func (h *Handler) writeStatus(w http.ResponseWriter, r *http.Request, status int, key string, msg string, args ...any) {
-	logArgs := []any{
+	logArgs := make([]any, 0, 6+len(args))
+	logArgs = append(logArgs,
 		"status", status,
 		"method", r.Method,
 		"path", r.URL.Path,
-	}
+	)
 	logArgs = append(logArgs, args...)
 
 	if status >= http.StatusInternalServerError {

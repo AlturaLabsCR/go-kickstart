@@ -1,9 +1,5 @@
 package i18n
 
-func init() {
-	Locales["en"] = en
-}
-
 var en = map[string]string{
 	"mail.login.subject":        "Your sign-in code",
 	"mail.login.body":           "Your sign-in code is {{.Code}}. It expires in {{.Minutes}} minutes. If you did not request it, ignore this message.",
@@ -43,9 +39,7 @@ var en = map[string]string{
 	"err.issue_tokens":               "Failed to issue session tokens.",
 	"err.missing_account_subject":    "Missing authenticated account subject.",
 	"err.missing_bearer":             "Missing bearer token.",
-	"err.missing_email_change":       "Missing account email change request.",
 	"err.missing_identity":           "Missing authenticated identity.",
-	"err.missing_login":              "Missing login request.",
 	"err.missing_refresh":            "Missing refresh token.",
 	"err.permission_denied":          "Permission denied.",
 	"err.refresh_session":            "Failed to refresh session.",
@@ -54,7 +48,5 @@ var en = map[string]string{
 	"err.save_email_change":          "Failed to save account email change request.",
 	"err.save_login":                 "Failed to save login request.",
 	"err.select_account":             "Failed to select account.",
-	"err.select_email_change":        "Failed to select account email change request.",
-	"err.select_login":               "Failed to select login request.",
 	"err.verify_bearer":              "Failed to verify bearer token.",
 }

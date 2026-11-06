@@ -74,7 +74,7 @@ paths:
                 access_token: eyJhbGciOa...
                 refresh_token: X4fFxvY89ypw5f...
                 expires_in: 900
-                refresh_token_expires_in: 5184000
+                refresh_token_expires_in: 2592000
         default:
           $ref: '#/components/responses/Error'
   /auth/refresh:
@@ -101,9 +101,9 @@ paths:
                 $ref: '#/components/schemas/RefreshResponse'
               example:
                 access_token: eyJhbGciOiJIU...
-                refresh_token: eyJhbGciOiJIU...
+                refresh_token: X4fFxvY89ypw5f...
                 expires_in: 900
-                refresh_token_expires_in: 5184000
+                refresh_token_expires_in: 2592000
         default:
           $ref: '#/components/responses/Error'
   /account:

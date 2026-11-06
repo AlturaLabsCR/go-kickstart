@@ -2,6 +2,8 @@
 package handlers
 
 import (
+	"errors"
+	"fmt"
 	"log/slog"
 	"net/http"
 	"net/mail"
@@ -52,32 +54,33 @@ type Options struct {
 	OTPSigner     *otp.Signer
 }
 
-func NewHandler(opts Options) *Handler {
+func NewHandler(opts Options) (*Handler, error) {
 	logger := opts.Logger
 	if logger == nil {
 		logger = slog.New(slog.NewTextHandler(os.Stdout, nil))
 	}
 
-	localizer := opts.Localizer
-	if localizer == nil {
-		panic("handler localizer is required")
+	if opts.DB == nil {
+		return nil, errors.New("handler database is required")
+	}
+	if opts.Localizer == nil {
+		return nil, errors.New("handler localizer is required")
 	}
 
-	authenticator := opts.Authenticator
-	if authenticator == nil {
-		panic("handler authenticator is required")
+	if opts.Authenticator == nil {
+		return nil, errors.New("handler authenticator is required")
 	}
 
 	if opts.Mailer == nil {
-		panic("handler mailer is required")
+		return nil, errors.New("handler mailer is required")
 	}
 	sender, err := mail.ParseAddress(opts.MailFrom)
 	if err != nil {
-		panic("handler mail sender must be a valid email address")
+		return nil, fmt.Errorf("invalid handler mail sender: %w", err)
 	}
 
 	if opts.OTPSigner == nil {
-		panic("handler OTP signer is required")
+		return nil, errors.New("handler OTP signer is required")
 	}
 
 	rootPrefix := normalizeRootPrefix(opts.RootPrefix)
@@ -86,8 +89,8 @@ func NewHandler(opts Options) *Handler {
 		dev:           opts.Dev,
 		logger:        logger,
 		db:            opts.DB,
-		authenticator: authenticator,
-		localizer:     localizer,
+		authenticator: opts.Authenticator,
+		localizer:     opts.Localizer,
 		rootPrefix:    rootPrefix,
 		mailer:        opts.Mailer,
 		mailFrom:      sender.Address,
@@ -98,7 +101,7 @@ func NewHandler(opts Options) *Handler {
 	next.registerRoutes()
 	next.entry = middleware.RequestLogger(next.logger, http.HandlerFunc(next.route))
 
-	return next
+	return next, nil
 }
 
 func (h *Handler) Add(method, path string, fn http.HandlerFunc) {

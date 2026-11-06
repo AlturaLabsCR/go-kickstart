@@ -3,4 +3,7 @@ package i18n
 
 import "github.com/tavocg/go-i18n"
 
-var Locales = map[string]i18n.Locale{}
+var Locales = map[string]i18n.Locale{
+	"en": en,
+	"es": es,
+}

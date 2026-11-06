@@ -5,10 +5,8 @@ package cmd
 import (
 	"context"
 	"errors"
-	"fmt"
 	"net"
 	"net/http"
-	"net/mail"
 	"os"
 	"os/signal"
 	"strconv"
@@ -67,21 +65,17 @@ func runServer(cfg serverConfig) error {
 		return err
 	}
 
-	if cfg.DatabaseDSN == "" {
-		return errors.New("database DSN is required")
-	}
-
-	if _, err := mail.ParseAddress(cfg.MailFrom); err != nil {
-		return fmt.Errorf("invalid mail sender: %w", err)
-	}
-
 	var db database.Database
 	db, err = provider.Open(context.Background(), cfg.DatabaseDSN)
 	if err != nil {
 		return err
 	}
 	cacheStore := memory.New()
-	defer cacheStore.Close()
+	defer func() {
+		if err := cacheStore.Close(); err != nil {
+			logger.Error("cache close error", "error", err)
+		}
+	}()
 	db = cached.New(db, cacheStore)
 	defer func() {
 		if err := db.Close(); err != nil {
@@ -100,7 +94,7 @@ func runServer(cfg serverConfig) error {
 	}
 
 	// Replace the noop provider below with a go-email SMTP or Mailgun client.
-	h := handlers.NewHandler(handlers.Options{
+	h, err := handlers.NewHandler(handlers.Options{
 		Logger:        logger,
 		Dev:           cfg.Dev,
 		DB:            db,
@@ -111,6 +105,9 @@ func runServer(cfg serverConfig) error {
 		MailFrom:      cfg.MailFrom,
 		OTPSigner:     otpSigner,
 	})
+	if err != nil {
+		return err
+	}
 
 	srv := &http.Server{
 		Addr:              net.JoinHostPort(cfg.Host, strconv.Itoa(cfg.Port)),

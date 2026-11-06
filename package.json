@@ -5,10 +5,10 @@
   "license": "GPL-3.0-or-later",
   "author": "",
   "type": "commonjs",
-  "main": "index.js",
+  "private": true,
   "scripts": {
-    "redocly": "mkdir -p handlers/static/api && redocly build-docs docs/api.yaml --output handlers/static/api/index.html >/dev/null 2>&1",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "redocly": "redocly build-docs docs/api.yaml --output handlers/static/api/index.html",
+    "test": "go test ./..."
   },
   "devDependencies": {
     "@redocly/cli": "^2.30.3"

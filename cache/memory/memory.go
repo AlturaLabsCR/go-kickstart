@@ -17,6 +17,7 @@ const (
 	defaultMaxBytes   = 8 << 20
 )
 
+// OptFunc configures the store through the With* options provided by this package.
 type OptFunc func(*memoryCache)
 
 type Store struct {

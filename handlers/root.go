@@ -1,7 +1,6 @@
 package handlers
 
 import (
-	"encoding/json"
 	"net/http"
 	"strings"
 
@@ -25,7 +24,7 @@ func (h *Handler) Root(w http.ResponseWriter, r *http.Request) {
 
 	if acceptsHTML(r) {
 		w.Header().Set("Content-Type", "text/html; charset=utf-8")
-		page := base.Page(L, base.PageParams{
+		page := base.Page(base.PageParams{
 			Head: base.HeadParams{
 				Title:       meta.AppTitle,
 				Subtitle:    L("root.greeting"),
@@ -33,7 +32,6 @@ func (h *Handler) Root(w http.ResponseWriter, r *http.Request) {
 			},
 			Body: base.BodyParams{
 				Content: root.RootMain(L),
-				Active:  h.rootPrefix,
 			},
 		})
 
@@ -50,8 +48,7 @@ func (h *Handler) Root(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	w.Header().Set("Content-Type", "application/json; charset=utf-8")
-	_ = json.NewEncoder(w).Encode(map[string]string{
+	writeJSON(w, http.StatusOK, map[string]string{
 		"message": L("root.greeting"),
 	})
 }
