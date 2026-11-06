@@ -7,21 +7,21 @@ import (
 	"app/database/mysql/db"
 )
 
-func (q *MysqlQuerier) UpsertAccountEmailChangeRequest(ctx context.Context, sub int64, email string, otpHash string, expiresAt int64) error {
+func (q *MySQLQuerier) UpsertAccountEmailChangeRequest(ctx context.Context, sub int64, email string, otpHash string, expiresAt int64) error {
 	return q.queries.UpsertAccountEmailChangeRequest(ctx, db.UpsertAccountEmailChangeRequestParams{
 		Sub:       sub,
 		Email:     email,
-		OtpHash:   otpHash,
+		OTPHash:   otpHash,
 		ExpiresAt: expiresAt,
 	})
 }
 
-func (q *MysqlQuerier) ConsumeAccountEmailChangeRequest(ctx context.Context, sub int64, otpHash string, now int64) (*database.AccountEmailChangeRequest, error) {
+func (q *MySQLQuerier) ConsumeAccountEmailChangeRequest(ctx context.Context, sub int64, otpHash string, now int64) (*database.AccountEmailChangeRequest, error) {
 	var request *database.AccountEmailChangeRequest
-	err := q.withTx(ctx, func(q *MysqlQuerier) error {
+	err := q.withTx(ctx, func(q *MySQLQuerier) error {
 		saved, err := q.queries.SelectAccountEmailChangeRequestForUpdate(ctx, db.SelectAccountEmailChangeRequestForUpdateParams{
 			Sub:       sub,
-			OtpHash:   otpHash,
+			OTPHash:   otpHash,
 			ExpiresAt: now,
 		})
 		if err != nil {
@@ -32,12 +32,7 @@ func (q *MysqlQuerier) ConsumeAccountEmailChangeRequest(ctx context.Context, sub
 			return err
 		}
 
-		request = &database.AccountEmailChangeRequest{
-			Sub:       saved.Sub,
-			Email:     saved.Email,
-			OtpHash:   saved.OtpHash,
-			ExpiresAt: saved.ExpiresAt,
-		}
+		request = (*database.AccountEmailChangeRequest)(&saved)
 		return nil
 	})
 	if err != nil {
@@ -47,6 +42,6 @@ func (q *MysqlQuerier) ConsumeAccountEmailChangeRequest(ctx context.Context, sub
 	return request, nil
 }
 
-func (q *MysqlQuerier) DeleteAccountEmailChangeRequest(ctx context.Context, sub int64) error {
+func (q *MySQLQuerier) DeleteAccountEmailChangeRequest(ctx context.Context, sub int64) error {
 	return q.queries.DeleteAccountEmailChangeRequest(ctx, sub)
 }

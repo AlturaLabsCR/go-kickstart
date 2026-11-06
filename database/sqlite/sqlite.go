@@ -15,7 +15,7 @@ import (
 	_ "modernc.org/sqlite"
 )
 
-type Sqlite struct {
+type SQLite struct {
 	db      *sql.DB
 	queries *db.Queries
 }
@@ -23,9 +23,9 @@ type Sqlite struct {
 // OptFunc configures DSN parameters applied to every new connection.
 type OptFunc func(url.Values)
 
-var _ database.Database = (*Sqlite)(nil)
+var _ database.Database = (*SQLite)(nil)
 
-func NewSqlite(ctx context.Context, connStr string, opts ...OptFunc) (*Sqlite, error) {
+func NewSQLite(ctx context.Context, connStr string, opts ...OptFunc) (*SQLite, error) {
 	filename, query, _ := strings.Cut(connStr, "?")
 	params, err := url.ParseQuery(query)
 	if err != nil {
@@ -61,7 +61,7 @@ func NewSqlite(ctx context.Context, connStr string, opts ...OptFunc) (*Sqlite, e
 		return nil, err
 	}
 
-	s := &Sqlite{
+	s := &SQLite{
 		db:      conn,
 		queries: db.New(conn),
 	}
@@ -77,11 +77,11 @@ func WithForeignKeys() OptFunc {
 	}
 }
 
-func (s *Sqlite) Querier() database.Querier {
+func (s *SQLite) Querier() database.Querier {
 	return queries.New(s.queries)
 }
 
-func (s *Sqlite) WithTx(ctx context.Context, fn func(q database.Querier) error) error {
+func (s *SQLite) WithTx(ctx context.Context, fn func(q database.Querier) error) error {
 	tx, err := s.db.BeginTx(ctx, nil)
 	if err != nil {
 		return err
@@ -96,10 +96,10 @@ func (s *Sqlite) WithTx(ctx context.Context, fn func(q database.Querier) error) 
 	return tx.Commit()
 }
 
-func (s *Sqlite) IsErrNotFound(err error) bool {
+func (s *SQLite) IsErrNotFound(err error) bool {
 	return errors.Is(err, sql.ErrNoRows)
 }
 
-func (s *Sqlite) Close() error {
+func (s *SQLite) Close() error {
 	return s.db.Close()
 }

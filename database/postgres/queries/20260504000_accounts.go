@@ -9,16 +9,11 @@ import (
 	"github.com/jackc/pgx/v5/pgconn"
 )
 
-func (q *PostgresQuerier) OncesertAccountByEmail(ctx context.Context, email string, createdAt int64) (sub int64, err error) {
-	accountSub, err := q.queries.OncesertAccountByEmail(ctx, db.OncesertAccountByEmailParams{
+func (q *PostgresQuerier) EnsureAccountByEmail(ctx context.Context, email string, createdAt int64) (sub int64, err error) {
+	return q.queries.EnsureAccountByEmail(ctx, db.EnsureAccountByEmailParams{
 		Email:     email,
 		CreatedAt: createdAt,
 	})
-	if err != nil {
-		return 0, err
-	}
-
-	return accountSub, nil
 }
 
 func (q *PostgresQuerier) UpdateAccountEmail(ctx context.Context, sub int64, email string) error {
@@ -43,11 +38,7 @@ func (q *PostgresQuerier) SelectAccountBySub(ctx context.Context, sub int64) (*d
 		return nil, err
 	}
 
-	return &database.Account{
-		Sub:       account.Sub,
-		Email:     account.Email,
-		CreatedAt: account.CreatedAt,
-	}, nil
+	return (*database.Account)(&account), nil
 }
 
 func (q *PostgresQuerier) SelectAccountAuthID(ctx context.Context, sub int64) (string, error) {

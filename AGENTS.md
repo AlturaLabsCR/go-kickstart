@@ -79,7 +79,7 @@ This repository is a Go web server template for REST APIs and small HTML surface
 
 5. Update the database interface and wrappers.
    - Add app-level models to `database/models.go` when generated row types should not leak out.
-   - Add methods to `database.Querier` or `database.Database` only for operations needed by application code.
+   - Add methods to the domain interfaces composed by `database.Querier` or to `database.Database` only for operations needed by application code.
    - Implement each new `Querier` method in `database/postgres/queries`, `database/sqlite/queries`, and `database/mysql/queries`.
    - Update `database/cached.Querier` so it still satisfies `database.Querier`.
 
@@ -217,3 +217,7 @@ The authentication integration suite always runs SQLite. Set `TEST_POSTGRES_DSN`
 - Use `npm update` for Node dependencies.
 - Re-run verification after dependency changes.
 - Keep this template current unless the user asks for a pinned or conservative update.
+
+## Naming and adapters
+
+Use `EnsureAccountByEmail` for create-if-missing semantics and Go initialisms `SQLite`, `MySQL` and `OTPHash`. sqlc renames `otp_hash` to `OTPHash` for every backend. Convert compatible generated row structs explicitly to application models; keep driver-specific error mapping in each adapter. `database.Querier` composes account, session, permission, OTP, rate-limit and maintenance interfaces.

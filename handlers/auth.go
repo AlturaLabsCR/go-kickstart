@@ -143,7 +143,7 @@ func (h *Handler) VerifyAuthenticationCode(w http.ResponseWriter, r *http.Reques
 		}
 
 		var err error
-		subject, err = q.OncesertAccountByEmail(r.Context(), email, time.Now().UTC().Unix())
+		subject, err = q.EnsureAccountByEmail(r.Context(), email, time.Now().UTC().Unix())
 		if err != nil {
 			return err
 		}

@@ -25,7 +25,7 @@ func authenticator(t *testing.T, db database.Database) *auth.Authenticator {
 
 func account(t *testing.T, db database.Database, email string) *auth.Claims {
 	t.Helper()
-	sub, err := db.Querier().OncesertAccountByEmail(t.Context(), email, time.Now().Unix())
+	sub, err := db.Querier().EnsureAccountByEmail(t.Context(), email, time.Now().Unix())
 	if err != nil {
 		t.Fatal(err)
 	}

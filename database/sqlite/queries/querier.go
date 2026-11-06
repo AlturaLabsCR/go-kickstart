@@ -6,14 +6,14 @@ import (
 	"app/database/sqlite/db"
 )
 
-type SqliteQuerier struct {
+type SQLiteQuerier struct {
 	queries *db.Queries
 }
 
-var _ database.Querier = (*SqliteQuerier)(nil)
+var _ database.Querier = (*SQLiteQuerier)(nil)
 
-func New(queries *db.Queries) *SqliteQuerier {
-	return &SqliteQuerier{
+func New(queries *db.Queries) *SQLiteQuerier {
+	return &SQLiteQuerier{
 		queries: queries,
 	}
 }

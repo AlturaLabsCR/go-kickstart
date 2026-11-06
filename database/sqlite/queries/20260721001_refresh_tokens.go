@@ -7,7 +7,7 @@ import (
 	"app/database/sqlite/db"
 )
 
-func (q *SqliteQuerier) InsertRefreshToken(ctx context.Context, tokenHash string, sub int64, authID string, expiresAt int64) error {
+func (q *SQLiteQuerier) InsertRefreshToken(ctx context.Context, tokenHash string, sub int64, authID string, expiresAt int64) error {
 	return q.queries.InsertRefreshToken(ctx, db.InsertRefreshTokenParams{
 		TokenHash: tokenHash,
 		Sub:       sub,
@@ -16,40 +16,28 @@ func (q *SqliteQuerier) InsertRefreshToken(ctx context.Context, tokenHash string
 	})
 }
 
-func (q *SqliteQuerier) SelectRefreshTokenByHash(ctx context.Context, tokenHash string) (*database.RefreshToken, error) {
+func (q *SQLiteQuerier) SelectRefreshTokenByHash(ctx context.Context, tokenHash string) (*database.RefreshToken, error) {
 	token, err := q.queries.SelectRefreshTokenByHash(ctx, tokenHash)
 	if err != nil {
 		return nil, err
 	}
 
-	return &database.RefreshToken{
-		TokenHash: token.TokenHash,
-		Sub:       token.Sub,
-		AuthID:    token.AuthID,
-		ExpiresAt: token.ExpiresAt,
-		CreatedAt: token.CreatedAt,
-	}, nil
+	return (*database.RefreshToken)(&token), nil
 }
 
-func (q *SqliteQuerier) ConsumeRefreshTokenByHash(ctx context.Context, tokenHash string) (*database.RefreshToken, error) {
+func (q *SQLiteQuerier) ConsumeRefreshTokenByHash(ctx context.Context, tokenHash string) (*database.RefreshToken, error) {
 	token, err := q.queries.ConsumeRefreshTokenByHash(ctx, tokenHash)
 	if err != nil {
 		return nil, err
 	}
 
-	return &database.RefreshToken{
-		TokenHash: token.TokenHash,
-		Sub:       token.Sub,
-		AuthID:    token.AuthID,
-		ExpiresAt: token.ExpiresAt,
-		CreatedAt: token.CreatedAt,
-	}, nil
+	return (*database.RefreshToken)(&token), nil
 }
 
-func (q *SqliteQuerier) DeleteRefreshTokenByHash(ctx context.Context, tokenHash string) error {
+func (q *SQLiteQuerier) DeleteRefreshTokenByHash(ctx context.Context, tokenHash string) error {
 	return q.queries.DeleteRefreshTokenByHash(ctx, tokenHash)
 }
 
-func (q *SqliteQuerier) DeleteRefreshTokensBySub(ctx context.Context, sub int64) error {
+func (q *SQLiteQuerier) DeleteRefreshTokensBySub(ctx context.Context, sub int64) error {
 	return q.queries.DeleteRefreshTokensBySub(ctx, sub)
 }

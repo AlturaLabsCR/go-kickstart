@@ -1,4 +1,4 @@
--- name: OncesertAccountByEmail :one
+-- name: EnsureAccountByEmail :one
 INSERT INTO accounts (sub, email, created_at, auth_id)
 VALUES ((SELECT last_sub + 1 FROM account_subject_sequence WHERE id = 1), ?, ?, lower(hex(randomblob(32))))
 ON CONFLICT(email) DO UPDATE SET email = excluded.email

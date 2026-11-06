@@ -11,18 +11,18 @@ type Database interface {
 }
 
 type Querier interface {
-	// TakeRateLimit atomically charges a request to a fixed window. Zero means
-	// allowed; a positive result is the retry delay in seconds. For failed
-	// authentication attempts to persist, call outside the business transaction.
-	TakeRateLimit(ctx context.Context, scope, key string, now, windowSeconds, maxRequests int64) (int64, error)
+	AccountQuerier
+	SessionQuerier
+	PermissionQuerier
+	OTPQuerier
+	RateLimitQuerier
+	MaintenanceQuerier
+}
 
-	// DeleteExpiredRecords removes at most 1000 expired rows per OTP/token table
-	// and 100 expired rate-limit windows. Active records are left untouched.
-	DeleteExpiredRecords(ctx context.Context, now int64) error
-
-	// OncesertAccountByEmail creates an account by email if not yet exists.
+type AccountQuerier interface {
+	// EnsureAccountByEmail creates an account only if the email does not already exist.
 	// It returns the email's subject.
-	OncesertAccountByEmail(ctx context.Context, email string, createdAt int64) (sub int64, err error)
+	EnsureAccountByEmail(ctx context.Context, email string, createdAt int64) (sub int64, err error)
 
 	// UpdateAccountEmail updates the email for the account subject.
 	// It returns ErrEmailUnavailable if another account already uses the email.
@@ -31,6 +31,11 @@ type Querier interface {
 	// DeleteAccount deletes the account for the account subject.
 	DeleteAccount(ctx context.Context, sub int64) error
 
+	// SelectAccountBySub returns the account for the account subject.
+	SelectAccountBySub(ctx context.Context, sub int64) (*Account, error)
+}
+
+type SessionQuerier interface {
 	// SelectAccountAuthID returns the current account authentication identity.
 	// Authorization must read this directly from the database, never from cache.
 	SelectAccountAuthID(ctx context.Context, sub int64) (string, error)
@@ -43,15 +48,6 @@ type Querier interface {
 	// SetAccountAuthID replaces the account authentication identity, which
 	// invalidates every access token carrying the previous value.
 	SetAccountAuthID(ctx context.Context, sub int64, authID string) error
-
-	// SelectAccountBySub returns the account for the account subject.
-	SelectAccountBySub(ctx context.Context, sub int64) (*Account, error)
-
-	// AssignRoleToAccount assigns a role key to an account.
-	AssignRoleToAccount(ctx context.Context, sub int64, roleKey string) error
-
-	// SelectAccountRolesBySub returns role keys assigned to an account.
-	SelectAccountRolesBySub(ctx context.Context, sub int64) ([]string, error)
 
 	// InsertRefreshToken stores a hashed refresh token for an account session.
 	InsertRefreshToken(ctx context.Context, tokenHash string, sub int64, authID string, expiresAt int64) error
@@ -67,10 +63,20 @@ type Querier interface {
 
 	// DeleteRefreshTokensBySub deletes every refresh token for an account.
 	DeleteRefreshTokensBySub(ctx context.Context, sub int64) error
+}
+
+type PermissionQuerier interface {
+	// AssignRoleToAccount assigns a role key to an account.
+	AssignRoleToAccount(ctx context.Context, sub int64, roleKey string) error
+
+	// SelectAccountRolesBySub returns role keys assigned to an account.
+	SelectAccountRolesBySub(ctx context.Context, sub int64) ([]string, error)
 
 	// RoleHasPermission reports whether a role includes a permission.
 	RoleHasPermission(ctx context.Context, roleKey string, permissionKey string) (bool, error)
+}
 
+type OTPQuerier interface {
 	// UpsertAccountEmailChangeRequest creates or updates the pending email change request for an account.
 	// otpHash is a keyed digest; plaintext codes are never stored.
 	UpsertAccountEmailChangeRequest(ctx context.Context, sub int64, email string, otpHash string, expiresAt int64) error
@@ -90,4 +96,17 @@ type Querier interface {
 
 	// DeleteAccountLoginRequest deletes the login request for an email.
 	DeleteAccountLoginRequest(ctx context.Context, email string) error
+}
+
+type RateLimitQuerier interface {
+	// TakeRateLimit atomically charges a request to a fixed window. Zero means
+	// allowed; a positive result is the retry delay in seconds. For failed
+	// authentication attempts to persist, call outside the business transaction.
+	TakeRateLimit(ctx context.Context, scope, key string, now, windowSeconds, maxRequests int64) (int64, error)
+}
+
+type MaintenanceQuerier interface {
+	// DeleteExpiredRecords removes at most 1000 expired rows per OTP/token table
+	// and 100 expired rate-limit windows. Active records are left untouched.
+	DeleteExpiredRecords(ctx context.Context, now int64) error
 }

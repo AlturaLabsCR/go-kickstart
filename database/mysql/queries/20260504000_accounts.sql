@@ -1,4 +1,4 @@
--- name: OncesertAccountByEmail :exec
+-- name: EnsureAccountByEmail :exec
 INSERT INTO accounts (email, created_at, auth_id)
 VALUES (?, ?, UUID())
 ON DUPLICATE KEY UPDATE email = VALUES(email);

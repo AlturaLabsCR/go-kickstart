@@ -22,13 +22,7 @@ func (q *PostgresQuerier) SelectRefreshTokenByHash(ctx context.Context, tokenHas
 		return nil, err
 	}
 
-	return &database.RefreshToken{
-		TokenHash: token.TokenHash,
-		Sub:       token.Sub,
-		AuthID:    token.AuthID,
-		ExpiresAt: token.ExpiresAt,
-		CreatedAt: token.CreatedAt,
-	}, nil
+	return (*database.RefreshToken)(&token), nil
 }
 
 func (q *PostgresQuerier) ConsumeRefreshTokenByHash(ctx context.Context, tokenHash string) (*database.RefreshToken, error) {
@@ -37,13 +31,7 @@ func (q *PostgresQuerier) ConsumeRefreshTokenByHash(ctx context.Context, tokenHa
 		return nil, err
 	}
 
-	return &database.RefreshToken{
-		TokenHash: token.TokenHash,
-		Sub:       token.Sub,
-		AuthID:    token.AuthID,
-		ExpiresAt: token.ExpiresAt,
-		CreatedAt: token.CreatedAt,
-	}, nil
+	return (*database.RefreshToken)(&token), nil
 }
 
 func (q *PostgresQuerier) DeleteRefreshTokenByHash(ctx context.Context, tokenHash string) error {

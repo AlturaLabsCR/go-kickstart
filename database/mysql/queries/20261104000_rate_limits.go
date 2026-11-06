@@ -7,7 +7,7 @@ import (
 	"app/database/mysql/db"
 )
 
-func (q *MysqlQuerier) TakeRateLimit(ctx context.Context, scope, key string, now, windowSeconds, maxRequests int64) (int64, error) {
+func (q *MySQLQuerier) TakeRateLimit(ctx context.Context, scope, key string, now, windowSeconds, maxRequests int64) (int64, error) {
 	if windowSeconds <= 0 || maxRequests <= 0 {
 		return 0, fmt.Errorf("rate limit window and request limit must be positive")
 	}
@@ -17,7 +17,7 @@ func (q *MysqlQuerier) TakeRateLimit(ctx context.Context, scope, key string, now
 	}
 
 	var retryAfter int64
-	err := q.withTx(ctx, func(q *MysqlQuerier) error {
+	err := q.withTx(ctx, func(q *MySQLQuerier) error {
 		if err := q.queries.TakeRateLimit(ctx, db.TakeRateLimitParams{
 			Scope:       scope,
 			BucketKey:   key,

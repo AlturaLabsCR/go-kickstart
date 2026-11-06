@@ -7,7 +7,7 @@ import (
 	"app/database/sqlite/db"
 )
 
-func (q *SqliteQuerier) TakeRateLimit(ctx context.Context, scope, key string, now, windowSeconds, maxRequests int64) (int64, error) {
+func (q *SQLiteQuerier) TakeRateLimit(ctx context.Context, scope, key string, now, windowSeconds, maxRequests int64) (int64, error) {
 	if windowSeconds <= 0 || maxRequests <= 0 {
 		return 0, fmt.Errorf("rate limit window and request limit must be positive")
 	}

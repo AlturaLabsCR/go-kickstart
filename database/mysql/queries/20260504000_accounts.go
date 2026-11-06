@@ -9,9 +9,9 @@ import (
 	"github.com/go-sql-driver/mysql"
 )
 
-func (q *MysqlQuerier) OncesertAccountByEmail(ctx context.Context, email string, createdAt int64) (sub int64, err error) {
-	err = q.withTx(ctx, func(q *MysqlQuerier) error {
-		if err := q.queries.OncesertAccountByEmail(ctx, db.OncesertAccountByEmailParams{
+func (q *MySQLQuerier) EnsureAccountByEmail(ctx context.Context, email string, createdAt int64) (sub int64, err error) {
+	err = q.withTx(ctx, func(q *MySQLQuerier) error {
+		if err := q.queries.EnsureAccountByEmail(ctx, db.EnsureAccountByEmailParams{
 			Email:     email,
 			CreatedAt: createdAt,
 		}); err != nil {
@@ -29,7 +29,7 @@ func (q *MysqlQuerier) OncesertAccountByEmail(ctx context.Context, email string,
 	return sub, nil
 }
 
-func (q *MysqlQuerier) UpdateAccountEmail(ctx context.Context, sub int64, email string) error {
+func (q *MySQLQuerier) UpdateAccountEmail(ctx context.Context, sub int64, email string) error {
 	err := q.queries.UpdateAccountEmail(ctx, db.UpdateAccountEmailParams{
 		Email: email,
 		Sub:   sub,
@@ -42,34 +42,30 @@ func (q *MysqlQuerier) UpdateAccountEmail(ctx context.Context, sub int64, email 
 	return err
 }
 
-func (q *MysqlQuerier) DeleteAccount(ctx context.Context, sub int64) error {
+func (q *MySQLQuerier) DeleteAccount(ctx context.Context, sub int64) error {
 	return q.queries.DeleteAccount(ctx, sub)
 }
 
-func (q *MysqlQuerier) SelectAccountBySub(ctx context.Context, sub int64) (*database.Account, error) {
+func (q *MySQLQuerier) SelectAccountBySub(ctx context.Context, sub int64) (*database.Account, error) {
 	account, err := q.queries.SelectAccountBySub(ctx, sub)
 	if err != nil {
 		return nil, err
 	}
 
-	return &database.Account{
-		Sub:       account.Sub,
-		Email:     account.Email,
-		CreatedAt: account.CreatedAt,
-	}, nil
+	return (*database.Account)(&account), nil
 }
 
-func (q *MysqlQuerier) SelectAccountAuthID(ctx context.Context, sub int64) (string, error) {
+func (q *MySQLQuerier) SelectAccountAuthID(ctx context.Context, sub int64) (string, error) {
 	return q.queries.SelectAccountAuthID(ctx, sub)
 }
 
 // LockAccountAuthID must run inside WithTx: MySQL releases row locks at the
 // end of the surrounding transaction.
-func (q *MysqlQuerier) LockAccountAuthID(ctx context.Context, sub int64) (string, error) {
+func (q *MySQLQuerier) LockAccountAuthID(ctx context.Context, sub int64) (string, error) {
 	return q.queries.LockAccountAuthID(ctx, sub)
 }
 
-func (q *MysqlQuerier) SetAccountAuthID(ctx context.Context, sub int64, authID string) error {
+func (q *MySQLQuerier) SetAccountAuthID(ctx context.Context, sub int64, authID string) error {
 	return q.queries.SetAccountAuthID(ctx, db.SetAccountAuthIDParams{
 		Sub:    sub,
 		AuthID: authID,

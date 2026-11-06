@@ -9,30 +9,30 @@ import (
 	"app/database/mysql/db"
 )
 
-type MysqlQuerier struct {
+type MySQLQuerier struct {
 	conn    *sql.DB
 	queries *db.Queries
 	tx      *sql.Tx
 }
 
-var _ database.Querier = (*MysqlQuerier)(nil)
+var _ database.Querier = (*MySQLQuerier)(nil)
 
-func New(conn *sql.DB) *MysqlQuerier {
-	return &MysqlQuerier{
+func New(conn *sql.DB) *MySQLQuerier {
+	return &MySQLQuerier{
 		conn:    conn,
 		queries: db.New(conn),
 	}
 }
 
-func NewTx(tx *sql.Tx) *MysqlQuerier {
-	return &MysqlQuerier{
+func NewTx(tx *sql.Tx) *MySQLQuerier {
+	return &MySQLQuerier{
 		queries: db.New(tx),
 		tx:      tx,
 	}
 }
 
 // withTx runs fn in a transaction unless the querier already belongs to one.
-func (q *MysqlQuerier) withTx(ctx context.Context, fn func(q *MysqlQuerier) error) error {
+func (q *MySQLQuerier) withTx(ctx context.Context, fn func(q *MySQLQuerier) error) error {
 	if q.tx != nil {
 		return fn(q)
 	}

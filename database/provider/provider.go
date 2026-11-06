@@ -23,7 +23,7 @@ func Open(ctx context.Context, connStr string) (database.Database, error) {
 	case isMySQLConnStr(connStr):
 		return mysql.NewMySQL(ctx, connStr)
 	default:
-		return sqlite.NewSqlite(ctx, connStr, sqlite.WithForeignKeys())
+		return sqlite.NewSQLite(ctx, connStr, sqlite.WithForeignKeys())
 	}
 }
 

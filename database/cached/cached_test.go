@@ -17,7 +17,7 @@ import (
 
 func account(t *testing.T, db database.Database) int64 {
 	t.Helper()
-	sub, err := db.Querier().OncesertAccountByEmail(t.Context(), "old@example.com", time.Now().Unix())
+	sub, err := db.Querier().EnsureAccountByEmail(t.Context(), "old@example.com", time.Now().Unix())
 	if err != nil {
 		t.Fatal(err)
 	}

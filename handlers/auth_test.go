@@ -122,7 +122,7 @@ func TestLoginOTPIsHashedAndConsumedOnce(t *testing.T) {
 			if err != nil {
 				return err
 			}
-			if saved.OtpHash == code || !h.signer.Verify("login", saved.Email, code, saved.OtpHash) {
+			if saved.OTPHash == code || !h.signer.Verify("login", saved.Email, code, saved.OTPHash) {
 				t.Error("database did not store the code as its context-bound digest")
 			}
 			return rollback
@@ -217,11 +217,11 @@ func TestEmailConflictRollsBackOTPAndPreservesProfile(t *testing.T) {
 	testdb.Run(t, func(t *testing.T, db database.Database) {
 		h := newHarness(t, db, nil)
 		q := db.Querier()
-		sub, err := q.OncesertAccountByEmail(t.Context(), "owner@example.com", time.Now().Unix())
+		sub, err := q.EnsureAccountByEmail(t.Context(), "owner@example.com", time.Now().Unix())
 		if err != nil {
 			t.Fatal(err)
 		}
-		target, err := q.OncesertAccountByEmail(t.Context(), "taken@example.com", time.Now().Unix())
+		target, err := q.EnsureAccountByEmail(t.Context(), "taken@example.com", time.Now().Unix())
 		if err != nil {
 			t.Fatal(err)
 		}

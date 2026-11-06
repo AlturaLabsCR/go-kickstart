@@ -6,18 +6,18 @@ import (
 	"app/database/mysql/db"
 )
 
-func (q *MysqlQuerier) AssignRoleToAccount(ctx context.Context, sub int64, roleKey string) error {
+func (q *MySQLQuerier) AssignRoleToAccount(ctx context.Context, sub int64, roleKey string) error {
 	return q.queries.AssignRoleToAccount(ctx, db.AssignRoleToAccountParams{
 		Sub:     sub,
 		RoleKey: roleKey,
 	})
 }
 
-func (q *MysqlQuerier) SelectAccountRolesBySub(ctx context.Context, sub int64) ([]string, error) {
+func (q *MySQLQuerier) SelectAccountRolesBySub(ctx context.Context, sub int64) ([]string, error) {
 	return q.queries.SelectAccountRolesBySub(ctx, sub)
 }
 
-func (q *MysqlQuerier) RoleHasPermission(ctx context.Context, roleKey string, permissionKey string) (bool, error) {
+func (q *MySQLQuerier) RoleHasPermission(ctx context.Context, roleKey string, permissionKey string) (bool, error) {
 	return q.queries.RoleHasPermission(ctx, db.RoleHasPermissionParams{
 		RoleKey:       roleKey,
 		PermissionKey: permissionKey,

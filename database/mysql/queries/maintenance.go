@@ -7,7 +7,7 @@ import (
 	"app/database/mysql/db"
 )
 
-func (q *MysqlQuerier) DeleteExpiredRecords(ctx context.Context, now int64) error {
+func (q *MySQLQuerier) DeleteExpiredRecords(ctx context.Context, now int64) error {
 	// Independent batches release locks between tables and still run if one fails.
 	return errors.Join(
 		q.queries.DeleteExpiredLoginRequests(ctx, db.DeleteExpiredLoginRequestsParams{Now: now}),
