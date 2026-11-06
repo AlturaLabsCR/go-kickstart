@@ -208,6 +208,8 @@ Only run the generation commands relevant to the files changed. Do not add new t
 
 CI runs the existing tests with `-race` and checks Go vulnerabilities before building release artifacts. Keep build/test jobs at `contents: read` with checkout credentials disabled; only the tag-push publication job may request `contents: write`, and it must depend on the successful build job and consume that run's artifacts.
 
+The authentication integration suite always runs SQLite. Set `TEST_POSTGRES_DSN` (PostgreSQL URL) and `TEST_MYSQL_DSN` (MySQL driver DSN) to include external backends; CI supplies disposable service containers for both. These test users need CREATE/DROP DATABASE rights: each case creates and removes a randomly named database. Missing variables skip those backends locally; a configured but unreachable backend fails the tests.
+
 ## Dependency Updates
 
 - Use `go get -u ./...` and `go mod tidy` for Go modules.

@@ -9,6 +9,27 @@ jobs:
   build:
     runs-on: ubuntu-latest
     timeout-minutes: 30
+    services:
+      postgres:
+        image: postgres:18-alpine
+        env:
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: kickstart_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -h 127.0.0.1 -U postgres -d kickstart_test"
+          --health-interval 10s --health-timeout 5s --health-retries 10
+      mysql:
+        image: mysql:8.4
+        env:
+          MYSQL_ROOT_PASSWORD: mysql
+          MYSQL_DATABASE: kickstart_test
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd "mysql --protocol=TCP -h 127.0.0.1 -uroot -pmysql -e 'SELECT 1' kickstart_test"
+          --health-interval 10s --health-timeout 5s --health-retries 10
     steps:
       - uses: actions/checkout@v4
         with:
@@ -30,6 +51,9 @@ jobs:
 
       - name: Test
         run: go test -race ./...
+        env:
+          TEST_POSTGRES_DSN: postgres://postgres:postgres@127.0.0.1:5432/kickstart_test?sslmode=disable
+          TEST_MYSQL_DSN: root:mysql@tcp(127.0.0.1:3306)/kickstart_test
 
       - name: Check Go vulnerabilities
         run: go run golang.org/x/vuln/cmd/govulncheck@v1.9.0 ./...
