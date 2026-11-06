@@ -64,7 +64,7 @@ This repository is a Go web server template for REST APIs and small HTML surface
    - Migrations are sorted by version and applied when `version > schema_migrations.version`.
    - Do not reuse a version. The migration loader rejects duplicates.
    - Use a monotonic timestamp-style version. If adding multiple migrations on the same day, increment the suffix: `20260722000`, `20260722001`, etc.
-   - Every runner locks before reading the version. Postgres and SQLite apply the pending batch in one transaction, including version updates; a failure rolls back the entire batch. MySQL DDL commits implicitly, so its runner uses `GET_LOCK` on a dedicated connection and advances the version after each successful migration instead. A competing startup may fail with a lock error and must be retried after the first finishes.
+   - Every runner locks before reading the version. Postgres and SQLite apply the pending batch in one transaction, including version updates; a failure rolls back the entire batch. MySQL DDL commits implicitly, so its runner uses `GET_LOCK` on a dedicated connection and commits a pending marker before each migration. It records completion and clears the marker atomically. An unfinished marker blocks startup; follow the MySQL migration recovery procedure below. A competing startup may fail with a lock error and must be retried after the first finishes.
 
 3. Add sqlc queries.
    - Postgres query files go in `database/postgres/queries`.
@@ -84,6 +84,27 @@ This repository is a Go web server template for REST APIs and small HTML surface
    - Update `database/cached.Querier` so it still satisfies `database.Querier`.
 
 SQLite constructor options configure DSN parameters for every new connection. Use `WithForeignKeys` for foreign-key enforcement; pool limits are configured separately in the constructor. MySQL accepts either a driver DSN (`user:pass@tcp(host:port)/dbname`) or a `mysql://user:pass@host:port/dbname?param=value` URL. Every backend initializes the migration table from its embedded `migrations/20260503000_schema_migrations.sql` file.
+
+## MySQL migration recovery
+
+The bootstrap creates `schema_migration_pending` for new and existing databases.
+This cannot detect partial failures that happened before this protection existed.
+If startup reports an unfinished migration:
+
+1. Stop all application instances and back up the database.
+2. Read `version` from `schema_migration_pending WHERE id = 1` and from `schema_migrations WHERE id = 1`. An absent completed-version row means zero. Inspect the matching file in `database/mysql/migrations` and determine which schema and data changes actually completed.
+3. Either restore the database to its pre-migration state before clearing the marker and retrying, or manually complete and verify all remaining changes. Do not blindly clear the marker, replay a partially applied file, or edit a published migration.
+4. If completing manually, record the actual pending version and clear the marker together, replacing `<version>` below. Only do this after repairing and verifying the schema and data:
+
+   ```sql
+   START TRANSACTION;
+   INSERT INTO schema_migrations (id, version) VALUES (1, <version>)
+     ON DUPLICATE KEY UPDATE version = VALUES(version);
+   DELETE FROM schema_migration_pending WHERE id = 1;
+   COMMIT;
+   ```
+
+5. Restart the application and verify that later migrations complete.
 
 ## Caching Guidance
 

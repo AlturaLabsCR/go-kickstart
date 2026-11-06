@@ -52,6 +52,13 @@ func applyMigrations(ctx context.Context, conn *sql.DB) error {
 	}
 
 	queries := db.New(c)
+	pending, err := queries.GetPendingSchemaMigration(ctx)
+	if err != nil {
+		return err
+	}
+	if pending != 0 {
+		return fmt.Errorf("mysql migration %d is incomplete; inspect and repair the database before clearing schema_migration_pending (see AGENTS.md: MySQL migration recovery)", pending)
+	}
 	currentVersion, err := queries.GetSchemaMigrationVersion(ctx)
 	if err != nil {
 		return err
@@ -62,16 +69,39 @@ func applyMigrations(ctx context.Context, conn *sql.DB) error {
 			continue
 		}
 
+		// Commit the marker before DDL, which may partially commit on failure.
+		if err := migrationMetadataTx(ctx, c, func(q *db.Queries) error {
+			return q.SetPendingSchemaMigration(ctx, migration.Version)
+		}); err != nil {
+			return fmt.Errorf("mark mysql migration %d pending: %w", migration.Version, err)
+		}
 		if _, err := c.ExecContext(ctx, migration.SQL); err != nil {
 			return fmt.Errorf("apply mysql migration %q: %w", migration.Name, err)
 		}
 
-		if err := queries.SetSchemaMigrationVersion(ctx, migration.Version); err != nil {
-			return fmt.Errorf("set mysql migration version %d: %w", migration.Version, err)
+		if err := migrationMetadataTx(ctx, c, func(q *db.Queries) error {
+			if err := q.SetSchemaMigrationVersion(ctx, migration.Version); err != nil {
+				return err
+			}
+			return q.ClearPendingSchemaMigration(ctx)
+		}); err != nil {
+			return fmt.Errorf("finish mysql migration %d: %w", migration.Version, err)
 		}
 	}
 
 	return nil
+}
+
+func migrationMetadataTx(ctx context.Context, conn *sql.Conn, fn func(*db.Queries) error) error {
+	tx, err := conn.BeginTx(ctx, nil)
+	if err != nil {
+		return err
+	}
+	defer func() { _ = tx.Rollback() }()
+	if err := fn(db.New(tx)); err != nil {
+		return err
+	}
+	return tx.Commit()
 }
 
 func ensureMigrationTable(ctx context.Context, conn *sql.Conn) error {
