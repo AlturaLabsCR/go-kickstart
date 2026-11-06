@@ -85,6 +85,8 @@ This repository is a Go web server template for REST APIs and small HTML surface
 
 SQLite constructor options configure DSN parameters for every new connection. Use `WithForeignKeys` for foreign-key enforcement; pool limits are configured separately in the constructor. MySQL accepts either a driver DSN (`user:pass@tcp(host:port)/dbname`) or a `mysql://user:pass@host:port/dbname?param=value` URL. Every backend initializes the migration table from its embedded `migrations/20260503000_schema_migrations.sql` file.
 
+SQLite with the default filesystem VFS creates new directories with `0700` and new database files with `0600`. On Unix, existing database/journal/WAL/SHM files must have no group/other permissions; startup rejects broader modes, symlinks and non-regular files. Stop the service before correcting permissions on its own storage files. Existing directories are not chmodded: use a service-owned directory that other users cannot modify. New SQLite journal/WAL/SHM files inherit the private database permissions. In-memory databases skip filesystem preparation; URI `mode=ro/rw` never creates a missing database. URI `modeof` is rejected because SQLite can use it to override the private file mode. Custom VFS permissions and Windows ACLs are deployment responsibilities.
+
 ## MySQL migration recovery
 
 The bootstrap creates `schema_migration_pending` for new and existing databases.

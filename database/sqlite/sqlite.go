@@ -6,8 +6,6 @@ import (
 	"database/sql"
 	"errors"
 	"net/url"
-	"os"
-	"path/filepath"
 	"strings"
 
 	"app/database"
@@ -41,29 +39,8 @@ func NewSqlite(ctx context.Context, connStr string, opts ...OptFunc) (*Sqlite, e
 		connStr += "?" + query
 	}
 
-	// URI parameters are connection settings, not part of the disk path.
-	path := filename
-	if strings.HasPrefix(filename, "file:") {
-		uri, err := url.Parse(filename)
-		if err != nil {
-			return nil, err
-		}
-		path = uri.Path
-		if uri.Opaque != "" {
-			path, err = url.PathUnescape(uri.Opaque)
-			if err != nil {
-				return nil, err
-			}
-		}
-	}
-	if params.Get("mode") == "memory" {
-		path = ""
-	}
-	dir := filepath.Dir(path)
-	if dir != "." {
-		if err := os.MkdirAll(dir, 0o755); err != nil {
-			return nil, err
-		}
+	if err := prepareStorage(filename, params); err != nil {
+		return nil, err
 	}
 
 	conn, err := sql.Open("sqlite", connStr)
