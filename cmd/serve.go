@@ -1,5 +1,3 @@
-// Copyright © 2026 NAME HERE <EMAIL ADDRESS>
-
 package cmd
 
 import (
@@ -55,7 +53,6 @@ func init() {
 		}
 		mustBindPersistentFlag(setting.key, rootCmd, setting.flag)
 	}
-
 }
 
 func runServerFromConfig() error {

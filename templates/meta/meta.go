@@ -3,14 +3,6 @@ package meta
 
 import "time"
 
-const (
-	AppTitle = "App"
-)
+const AppTitle = "App"
 
-var (
-	Year int
-)
-
-func init() {
-	Year = time.Now().Year()
-}
+var Year = time.Now().Year()

@@ -1,9 +1,8 @@
 {
   "name": "app",
   "version": "0.1.0",
-  "description": "App description",
+  "description": "Documentation tooling for the app Go server template",
   "license": "GPL-3.0-or-later",
-  "author": "",
   "type": "commonjs",
   "private": true,
   "scripts": {

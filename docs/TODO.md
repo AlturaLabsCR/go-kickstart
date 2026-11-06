@@ -4,14 +4,17 @@
 
 Lista de seguimiento de la revisión del código, migraciones, configuración, plantillas y documentación. Las propuestas son orientativas; cada ajuste puede resolverse con una implementación más sencilla. Las descripciones de los hallazgos conservan el contexto original.
 
-**Verificación de la pasada de fixes pequeños**
+**Verificación del plan completo**
 
-- `go build -o /tmp/go-kickstart-sweep .`: correcto.
-- `go vet ./...`: correcto.
-- `go test -race ./...`: correcto. Los backends PostgreSQL/MySQL se omiten si no hay `TEST_POSTGRES_DSN`/`TEST_MYSQL_DSN`.
-- `golangci-lint run ./...`: sin avisos.
-- Plantillas y OpenAPI regenerados.
-- Comprobación manual de precedencia flags > entorno > YAML y de cabeceras JSON en raíz y middleware.
+- Tests existentes con `go test -race ./...`: correctos en SQLite, PostgreSQL y MySQL (contenedores locales dedicados).
+- `go vet ./...`, `golangci-lint run ./...` y compilación: correctos, lint sin avisos.
+- sqlc regenerado al cambiar queries y nombres; código generado ignorado, sin ediciones manuales.
+- Escaneo `govulncheck@v1.9.0`: cero vulnerabilidades alcanzables; advertencia de módulo `GO-2026-5932` en `golang.org/x/crypto/openpgp`, paquete que la aplicación no importa. Los paquetes importados no tienen hallazgos en este escaneo.
+- Comprobación manual de flags > entorno > YAML para ambos TTL, constructor y contextos inválidos, permisos/URIs/symlinks de SQLite y copias de locales.
+- HTTP: límite de cuerpo, campos desconocidos, JSON extra, localización, prefijo, 401/403/404/405/500, `no-store`, `Allow`, estáticos, redirecciones y `ResponseController`.
+- Autorización: un JWT sin roles obtiene permiso tras asignarlo en la base de datos; revocación invalida access y refresh anteriores.
+- Upgrade desde `20261105002`: conserva sesiones y solicitudes válidas en los tres motores; SQLite descarta solicitudes huérfanas y el borrado aplica cascade.
+- Fallos de migración con fixtures temporales ya retirados: PostgreSQL/SQLite revierten DDL y versión; MySQL conserva DDL parcial y marcador, y bloquea el reintento.
 
 ---
 
@@ -87,7 +90,7 @@ Si el token caduca entre la emisión y la respuesta, el resultado puede ser nega
 
 **Completado:** [x]
 
-**Resolución:** Se añadió `no-store` al escritor de errores del middleware y la raíz reutiliza `writeJSON`. Se mantienen helpers locales para evitar añadir un paquete por una cabecera.
+**Resolución:** La primera pasada añadió `no-store` al middleware y reutilizó el escritor en la raíz. El plan posterior centralizó lectura y escritura JSON en `internal/httpx`, compartido por handlers y middleware.
 
 **Dónde:** `middleware/internal.go:10-18` frente a `handlers/internal.go:29-34`; `docs/api.yaml:7` promete `no-store` en respuestas JSON.
 
@@ -131,7 +134,7 @@ Hoy todo cabe, pero es inconsistente y frágil. Si se cambia la generación a 25
 | 9 | `handlers/handler.go:104-106` | `Add` es solo un alias de `AddHandler`; unas rutas usan uno y otras el otro. | Elegir una API canónica (`AddHandler`) y usarla en todas las rutas, o mantener `Add` como azúcar pero documentarlo y usarlo consistentemente para `http.HandlerFunc`. | 3–8 líneas | **Baja** | [x] |
 | 10 | `cache/memory/memory.go:78-145` | `Set`, `Get` y `Delete` repiten validación de contexto, clave vacía y estado cerrado. | Extraer `validateKey`/`validateContext` (sin intentar abstraer el lock) para reducir duplicación sin perder claridad. | ~10 líneas | **Baja** | [x] |
 
-**Estimación global:** hay un ahorro razonable de **150–200 líneas** sin contar tests ni documentación, concentrado en configuración, handlers y adaptadores. Más importante que el número es eliminar duplicación que puede desincronizarse.
+**Criterio aplicado:** las estimaciones originales eran orientativas. Se priorizó eliminar duplicación sin esconder diferencias de drivers, transacciones o seguridad; las interfaces pequeñas, validaciones y migraciones nuevas también requieren líneas.
 
 ---
 
@@ -174,8 +177,8 @@ Hoy todo cabe, pero es inconsistente y frágil. Si se cambia la generación a 25
 | Español | `codigo`, `sesion`, `verificacion`, `invalido` sin tildes; `misspell` las marca como errores en inglés. | Si el estilo ASCII es intencional, documentarlo y configurar `misspell`; si no, corregir tildes. | **Baja** | [x] |
 | Ejemplos OpenAPI | `refresh_token_expires_in: 5184000` (60 días) no coincide con el default de 30 días (`2592000`). El `refresh_token` de ejemplo parece un JWT, pero se genera como cadena aleatoria. | Corregir ejemplos en `docs/api.yaml:77,106`. | **Baja** | [x] |
 | Documentación de caché | AGENTS.md propone cachear listas de roles y comprobaciones de permisos, pero luego indica que roles/permisos se saltan la caché. | Decidir si se implementará o eliminar esas recomendaciones para que la guía no se contradiga. | **Baja** | [x] |
-| Placeholders de plantilla | Módulo y comando `app`, `package.json` `app`, título `App`, pero ejemplo `myserver`, README `go-kickstart` y textos Cobra de ejemplo. | Elegir un nombre/placeholder único y actualizar README, `package.json`, Cobra y configuración de ejemplo. | **Baja** | [ ] |
-| Cabeceras de licencia | `cmd/root.go` tiene la GPL completa, `cmd/serve.go`/`logging.go` solo copyright y la mayoría de archivos no tienen cabecera. | Aplicar la misma política a todos los archivos o eliminar las cabeceras parciales. | **Baja** | [ ] |
+| Placeholders de plantilla | Módulo y comando `app`, `package.json` `app`, título `App`, pero ejemplo `myserver`, README `go-kickstart` y textos Cobra de ejemplo. | Elegir un nombre/placeholder único y actualizar README, `package.json`, Cobra y configuración de ejemplo. | **Baja** | [x] |
+| Cabeceras de licencia | `cmd/root.go` tiene la GPL completa, `cmd/serve.go`/`logging.go` solo copyright y la mayoría de archivos no tienen cabecera. | Aplicar la misma política a todos los archivos o eliminar las cabeceras parciales. | **Baja** | [x] |
 | Contexto nulo | `cache/memory` acepta `nil`; `mailer/noop` devuelve `ErrNilContext`. | Documentar o normalizar la política. | **Baja** | [x] |
 | Migración bootstrap | `20260503000_schema_migrations.sql` no usa `.up.sql`, a diferencia del resto. | Es intencional porque se aplica aparte, pero conviene documentarlo junto al formato de nombres. | **Baja** | [x] |
 
@@ -193,7 +196,7 @@ Hoy todo cabe, pero es inconsistente y frágil. Si se cambia la generación a 25
   - `main: "index.js"` apunta a un archivo inexistente; para un proyecto solo de documentación, considera `"private": true` y quitar `main`.
 - [x] **README/configuración** — Urgencia **Baja**: corregir el nombre del archivo de ejemplo y explicar que `app serve` es opcional porque `app` ya arranca el servidor.
 - [x] **`docs/api.yaml`** — Urgencia **Baja**: corregir TTL y ejemplo de refresh token.
-- [ ] **Tests faltantes** — Urgencia **Media**: no hay cobertura de `middleware`, `cmd` (especialmente precedencia de variables de entorno), `routingErrorWriter` ni `sqlite/storage.go`. Respetando la política de AGENTS de no añadir tests salvo petición, al menos validar manualmente los casos de permisos/modos antes de publicar.
+- [ ] **Cobertura automatizada adicional** — Pendiente de petición explícita conforme a AGENTS.md: añadir tests permanentes para configuración, middleware, routing y almacenamiento SQLite. Los escenarios indicados arriba ya se comprobaron manualmente; se adaptaron y ejecutaron los tests existentes. No se marca completado porque las comprobaciones temporales no sustituyen esa cobertura.
 
 ---
 
@@ -201,14 +204,14 @@ Hoy todo cabe, pero es inconsistente y frágil. Si se cambia la generación a 25
 
 El orden estabiliza primero los contratos, después cambia comportamiento y esquema, y finalmente simplifica consumidores y documentación. Cada commit actualiza este seguimiento y ejecuta generación pertinente y tests existentes.
 
-1. [x] **Contratos de base de datos:** `EnsureAccountByEmail`, iniciales `SQLite`/`MySQL`/`OTP`, interfaces por dominio y adaptadores más directos.
-2. [x] **Permisos:** una consulta `EXISTS` por cuenta y permiso; mantener autorización fuera de caché.
-3. [x] **Generaciones de sesión:** generar identidades nuevas de 256 bits en la aplicación, ampliar columnas MySQL y conservar identidades y sesiones existentes.
-4. [x] **Ciclo de vida de cuentas:** FK con cascade para cambios de correo, preservar solicitudes válidas y eliminar la vista innecesaria `accounts_meta` mediante migraciones nuevas.
-5. [x] **HTTP y handlers:** JSON compartido, logger mínimo compartido, validación de cuerpos y carga de cuentas reutilizables; documentar la distinción entre `Add` y `AddHandler`.
-6. [x] **OTP e idiomas:** propósitos tipados y scopes derivados, presupuestos de verificación centralizados, locales sin mapa público mutable y español con tildes; mantener claves estables cuando ya distinguen bien su propósito.
-7. [x] **Configuración y almacenamiento:** tabla de ajustes, validación de caché compartida con contrato de contexto explícito, y preparación SQLite dividida en funciones pequeñas.
-8. [x] **Migraciones:** compartir solo el recorrido de migraciones donde reduzca duplicación y mantenga visibles locks, transacciones y recuperación MySQL. Conservar migraciones publicadas sin alteraciones.
-9. [ ] **Documentación y cierre:** nombres y licencias coherentes, guía de extensión actualizada, revisión de todas las filas del TODO y verificación con SQLite, PostgreSQL y MySQL.
+1. [x] `151554f` — **Contratos de base de datos:** `EnsureAccountByEmail`, iniciales `SQLite`/`MySQL`/`OTP`, interfaces por dominio y adaptadores más directos.
+2. [x] `fa55558` — **Permisos:** una consulta `EXISTS` por cuenta y permiso; mantener autorización fuera de caché.
+3. [x] `44f3f82` — **Generaciones de sesión:** generar identidades nuevas de 256 bits en la aplicación, ampliar columnas MySQL y conservar identidades y sesiones existentes.
+4. [x] `55e7209` — **Ciclo de vida de cuentas:** FK con cascade para cambios de correo, preservar solicitudes válidas y eliminar la vista innecesaria `accounts_meta` mediante migraciones nuevas.
+5. [x] `924df3d` — **HTTP y handlers:** JSON compartido, logger mínimo compartido, validación de cuerpos y carga de cuentas reutilizables; documentar la distinción entre `Add` y `AddHandler`.
+6. [x] `724a7f1` — **OTP e idiomas:** propósitos tipados y scopes derivados, presupuestos de verificación centralizados, locales sin mapa público mutable y español con tildes; mantener claves estables cuando ya distinguen bien su propósito.
+7. [x] `5110b81` — **Configuración y almacenamiento:** tabla de ajustes, validación de caché compartida con contrato de contexto explícito, y preparación SQLite dividida en funciones pequeñas.
+8. [x] `99fa49d` — **Migraciones:** compartir solo el recorrido de migraciones donde reduzca duplicación y mantenga visibles locks, transacciones y recuperación MySQL. Conservar migraciones publicadas sin alteraciones.
+9. [x] **Documentación y cierre:** nombres y licencias coherentes, guía de extensión actualizada, revisión de todas las filas del TODO y verificación con SQLite, PostgreSQL y MySQL.
 
 Las propuestas se evalúan por su beneficio: no se introducirán abstracciones solo para reducir líneas. Las decisiones de conservar código se explicarán en el punto correspondiente. No se añadirán tests nuevos sin petición explícita, según AGENTS.md; se adaptarán los existentes y se comprobarán manualmente los escenarios sin cobertura.

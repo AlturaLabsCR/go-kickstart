@@ -80,7 +80,7 @@ This repository is a Go web server template for REST APIs and small HTML surface
 
 5. Update the database interface and wrappers.
    - Add app-level models to `database/models.go` when generated row types should not leak out.
-   - Add methods to the domain interfaces composed by `database.Querier` or to `database.Database` only for operations needed by application code.
+   - Add methods to the domain interfaces composed by `database.Querier`, or to `database.Database`, only for operations needed by application code.
    - Implement each new `Querier` method in `database/postgres/queries`, `database/sqlite/queries`, and `database/mysql/queries`.
    - Update `database/cached.Querier` so it still satisfies `database.Querier`.
 
@@ -232,3 +232,7 @@ OTP routes use the typed purposes in `handlers/otp.go` for signing, mail keys an
 Cache operations require a non-nil context, as does the mailer; `cache.ErrNilContext` reports invalid calls without a panic. SQLite path parsing, private creation and existing-file validation are separate helpers; URI `mode=ro/rw` does not create missing files or directories.
 
 Published migrations are immutable. The stored version prevents replay; do not add `IF NOT EXISTS` retroactively or hide schema drift. On MySQL, inspect and repair partial DDL using the pending-marker recovery procedure instead of rerunning a migration blindly.
+
+## Template naming and license
+
+The starter application uses `app` for its module, CLI, configuration and artifacts, and `App` for display text. `go-kickstart` is the repository/template name. Keep those roles clear rather than renaming the Go module just to match the repository. License terms live in `LICENSE`; do not add fictitious copyright holders or placeholder license headers to source files.
