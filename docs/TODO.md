@@ -11,8 +11,6 @@ No modifiqué ningún archivo del repositorio. Revisé el código, migraciones, 
 - `go test ./...`: correcto. Los backends PostgreSQL/MySQL se omiten si no hay `TEST_POSTGRES_DSN`/`TEST_MYSQL_DSN`.
 - `golangci-lint run ./...`: 4 avisos de `errcheck` (`cmd/server.go:84` y 3 cierres en `cache/memory/memory_test.go`).
 
-**Nota importante:** al momento de revisar había cambios locales sin commitear. `database/sqlite/storage.go` está sin trackear. No lo toqué.
-
 ---
 
 ## 1. Hallazgos de mayor impacto
@@ -42,25 +40,7 @@ o renombrar las claves a `auth.access_token_ttl`/`auth.refresh_token_ttl`. Añad
 
 ---
 
-### 1.2 `storage.go` está fuera de Git; un commit parcial rompe el build — Urgencia: **Alta**
-
-**Completado:** [ ]
-
-**Dónde:** `database/sqlite/sqlite.go:42` llama a `prepareStorage`; `database/sqlite/storage.go` está como `??` en Git.
-
-Si se commitea solo lo que ya estaba trackeado, el proyecto no compila porque falta `prepareStorage`. Además, esta lógica de permisos es sensible y no tiene tests.
-
-Relacionado: el archivo local `data/app.sqlite` tiene permisos `0644`. Con el nuevo chequeo, `go run .` fallará hasta corregir el modo del archivo. No lo modifiqué.
-
-**Cómo atacarlo:**
-
-1. `git add database/sqlite/storage.go`.
-2. Antes de publicar la plantilla, probar: archivo nuevo `0600`, archivo existente `0644/0640` rechazado, symlink rechazado, `mode=ro/rw` sin archivo, sidecars `-wal/-shm`, y `modeof`.
-3. Documentar que hay que detener el servicio antes de cambiar permisos, tal como ya indica `AGENTS.md`.
-
----
-
-### 1.3 `NewHandler` no valida la base de datos y usa `panic` de forma inconsistente — Urgencia: **Alta**
+### 1.2 `NewHandler` no valida la base de datos y usa `panic` de forma inconsistente — Urgencia: **Alta**
 
 **Completado:** [ ]
 
@@ -79,7 +59,7 @@ Para una plantilla, esto es una trampa: un fallo de configuración debería prod
 
 ---
 
-### 1.4 `expiresIn` puede devolver valores negativos — Urgencia: **Media**
+### 1.3 `expiresIn` puede devolver valores negativos — Urgencia: **Media**
 
 **Completado:** [ ]
 
@@ -95,7 +75,7 @@ Si el token caduca entre la emisión y la respuesta, el resultado puede ser nega
 
 ---
 
-### 1.5 Los errores JSON de middleware no envían `Cache-Control: no-store` — Urgencia: **Media**
+### 1.4 Los errores JSON de middleware no envían `Cache-Control: no-store` — Urgencia: **Media**
 
 **Completado:** [ ]
 
@@ -107,7 +87,7 @@ Las respuestas 401/403/500 generadas por autenticación/permisos pueden ser cach
 
 ---
 
-### 1.6 `auth_id` tiene formatos y longitudes distintas entre backends — Urgencia: **Media**
+### 1.5 `auth_id` tiene formatos y longitudes distintas entre backends — Urgencia: **Media**
 
 **Completado:** [ ]
 
@@ -207,7 +187,7 @@ Hoy todo cabe, pero es inconsistente y frágil. Si se cambia la generación a 25
 
 ## 6. Orden recomendado
 
-1. [ ] **Alta:** corregir el reemplazo de variables de entorno, asegurar que `storage.go` esté en Git, validar `DB` en `NewHandler`, unificar el contrato de errores de constructores y añadir `no-store` al JSON de middleware.
+1. [ ] **Alta:** corregir el reemplazo de variables de entorno, validar `DB` en `NewHandler`, unificar el contrato de errores de constructores y añadir `no-store` al JSON de middleware.
 2. [ ] **Media:** `expiresIn`, tabla de configuración, helpers de handlers, reducción de adaptadores/migraciones, unificación de `auth_id`, N+1 de permisos, naming (`Oncesert`, `SQLite`, `MySQL`), i18n y lint.
 3. [ ] **Baja:** limpiar templates, ejemplos OpenAPI, placeholders de marca, cabeceras de licencia, `package.json` y pruebas de pulido.
 
