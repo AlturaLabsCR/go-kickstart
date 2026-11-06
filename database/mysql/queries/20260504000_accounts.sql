@@ -1,6 +1,6 @@
 -- name: EnsureAccountByEmail :exec
 INSERT INTO accounts (email, created_at, auth_id)
-VALUES (?, ?, UUID())
+VALUES (?, ?, ?)
 ON DUPLICATE KEY UPDATE email = VALUES(email);
 
 -- name: SelectAccountSubByEmail :one

@@ -10,9 +10,14 @@ import (
 )
 
 func (q *PostgresQuerier) EnsureAccountByEmail(ctx context.Context, email string, createdAt int64) (sub int64, err error) {
+	authID, err := database.NewAuthID()
+	if err != nil {
+		return 0, err
+	}
 	return q.queries.EnsureAccountByEmail(ctx, db.EnsureAccountByEmailParams{
 		Email:     email,
 		CreatedAt: createdAt,
+		AuthID:    authID,
 	})
 }
 

@@ -1,6 +1,6 @@
 -- name: EnsureAccountByEmail :one
-INSERT INTO accounts (email, created_at)
-VALUES ($1, $2)
+INSERT INTO accounts (email, created_at, auth_id)
+VALUES ($1, $2, $3)
 ON CONFLICT (email) DO UPDATE SET email = EXCLUDED.email
 RETURNING sub;
 

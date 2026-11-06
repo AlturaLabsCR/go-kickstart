@@ -39,8 +39,8 @@ func TestOpenAutoMigratesSQLite(t *testing.T) {
 		t.Fatalf("read schema_migrations version: %v", err)
 	}
 
-	if version != 20261105002 {
-		t.Fatalf("got schema version %d, want 20261105002", version)
+	if version != 20261106000 {
+		t.Fatalf("got schema version %d, want 20261106000", version)
 	}
 
 	var accountColumns int

@@ -170,7 +170,7 @@ func (a *Authenticator) RevokeAll(ctx context.Context, identity *Claims) error {
 
 	// Rotate instead of clearing so every access token carrying the previous
 	// generation fails verification, not just future refreshes.
-	authID, err := secrets.RandStr(128)
+	authID, err := database.NewAuthID()
 	if err != nil {
 		return err
 	}

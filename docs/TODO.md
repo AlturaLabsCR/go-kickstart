@@ -99,7 +99,9 @@ Las respuestas 401/403/500 generadas por autenticación/permisos pueden ser cach
 
 ### 1.5 `auth_id` tiene formatos y longitudes distintas entre backends — Urgencia: **Media**
 
-**Completado:** [ ]
+**Completado:** [x]
+
+**Resolución:** `database.NewAuthID` genera 256 bits en hexadecimal para creación y revocación en los tres motores. Migración nueva amplía MySQL (cuentas y refresh tokens); los valores existentes se conservan para mantener sesiones.
 
 **Dónde:**
 
@@ -165,7 +167,7 @@ Hoy todo cabe, pero es inconsistente y frágil. Si se cambia la generación a 25
 | Cabeceras JSON | Handlers ponen `Cache-Control: no-store`; middleware no; la raíz JSON escribe manualmente y tampoco. | Helper JSON único con cabeceras consistentes. | **Media** | [x] |
 | Respuesta JSON de la raíz | `handlers/root.go:53-56` usa `json.NewEncoder` directamente en lugar de `writeJSON`. | Usar `writeJSON` para heredar cabeceras y formato. | **Baja** | [x] |
 | Esquema entre backends | `account_email_change_requests` tiene FK con cascade en MySQL, FK sin cascade en PostgreSQL y sin FK explícita en SQLite. | Añadir `ON DELETE CASCADE` donde aplique o documentar que el handler borra manualmente; alinear migraciones. | **Media** | [ ] |
-| `auth_id` | UUID de 36 caracteres en PostgreSQL/MySQL, 64 hex en SQLite, 32 hex tras `RevokeAll`. | Estandarizar formato y longitud; ampliar MySQL si hace falta. | **Media** | [ ] |
+| `auth_id` | UUID de 36 caracteres en PostgreSQL/MySQL, 64 hex en SQLite, 32 hex tras `RevokeAll`. | Estandarizar formato y longitud; ampliar MySQL si hace falta. | **Media** | [x] |
 | Vista `accounts_meta` | PostgreSQL/SQLite usan `SELECT a.*` (incluye `auth_id`); MySQL enumera columnas (no incluye `auth_id`). Las queries seleccionan columnas explícitas, así que la vista no aporta. | Eliminar la vista y consultar `accounts`, o mantener columnas idénticas en los tres motores. | **Baja/Media** | [ ] |
 | Idempotencia de migraciones | `20261104000_rate_limits` y `20261105000_expiration_indexes` usan `CREATE INDEX` sin `IF NOT EXISTS`; otras migraciones sí lo usan. MySQL no soporta esa cláusula. | Usar `IF NOT EXISTS` donde el motor lo permita; documentar la limitación de MySQL en la recuperación. | **Baja** | [ ] |
 | i18n | Claves muertas, `err.invalid_email_change_body` frente a `err.invalid_email_confirm_body`, `init()` por locale y `Locales` global mutable. | Limpiar claves, unificar nombres, registrar locales en un solo sitio. | **Media/Baja** | [ ] |
@@ -201,7 +203,7 @@ El orden estabiliza primero los contratos, después cambia comportamiento y esqu
 
 1. [x] **Contratos de base de datos:** `EnsureAccountByEmail`, iniciales `SQLite`/`MySQL`/`OTP`, interfaces por dominio y adaptadores más directos.
 2. [x] **Permisos:** una consulta `EXISTS` por cuenta y permiso; mantener autorización fuera de caché.
-3. [ ] **Generaciones de sesión:** generar identidades nuevas de 256 bits en la aplicación, ampliar columnas MySQL y conservar identidades y sesiones existentes.
+3. [x] **Generaciones de sesión:** generar identidades nuevas de 256 bits en la aplicación, ampliar columnas MySQL y conservar identidades y sesiones existentes.
 4. [ ] **Ciclo de vida de cuentas:** FK con cascade para cambios de correo, preservar solicitudes válidas y eliminar la vista innecesaria `accounts_meta` mediante migraciones nuevas.
 5. [ ] **HTTP y handlers:** JSON compartido, logger mínimo compartido, validación de cuerpos y carga de cuentas reutilizables; documentar la distinción entre `Add` y `AddHandler`.
 6. [ ] **OTP e idiomas:** propósitos tipados y scopes derivados, presupuestos de verificación centralizados, locales sin mapa público mutable y español con tildes; mantener claves estables cuando ya distinguen bien su propósito.

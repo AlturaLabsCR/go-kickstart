@@ -10,10 +10,15 @@ import (
 )
 
 func (q *MySQLQuerier) EnsureAccountByEmail(ctx context.Context, email string, createdAt int64) (sub int64, err error) {
+	authID, err := database.NewAuthID()
+	if err != nil {
+		return 0, err
+	}
 	err = q.withTx(ctx, func(q *MySQLQuerier) error {
 		if err := q.queries.EnsureAccountByEmail(ctx, db.EnsureAccountByEmailParams{
 			Email:     email,
 			CreatedAt: createdAt,
+			AuthID:    authID,
 		}); err != nil {
 			return err
 		}
