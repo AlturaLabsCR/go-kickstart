@@ -15,15 +15,22 @@ Very opinionated, your mileage may vary.
 
 - `npm ci`
 - `go generate ./...`
-- `APP_OTP_SECRET=$(openssl rand -hex 32) go run .`
+- `go run . --dev`
 
-Verification codes are stored as keyed HMAC digests, so the server requires an
-independent `APP_OTP_SECRET` (or `otp.secret` / `--otp-secret`). It must differ
-from `APP_AUTH_SECRET`. Use a stable value across restarts and instances.
+Development mode allows empty or short `APP_AUTH_SECRET` and `APP_OTP_SECRET`
+with warnings. When the OTP secret is empty, a temporary key is generated;
+pending verification codes will not survive a restart.
+
+Outside `--dev`, both secrets must contain at least 32 bytes and differ from
+each other. Generate them independently, for example with `openssl rand -hex 32`,
+and keep them stable across restarts and instances. Set them through environment
+variables, `auth.secret` / `otp.secret`, or `--auth-secret` / `--otp-secret`.
+Equal nonempty secrets are rejected in both modes.
 
 Copy [`contrib/app.example.yaml`](contrib/app.example.yaml) to `app.yaml` in the
 working directory to customize the defaults, or pass `--config /path/to/app.yaml`.
-Set `otp.secret` before starting; the example leaves it empty intentionally.
+Set both secrets before starting outside development; the example leaves them
+empty intentionally.
 Flags override environment variables, which override the configuration file.
 For environment variables, replace dots and hyphens in keys with underscores
 and prefix with `APP_` (for example, `APP_AUTH_ACCESS_TOKEN_TTL=15m`).

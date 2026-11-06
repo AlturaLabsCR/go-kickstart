@@ -198,6 +198,7 @@ h.writeError(
 - Add the key, flag, help and default together in the settings table. Keep `runServerFromConfig` and the `serverConfig` fields in `cmd/server.go` aligned with it.
 - Avoid adding configuration until the code path actually needs it.
 - Verification codes are stored only as HMAC-SHA-256 digests bound to purpose and identity using `github.com/tavocg/go-secrets/otp`. Configure an independent `otp.secret`; never reuse the JWT signing secret.
+- Outside `--dev`, startup requires both `auth.secret` and `otp.secret` to contain at least 32 bytes. Development allows empty or short secrets with warnings; an empty OTP secret uses a random per-process key, so pending codes do not survive restarts. Equal nonempty secrets are rejected in both modes. Keep this policy in runtime wiring; reusable constructors retain their own contracts. The README quick start uses `go run . --dev`.
 
 ## Verification
 

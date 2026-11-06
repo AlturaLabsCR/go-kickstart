@@ -3,6 +3,7 @@ package cmd
 import (
 	"context"
 	"errors"
+	"fmt"
 	"net"
 	"net/http"
 	"os"
@@ -20,6 +21,7 @@ import (
 	locales "app/i18n"
 	"app/mailer/noop"
 	"github.com/tavocg/go-i18n"
+	secrets "github.com/tavocg/go-secrets"
 	"github.com/tavocg/go-secrets/otp"
 )
 
@@ -44,21 +46,33 @@ func runServer(cfg serverConfig) error {
 		return err
 	}
 
-	if len(cfg.AuthSecret) < 32 {
-		logger.Warn("JWT signing secret is shorter than the recommended 32 random bytes; tokens may be forged", "secret_bytes", len(cfg.AuthSecret))
+	for _, secret := range []struct{ name, value string }{
+		{"auth.secret", cfg.AuthSecret},
+		{"otp.secret", cfg.OTPSecret},
+	} {
+		if len(secret.value) >= 32 {
+			continue
+		}
+		if !cfg.Dev {
+			return fmt.Errorf("%s must contain at least 32 bytes outside development mode", secret.name)
+		}
+		logger.Warn("short signing secret allowed only in development", "setting", secret.name, "secret_bytes", len(secret.value))
 	}
-
-	if cfg.OTPSecret == "" {
-		return errors.New("OTP HMAC secret is required")
-	}
-	if cfg.OTPSecret == cfg.AuthSecret {
+	if cfg.OTPSecret != "" && cfg.OTPSecret == cfg.AuthSecret {
 		return errors.New("OTP HMAC secret must differ from the JWT signing secret")
 	}
-	if len(cfg.OTPSecret) < 32 {
-		logger.Warn("OTP HMAC secret is shorter than the recommended 32 random bytes; codes may be guessed offline", "secret_bytes", len(cfg.OTPSecret))
+
+	otpSecret := cfg.OTPSecret
+	if otpSecret == "" {
+		// Development only: the signer requires a key. Pending codes will not
+		// survive a restart unless a stable OTP secret is configured.
+		otpSecret, err = secrets.RandStr()
+		if err != nil {
+			return err
+		}
 	}
 
-	otpSigner, err := otp.NewSigner(cfg.OTPSecret)
+	otpSigner, err := otp.NewSigner(otpSecret)
 	if err != nil {
 		return err
 	}

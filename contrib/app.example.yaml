@@ -4,6 +4,7 @@
 # found, then these values will be used.
 
 # Enable development features like source locations in logs.
+# Allows empty or short signing secrets with warnings.
 # Override with:
 #   APP_DEV=true app serve
 #   app serve --dev
@@ -22,9 +23,10 @@ host: ""
 port: 3080
 
 # Auth settings.
+# Signing secrets require at least 32 bytes outside development mode.
 # Override with:
-#   APP_AUTH_SECRET=change-me app serve
-#   app serve --auth-secret change-me
+#   APP_AUTH_SECRET=change-me app serve --dev
+#   app serve --dev --auth-secret change-me
 #   APP_AUTH_ACCESS_TOKEN_TTL=15m app serve
 #   app serve --auth-access-ttl 15m
 #   APP_AUTH_REFRESH_TOKEN_TTL=720h app serve
@@ -35,11 +37,12 @@ auth:
   refresh-token-ttl: 720h
 
 # Independent HMAC key used to store verification codes as keyed digests.
-# It must be set and must differ from auth.secret. Use at least 32 random bytes.
+# Use at least 32 random bytes outside development; it must differ from auth.secret.
+# In development, an empty value uses a temporary key that changes on restart.
 # Rotating this key invalidates every pending verification code.
 # Override with:
-#   APP_OTP_SECRET=change-me app serve
-#   app serve --otp-secret change-me
+#   APP_OTP_SECRET=change-me app serve --dev
+#   app serve --dev --otp-secret change-me
 otp:
   secret: ""
 

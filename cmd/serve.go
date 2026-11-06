@@ -23,7 +23,7 @@ func init() {
 		key, flag, usage string
 		value            any
 	}{
-		{"dev", "dev", "enable dev mode", false},
+		{"dev", "dev", "enable development features and allow empty or short signing secrets", false},
 		{"host", "host", "bind host", ""},
 		{"port", "port", "bind port", 3080},
 		{"logfmt", "logfmt", "log format", "json"},
