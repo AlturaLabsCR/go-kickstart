@@ -145,8 +145,8 @@ github.com/tavocg/go-email v1.1.0 h1:7VPqxqwyasQtWdhZ23DKLzfsCy4TvgDV8rHdv52iLWI
 github.com/tavocg/go-email v1.1.0/go.mod h1:KigyQZ17of+U5Rg3Zttk+ml4C3WkdGPRbZztocIxWBM=
 github.com/tavocg/go-i18n v1.0.6 h1:cOfhQMv/3LwH3jlhhGuGy+nuCZ7v4vi9cb+tarLKijQ=
 github.com/tavocg/go-i18n v1.0.6/go.mod h1:52LDWNb4EUdAuLlhAJ4yp4WNQBTEUdp7+prL8wojkOs=
-github.com/tavocg/go-secrets v1.0.1 h1:Fr3Ytb191/+ukoMtcIDVNf7AoJzGxSa23V9aylRHzB8=
-github.com/tavocg/go-secrets v1.0.1/go.mod h1:4Kz8aSjvPh0m+WegL6kgf/3w2n4oSIT3UNQ/aVclU4I=
+github.com/tavocg/go-secrets v1.1.0 h1:jOIviuE0SuoFpN78+pB8GUQL/nFeyYbG2rNrj9oUpcs=
+github.com/tavocg/go-secrets v1.1.0/go.mod h1:4Kz8aSjvPh0m+WegL6kgf/3w2n4oSIT3UNQ/aVclU4I=
 github.com/tavocg/go-secrets/otp v1.0.0 h1:eGbvB0SaBeKxxcSR7djnC1NPOjNZvHWgQq2lWUzi6p8=
 github.com/tavocg/go-secrets/otp v1.0.0/go.mod h1:fydkBfjAAH2loYG5JTmxV9Fq7RYqB0O8LwEuzImbVAY=
 github.com/tetratelabs/wazero v1.11.0 h1:+gKemEuKCTevU4d7ZTzlsvgd1uaToIDtlQlmNbwqYhA=
