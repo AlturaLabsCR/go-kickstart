@@ -40,6 +40,18 @@ type SessionQuerier interface {
 	// Authorization must read this directly from the database, never from cache.
 	SelectAccountAuthID(ctx context.Context, sub int64) (string, error)
 
+	// SelectSessionAuthID verifies that the session still belongs to the account's
+	// current generation. Authorization must bypass the cache.
+	SelectSessionAuthID(ctx context.Context, sub int64, sessionID string) (string, error)
+
+	// SelectAccountSessions returns at most 101 active sessions, newest first.
+	// The last item detects another page; the cursor is (created_at, session_id).
+	SelectAccountSessions(ctx context.Context, sub, now, beforeCreatedAt int64, beforeID string) ([]Session, error)
+
+	// DeleteAccountSession is scoped to its owner. Acquire the account lock in
+	// the same transaction first, to serialize deletion with refresh rotation.
+	DeleteAccountSession(ctx context.Context, sub int64, sessionID string) error
+
 	// LockAccountAuthID locks the account row and returns its current
 	// authentication identity. Call it inside WithTx; session issuance,
 	// refresh and revocation use this lock order before touching refresh tokens.
@@ -50,7 +62,7 @@ type SessionQuerier interface {
 	SetAccountAuthID(ctx context.Context, sub int64, authID string) error
 
 	// InsertRefreshToken stores a hashed refresh token for an account session.
-	InsertRefreshToken(ctx context.Context, tokenHash string, sub int64, authID string, expiresAt int64) error
+	InsertRefreshToken(ctx context.Context, token RefreshToken) error
 
 	// SelectRefreshTokenByHash returns a refresh token record without locking it.
 	SelectRefreshTokenByHash(ctx context.Context, tokenHash string) (*RefreshToken, error)

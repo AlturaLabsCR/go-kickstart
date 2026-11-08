@@ -7,12 +7,17 @@ import (
 	"app/database/mysql/db"
 )
 
-func (q *MySQLQuerier) InsertRefreshToken(ctx context.Context, tokenHash string, sub int64, authID string, expiresAt int64) error {
+func (q *MySQLQuerier) InsertRefreshToken(ctx context.Context, token database.RefreshToken) error {
 	return q.queries.InsertRefreshToken(ctx, db.InsertRefreshTokenParams{
-		TokenHash: tokenHash,
-		Sub:       sub,
-		AuthID:    authID,
-		ExpiresAt: expiresAt,
+		TokenHash:       token.TokenHash,
+		Sub:             token.Sub,
+		AuthID:          token.AuthID,
+		ExpiresAt:       token.ExpiresAt,
+		CreatedAt:       token.CreatedAt,
+		SessionID:       token.SessionID,
+		UserAgent:       token.UserAgent,
+		LastUsedAt:      token.LastUsedAt,
+		AccessExpiresAt: token.AccessExpiresAt,
 	})
 }
 

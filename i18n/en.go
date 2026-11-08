@@ -18,6 +18,11 @@ var en = map[string]string{
 	"role.default":      "Default user",
 	"root.greeting":     "Hello, world!",
 
+	"err.invalid_sessions_cursor": "Invalid session cursor.",
+	"err.select_sessions":         "Failed to retrieve account sessions.",
+	"err.invalid_session_id":      "Invalid session identifier.",
+	"err.revoke_session":          "Failed to revoke account session.",
+
 	"err.account_not_found":          "Account not found.",
 	"err.check_role_permission":      "Failed to check account permission.",
 	"err.confirm_email_change":       "Failed to confirm account email change.",

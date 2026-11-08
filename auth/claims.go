@@ -1,10 +1,14 @@
 package auth
 
 type Claims struct {
-	AuthID string   `json:"aid"`
-	Sub    string   `json:"sub"`
-	Roles  []string `json:"roles,omitempty"`
-	Exp    int64    `json:"exp,omitempty"`
+	AuthID    string   `json:"aid"`
+	SessionID string   `json:"sid"`
+	Sub       string   `json:"sub"`
+	Roles     []string `json:"roles,omitempty"`
+	Exp       int64    `json:"exp,omitempty"`
+
+	// UserAgent is issuance metadata only; it is never included in the JWT.
+	UserAgent string `json:"-"`
 }
 
 func (c *Claims) ExpiresAt() int64 {

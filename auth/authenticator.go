@@ -51,7 +51,7 @@ func (a *Authenticator) Issue(ctx context.Context, identity *Claims) (at *goauth
 
 	err = a.db.WithTx(ctx, func(q database.Querier) error {
 		var err error
-		at, rt, err = a.issueLocked(ctx, q, sub)
+		at, rt, err = a.issueLocked(ctx, q, sub, identity.UserAgent)
 		return err
 	})
 	if err != nil {
@@ -101,7 +101,7 @@ func (a *Authenticator) Refresh(ctx context.Context, refreshToken string) (at *g
 			}
 			return err
 		}
-		if consumed.Sub != saved.Sub || consumed.AuthID != authID {
+		if consumed.Sub != saved.Sub || consumed.AuthID != authID || consumed.SessionID != saved.SessionID {
 			return goauth.ErrInvalidToken
 		}
 		// The token may have expired while waiting for either lock.
@@ -109,7 +109,7 @@ func (a *Authenticator) Refresh(ctx context.Context, refreshToken string) (at *g
 			return goauth.ErrExpiredToken
 		}
 
-		at, rt, err = a.signSession(ctx, q, saved.Sub, authID)
+		at, rt, err = a.signSession(ctx, q, consumed)
 		return err
 	})
 	if err != nil {
@@ -131,7 +131,7 @@ func (a *Authenticator) Verify(ctx context.Context, accessToken string) (*Claims
 			return nil, err
 		}
 	}
-	if claims == nil || claims.AuthID == "" || claims.ExpiresAt() <= 0 {
+	if claims == nil || claims.AuthID == "" || claims.SessionID == "" || claims.ExpiresAt() <= 0 {
 		return nil, goauth.ErrInvalidToken
 	}
 
@@ -139,7 +139,7 @@ func (a *Authenticator) Verify(ctx context.Context, accessToken string) (*Claims
 	if err != nil {
 		return nil, goauth.ErrInvalidToken
 	}
-	authID, err := a.db.Querier().SelectAccountAuthID(ctx, sub)
+	authID, err := a.db.Querier().SelectSessionAuthID(ctx, sub, claims.SessionID)
 	if a.db.IsErrNotFound(err) {
 		return nil, goauth.ErrInvalidToken
 	}
@@ -192,7 +192,7 @@ func (a *Authenticator) RevokeAll(ctx context.Context, identity *Claims) error {
 	})
 }
 
-func (a *Authenticator) issueLocked(ctx context.Context, q database.Querier, sub int64) (*goauth.Token, *goauth.Token, error) {
+func (a *Authenticator) issueLocked(ctx context.Context, q database.Querier, sub int64, userAgent string) (*goauth.Token, *goauth.Token, error) {
 	authID, err := q.LockAccountAuthID(ctx, sub)
 	if a.db.IsErrNotFound(err) {
 		return nil, nil, goauth.ErrInvalidIdentity
@@ -204,19 +204,30 @@ func (a *Authenticator) issueLocked(ctx context.Context, q database.Querier, sub
 		return nil, nil, goauth.ErrInvalidIdentity
 	}
 
-	return a.signSession(ctx, q, sub, authID)
+	sessionID, err := database.NewAuthID()
+	if err != nil {
+		return nil, nil, err
+	}
+	return a.signSession(ctx, q, &database.RefreshToken{
+		Sub:       sub,
+		AuthID:    authID,
+		SessionID: sessionID,
+		UserAgent: normalizeUserAgent(userAgent),
+		CreatedAt: time.Now().UTC().Unix(),
+	})
 }
 
-func (a *Authenticator) signSession(ctx context.Context, q database.Querier, sub int64, authID string) (*goauth.Token, *goauth.Token, error) {
-	roles, err := q.SelectAccountRolesBySub(ctx, sub)
+func (a *Authenticator) signSession(ctx context.Context, q database.Querier, session *database.RefreshToken) (*goauth.Token, *goauth.Token, error) {
+	roles, err := q.SelectAccountRolesBySub(ctx, session.Sub)
 	if err != nil {
 		return nil, nil, err
 	}
 
 	claims := &Claims{
-		AuthID: authID,
-		Sub:    strconv.FormatInt(sub, 10),
-		Roles:  roles,
+		AuthID:    session.AuthID,
+		SessionID: session.SessionID,
+		Sub:       strconv.FormatInt(session.Sub, 10),
+		Roles:     roles,
 	}
 	accessToken, err := a.tokener.Sign(claims)
 	if err != nil {
@@ -233,7 +244,11 @@ func (a *Authenticator) signSession(ctx context.Context, q database.Querier, sub
 		refreshExpiresAt = time.Now().UTC().Add(a.refreshTTL).Unix()
 	}
 
-	if err := q.InsertRefreshToken(ctx, hashRefreshToken(refreshToken), sub, authID, refreshExpiresAt); err != nil {
+	session.TokenHash = hashRefreshToken(refreshToken)
+	session.ExpiresAt = refreshExpiresAt
+	session.AccessExpiresAt = max(session.AccessExpiresAt, claims.ExpiresAt())
+	session.LastUsedAt = time.Now().UTC().Unix()
+	if err := q.InsertRefreshToken(ctx, *session); err != nil {
 		return nil, nil, err
 	}
 

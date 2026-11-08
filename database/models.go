@@ -25,9 +25,23 @@ type AccountEmailChangeRequest struct {
 }
 
 type RefreshToken struct {
-	TokenHash string
-	Sub       int64
-	AuthID    string
-	ExpiresAt int64
-	CreatedAt int64
+	TokenHash       string
+	Sub             int64
+	AuthID          string
+	ExpiresAt       int64
+	CreatedAt       int64
+	SessionID       string
+	UserAgent       string
+	LastUsedAt      int64
+	AccessExpiresAt int64
+}
+
+// Session contains display metadata; credentials and their hashes stay private.
+type Session struct {
+	SessionID       string
+	UserAgent       string
+	CreatedAt       int64
+	LastUsedAt      int64
+	ExpiresAt       int64
+	AccessExpiresAt int64
 }

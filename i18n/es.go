@@ -18,6 +18,11 @@ var es = map[string]string{
 	"role.default":      "Usuario predeterminado",
 	"root.greeting":     "¡Hola, mundo!",
 
+	"err.invalid_sessions_cursor": "El cursor de sesiones es inválido.",
+	"err.select_sessions":         "No se pudieron consultar las sesiones de la cuenta.",
+	"err.invalid_session_id":      "El identificador de sesión es inválido.",
+	"err.revoke_session":          "No se pudo revocar la sesión de la cuenta.",
+
 	"err.account_not_found":          "Cuenta no encontrada.",
 	"err.check_role_permission":      "No se pudo verificar el permiso de la cuenta.",
 	"err.confirm_email_change":       "No se pudo confirmar el cambio de correo.",

@@ -175,7 +175,8 @@ func (h *Handler) VerifyAuthenticationCode(w http.ResponseWriter, r *http.Reques
 	}
 
 	accessToken, refreshToken, err := h.authenticator.Issue(r.Context(), &appauth.Claims{
-		Sub: fmt.Sprintf("%d", subject),
+		Sub:       fmt.Sprintf("%d", subject),
+		UserAgent: r.UserAgent(),
 	})
 	if err != nil {
 		h.writeError(

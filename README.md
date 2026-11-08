@@ -27,6 +27,8 @@ The starter application's name is **app** (Go module, CLI, configuration and
 build artifacts), displayed as **App** in HTML. Rename these together when
 creating your application.
 
+Session listing and individual or account-wide logout are available through the JSON API; see [session management](docs/sessions.md), including deployment notes.
+
 ## Extending
 
 - Add a route group in `handlers/`, a registration method and its call in `registerRoutes`.
