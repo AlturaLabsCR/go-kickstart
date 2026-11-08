@@ -10,6 +10,7 @@ import (
 	"os"
 	"path"
 	"strings"
+	"time"
 	"unicode"
 
 	appauth "app/auth"
@@ -21,6 +22,8 @@ import (
 	"github.com/tavocg/go-i18n"
 	"github.com/tavocg/go-secrets/otp"
 )
+
+const requestTimeout = 20 * time.Second
 
 type Handler struct {
 	dev bool
@@ -108,14 +111,14 @@ func (h *Handler) Add(method, path string, fn http.HandlerFunc) {
 	h.AddHandler(method, path, fn)
 }
 
-// AddHandler registers an http.Handler, including middleware-wrapped routes.
+// AddHandler registers a handler with a request deadline, including its middleware.
 func (h *Handler) AddHandler(method, path string, handler http.Handler) {
 	pattern := h.routePath(path)
 	if method != "" {
 		pattern = method + " " + pattern
 	}
 
-	h.mux.Handle(pattern, handler)
+	h.mux.Handle(pattern, middleware.WithTimeout(requestTimeout, handler))
 }
 
 func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {

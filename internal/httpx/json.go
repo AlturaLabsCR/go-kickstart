@@ -2,11 +2,21 @@
 package httpx
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"io"
 	"net/http"
 )
+
+// ErrorStatus selects the deadline error when the request's context has expired.
+// Timeouts belonging to a nested operation keep their caller's fallback error.
+func ErrorStatus(ctx context.Context, status int, key string) (int, string) {
+	if ctx.Err() == context.DeadlineExceeded {
+		return http.StatusGatewayTimeout, "err.request_timeout"
+	}
+	return status, key
+}
 
 // DecodeJSON reads one JSON value, rejects unknown fields and limits the body to 1 MiB.
 func DecodeJSON(w http.ResponseWriter, r *http.Request, dst any) error {

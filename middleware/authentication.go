@@ -9,6 +9,7 @@ import (
 	"strings"
 
 	appauth "app/auth"
+	"app/internal/httpx"
 	"app/internal/logging"
 	goauth "github.com/tavocg/go-auth"
 )
@@ -38,8 +39,9 @@ func AuthenticateBearer(logger logging.Logger, localize LocalizeFunc, authentica
 				return
 			}
 
-			logger.Error("failed to verify bearer token", logging.RequestArgs(r, http.StatusInternalServerError, "error", err)...)
-			writeJSONError(w, r, localize, http.StatusInternalServerError, "err.verify_bearer")
+			status, key := httpx.ErrorStatus(r.Context(), http.StatusInternalServerError, "err.verify_bearer")
+			logger.Error("failed to verify bearer token", logging.RequestArgs(r, status, "error", err)...)
+			writeJSONError(w, r, localize, status, key)
 			return
 		}
 
@@ -84,8 +86,9 @@ func RequirePermission(logger logging.Logger, localize LocalizeFunc, permissions
 
 		allowed, err := permissions.AccountHasPermission(r.Context(), sub, permission)
 		if err != nil {
-			logger.Error("failed to check account permission", logging.RequestArgs(r, http.StatusInternalServerError, "sub", sub, "permission", permission, "error", err)...)
-			writeJSONError(w, r, localize, http.StatusInternalServerError, "err.check_role_permission")
+			status, key := httpx.ErrorStatus(r.Context(), http.StatusInternalServerError, "err.check_role_permission")
+			logger.Error("failed to check account permission", logging.RequestArgs(r, status, "sub", sub, "permission", permission, "error", err)...)
+			writeJSONError(w, r, localize, status, key)
 			return
 		}
 		if allowed {

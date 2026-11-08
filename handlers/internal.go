@@ -11,6 +11,7 @@ import (
 )
 
 func (h *Handler) writeStatus(w http.ResponseWriter, r *http.Request, status int, key string, msg string, args ...any) {
+	status, key = httpx.ErrorStatus(r.Context(), status, key)
 	logArgs := logging.RequestArgs(r, status, args...)
 
 	if status >= http.StatusInternalServerError {

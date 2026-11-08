@@ -8,6 +8,11 @@ info:
     Unmatched routes return localized JSON with status 404. Unsupported methods
     return localized JSON with status 405 and the Allow header. The root page
     matches only the application root, not unknown paths.
+    Registered routes carry a twenty-second request-context deadline. Database
+    operations and mail delivery use that context; failures after it expires
+    return localized JSON with status 504 if response headers have not been sent.
+    Cancellation is cooperative and does
+    not roll back changes already committed before the deadline.
     OTP limits in the application are per normalized email for login and per
     authenticated account for email changes. Per-client-IP throttling belongs
     in the deployment's reverse proxy; the application does not impose IP or
@@ -37,6 +42,8 @@ paths:
             example:
               email: john@doe.com
       responses:
+        '504':
+          $ref: '#/components/responses/RequestTimeout'
         '502':
           $ref: '#/components/responses/OTPMailFailure'
         '429':
@@ -62,6 +69,8 @@ paths:
               email: john@doe.com
               otp: "123456"
       responses:
+        '504':
+          $ref: '#/components/responses/RequestTimeout'
         '429':
           $ref: '#/components/responses/OTPRateLimited'
         '200':
@@ -93,6 +102,8 @@ paths:
             example:
               refresh_token: X4fFxvY89ypw5f...
       responses:
+        '504':
+          $ref: '#/components/responses/RequestTimeout'
         '200':
           description: Refreshed tokens.
           content:
@@ -115,6 +126,8 @@ paths:
       security:
         - bearerAuth: []
       responses:
+        '504':
+          $ref: '#/components/responses/RequestTimeout'
         '200':
           description: Account information.
           content:
@@ -135,6 +148,8 @@ paths:
       security:
         - bearerAuth: []
       responses:
+        '504':
+          $ref: '#/components/responses/RequestTimeout'
         '204':
           description: Account deleted.
         default:
@@ -157,6 +172,8 @@ paths:
             example:
               new_email: new@email.com
       responses:
+        '504':
+          $ref: '#/components/responses/RequestTimeout'
         '502':
           $ref: '#/components/responses/OTPMailFailure'
         '429':
@@ -183,6 +200,8 @@ paths:
             example:
               otp: "123456"
       responses:
+        '504':
+          $ref: '#/components/responses/RequestTimeout'
         '429':
           $ref: '#/components/responses/OTPRateLimited'
         '204':
@@ -203,6 +222,12 @@ components:
       bearerFormat: JWT
       description: Access tokens must contain an expiration and the current account authentication identity. Account-wide session revocation rotates this identity, rejecting previous tokens immediately on subsequent verification. Tokens for deleted accounts and tokens issued before the account identity migration are rejected.
   responses:
+    RequestTimeout:
+      description: The request-context deadline expired. Changes committed before expiration may still have taken effect.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
     OTPMailFailure:
       description: The configured mailer reported a failure. The saved code expires normally and request limits remain in effect; a delivery error can occur after a provider has accepted the message.
       content:
