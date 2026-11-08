@@ -34,6 +34,7 @@ Session listing and individual or account-wide logout are available through the 
 - Add a route group in `handlers/`, a registration method and its call in `registerRoutes`.
 - Use `Add` for a handler function and `AddHandler` for middleware-wrapped handlers;
   both apply the configured root prefix.
+- For endpoints with multiple response formats, see [content negotiation](docs/content-negotiation.md); JSON is the default.
 - Keep request/response types near their handler. Use `decodeBody` for localized
   validation errors and `internal/httpx` for JSON responses.
 - Put reusable behavior in `middleware/`; authorization checks current permissions

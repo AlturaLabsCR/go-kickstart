@@ -21,16 +21,6 @@ func (h *Handler) Root(w http.ResponseWriter, r *http.Request) {
 	w.Header().Add("Vary", "Accept, Accept-Language")
 	w.Header().Set("Cache-Control", "no-store")
 	contentType := httpx.Negotiate(r, "application/json; charset=utf-8", "text/html; charset=utf-8")
-	if contentType == "" {
-		h.writeStatus(
-			w,
-			r,
-			http.StatusNotAcceptable,
-			"err.not_acceptable",
-			"no acceptable root representation",
-		)
-		return
-	}
 	L := func(key string, args ...any) string {
 		return h.localize(r, key, args...)
 	}

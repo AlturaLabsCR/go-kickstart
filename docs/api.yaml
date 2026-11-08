@@ -13,11 +13,13 @@ info:
     return localized JSON with status 405 and the Allow header. The root page
     matches only the application root, not unknown paths.
     The root page negotiates application/json or text/html using Accept weights,
-    wildcards and media parameters. JSON is the default when Accept is absent or
-    blank and wins equal weights. If neither format is acceptable, the root
-    returns a localized JSON error with status 406. Both formats use no-store
+    wildcards and media parameters. JSON wins equal weights and is the fallback
+    when Accept is absent, blank, unsupported or excludes both formats. Unsupported
+    preferences do not produce status 406. Both formats use no-store
     and Vary on Accept and Accept-Language; XHTML is not offered. API endpoints
     remain JSON-only.
+    JSON request bodies are parsed regardless of Content-Type; missing headers
+    and text/plain are accepted, but the body must still contain valid JSON.
     Registered routes carry a twenty-second request-context deadline. Database
     operations and mail delivery use that context; failures after it expires
     return localized JSON with status 504 if response headers have not been sent.

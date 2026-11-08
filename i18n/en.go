@@ -11,7 +11,6 @@ var en = map[string]string{
 	"err.otp_rate_limited":   "Too many verification code requests. Try again later.",
 	"err.route_not_found":    "Route not found.",
 	"err.method_not_allowed": "Method not allowed for this route.",
-	"err.not_acceptable":     "No acceptable representation. Request JSON or HTML.",
 	"err.request_timeout":    "Request timed out. Please try again later.",
 
 	"perm.change_email": "Change account email",

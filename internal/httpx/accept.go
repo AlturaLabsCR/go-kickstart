@@ -7,15 +7,19 @@ import (
 )
 
 // Negotiate selects the most acceptable offered media type, preferring offer order
-// on ties or when Accept is absent. An empty result means none is acceptable.
+// on ties. The first offer is the fallback for absent or unsupported Accept values.
+// Callers provide valid media types and render the returned format themselves.
 // Malformed ranges are ignored; specific exclusions override broader wildcards.
 func Negotiate(r *http.Request, offers ...string) string {
+	if len(offers) == 0 {
+		return ""
+	}
 	accept := strings.Join(r.Header.Values("Accept"), ",")
-	if strings.Trim(accept, " \t,") == "" && len(offers) > 0 {
+	if strings.Trim(accept, " \t,") == "" {
 		return offers[0]
 	}
 	ranges := splitMediaRanges(accept)
-	best, bestQuality := "", 0
+	best, bestQuality := offers[0], 0
 	for _, offer := range offers {
 		mediaType, params, err := mime.ParseMediaType(offer)
 		if err != nil {
