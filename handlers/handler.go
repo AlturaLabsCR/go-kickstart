@@ -92,7 +92,7 @@ func NewHandler(opts Options) (*Handler, error) {
 		localizer:     opts.Localizer,
 		rootPrefix:    rootPrefix,
 		mailer:        opts.Mailer,
-		mailFrom:      sender.Address,
+		mailFrom:      sender.String(),
 		otpSigner:     opts.OTPSigner,
 		mux:           http.NewServeMux(),
 	}
