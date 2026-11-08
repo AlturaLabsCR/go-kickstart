@@ -21,7 +21,7 @@ ON CONFLICT (scope, bucket_key) DO UPDATE SET
   END
 RETURNING requests, max_requests, expires_at;
 
--- name: DeleteExpiredRateLimits :exec
+-- name: DeleteExpiredRateLimits :execrows
 DELETE FROM rate_limits
 WHERE rate_limits.expires_at <= sqlc.arg(now)
   AND (rate_limits.scope, rate_limits.bucket_key) IN (

@@ -196,7 +196,7 @@ h.writeError(
 
 - Startup registers SIGINT/SIGTERM cancellation before opening the database. Each backend's initial ping has a ten-second context limit; migrations use the original startup context so this connection deadline does not cut off long migrations. PostgreSQL defaults new connection attempts to ten seconds unless the DSN sets `connect_timeout`; migration rollback has its own five-second cleanup deadline. HTTP shutdown keeps its independent grace period.
 
-- Database maintenance runs at startup and every minute, outside HTTP handlers. Each pass deletes up to 1000 expired rows per OTP/refresh-token table and 100 rate-limit rows, with a five-second context deadline. Failures are logged and retried on the next pass; shutdown cancels and joins the worker before closing the database. Cleanup is retention maintenance, not an abuse quota.
+- Database maintenance runs at startup and every minute, outside HTTP handlers. Each pass deletes up to 1000 expired rows per OTP/refresh-token table, then drains expired rate-limit rows in batches of 100 until none remain or the shared five-second deadline expires. Quota checks renew expired windows atomically without performing cleanup; active quotas are unaffected by retention maintenance. Failures are logged and retried on the next pass; shutdown cancels and joins the worker before closing the database. Cleanup is retention maintenance, not an abuse quota.
 
 - Add new runtime settings in `cmd/serve.go`.
 - Add the key, flag, help and default together in the settings table. Keep `runServerFromConfig` and the `serverConfig` fields in `cmd/server.go` aligned with it.

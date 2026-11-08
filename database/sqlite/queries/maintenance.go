@@ -3,14 +3,16 @@ package queries
 import (
 	"context"
 	"errors"
+
+	"app/database"
 )
 
 func (q *SQLiteQuerier) DeleteExpiredRecords(ctx context.Context, now int64) error {
-	// Independent batches release locks between tables and still run if one fails.
+	// Independent statements release locks between batches and still run if one fails.
 	return errors.Join(
 		q.queries.DeleteExpiredLoginRequests(ctx, now),
 		q.queries.DeleteExpiredEmailChangeRequests(ctx, now),
 		q.queries.DeleteExpiredRefreshTokens(ctx, now),
-		q.queries.DeleteExpiredRateLimits(ctx, now),
+		database.DeleteExpiredBatches(ctx, now, q.queries.DeleteExpiredRateLimits),
 	)
 }

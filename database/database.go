@@ -110,6 +110,7 @@ type RateLimitQuerier interface {
 
 type MaintenanceQuerier interface {
 	// DeleteExpiredRecords removes at most 1000 expired rows per OTP/token table
-	// and 100 expired rate-limit windows. Active records are left untouched.
+	// and drains expired rate-limit windows in batches of 100 until none remain
+	// or ctx ends. Active records are left untouched; callers must bound ctx.
 	DeleteExpiredRecords(ctx context.Context, now int64) error
 }

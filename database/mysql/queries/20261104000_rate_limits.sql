@@ -25,7 +25,7 @@ SELECT requests, max_requests, expires_at
 FROM rate_limits
 WHERE scope = ? AND bucket_key = ?;
 
--- name: DeleteExpiredRateLimits :exec
+-- name: DeleteExpiredRateLimits :execrows
 DELETE FROM rate_limits
 WHERE expires_at <= sqlc.arg(now)
 ORDER BY expires_at
