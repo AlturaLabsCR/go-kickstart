@@ -4,6 +4,7 @@ import (
 	"context"
 	"embed"
 	"fmt"
+	"time"
 
 	"app/database"
 	"app/database/postgres/db"
@@ -19,7 +20,11 @@ func applyMigrations(ctx context.Context, pool *pgxpool.Pool) error {
 	if err != nil {
 		return err
 	}
-	defer func() { _ = tx.Rollback(context.Background()) }()
+	defer func() {
+		rollbackCtx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+		defer cancel()
+		_ = tx.Rollback(rollbackCtx)
+	}()
 
 	// Protect bootstrap as well as version reads; commit/rollback releases the lock.
 	var locked bool

@@ -20,12 +20,20 @@ type Postgres struct {
 var _ database.Database = (*Postgres)(nil)
 
 func NewPostgres(ctx context.Context, connStr string) (*Postgres, error) {
-	pool, err := pgxpool.New(ctx, connStr)
+	cfg, err := pgxpool.ParseConfig(connStr)
+	if err != nil {
+		return nil, err
+	}
+	// Pool connection attempts can outlive a canceled acquisition.
+	if cfg.ConnConfig.ConnectTimeout <= 0 {
+		cfg.ConnConfig.ConnectTimeout = database.ConnectTimeout
+	}
+	pool, err := pgxpool.NewWithConfig(ctx, cfg)
 	if err != nil {
 		return nil, err
 	}
 
-	if err := pool.Ping(ctx); err != nil {
+	if err := database.Ping(ctx, pool.Ping); err != nil {
 		pool.Close()
 		return nil, err
 	}

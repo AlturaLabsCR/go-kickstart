@@ -57,8 +57,11 @@ func runServer(cfg serverConfig) error {
 		return err
 	}
 
+	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
+	defer stop()
+
 	var db database.Database
-	db, err = provider.Open(context.Background(), cfg.DatabaseDSN)
+	db, err = provider.Open(ctx, cfg.DatabaseDSN)
 	if err != nil {
 		return err
 	}
@@ -111,13 +114,14 @@ func runServer(cfg serverConfig) error {
 		MaxHeaderBytes:    32 << 10,
 	}
 
+	if err := ctx.Err(); err != nil {
+		return err
+	}
 	listener, err := net.Listen("tcp", srv.Addr)
 	if err != nil {
 		return err
 	}
 
-	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
-	defer stop()
 	stopMaintenance := startDatabaseMaintenance(ctx, db, logger)
 	defer stopMaintenance()
 

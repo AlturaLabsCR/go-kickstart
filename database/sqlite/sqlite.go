@@ -51,7 +51,7 @@ func NewSQLite(ctx context.Context, connStr string, opts ...OptFunc) (*SQLite, e
 	// Keep the template's SQLite pool serialized, independently of pragmas.
 	conn.SetMaxOpenConns(1)
 
-	if err := conn.PingContext(ctx); err != nil {
+	if err := database.Ping(ctx, conn.PingContext); err != nil {
 		_ = conn.Close()
 		return nil, err
 	}

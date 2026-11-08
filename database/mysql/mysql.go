@@ -43,7 +43,7 @@ func NewMySQL(ctx context.Context, connStr string) (*MySQL, error) {
 	conn.SetMaxIdleConns(10)
 	conn.SetConnMaxLifetime(3 * time.Minute)
 
-	if err := conn.PingContext(ctx); err != nil {
+	if err := database.Ping(ctx, conn.PingContext); err != nil {
 		_ = conn.Close()
 		return nil, err
 	}
