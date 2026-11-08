@@ -5,9 +5,19 @@ info:
   description: >-
     OpenAPI specification of App. JSON request bodies are limited to 1 MiB;
     oversized bodies return 400. JSON responses include Cache-Control no-store.
-    Unmatched routes return localized JSON with status 404. Unsupported methods
+    Unmatched routes return a localized HTML page or JSON with status 404,
+    negotiated using Accept with the same weights and defaults as the root.
+    If neither format is acceptable, router 404 responses fall back to JSON;
+    both formats use no-store and Vary on Accept and Accept-Language.
+    Unsupported methods
     return localized JSON with status 405 and the Allow header. The root page
     matches only the application root, not unknown paths.
+    The root page negotiates application/json or text/html using Accept weights,
+    wildcards and media parameters. JSON is the default when Accept is absent or
+    blank and wins equal weights. If neither format is acceptable, the root
+    returns a localized JSON error with status 406. Both formats use no-store
+    and Vary on Accept and Accept-Language; XHTML is not offered. API endpoints
+    remain JSON-only.
     Registered routes carry a twenty-second request-context deadline. Database
     operations and mail delivery use that context; failures after it expires
     return localized JSON with status 504 if response headers have not been sent.

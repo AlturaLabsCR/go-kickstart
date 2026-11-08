@@ -1,6 +1,12 @@
 package handlers
 
-import "net/http"
+import (
+	"net/http"
+
+	"app/internal/httpx"
+	"app/internal/logging"
+	"app/templates/errorpage"
+)
 
 func (h *Handler) route(w http.ResponseWriter, r *http.Request) {
 	h.mux.ServeHTTP(&routingErrorWriter{ResponseWriter: w, handler: h, request: r}, r)
@@ -30,9 +36,26 @@ func (w *routingErrorWriter) WriteHeader(status int) {
 		key, message = "err.method_not_allowed", "method not allowed"
 	}
 	w.replaced = true
-	w.handler.writeStatus(
-		w.ResponseWriter,
-		w.request,
+	w.handler.writeRoutingError(w.ResponseWriter, w.request, status, key, message)
+}
+
+func (h *Handler) writeRoutingError(w http.ResponseWriter, r *http.Request, status int, key, message string) {
+	if status == http.StatusNotFound {
+		w.Header().Add("Vary", "Accept, Accept-Language")
+		w.Header().Set("Cache-Control", "no-store")
+		if httpx.Negotiate(r, "application/json; charset=utf-8", "text/html; charset=utf-8") == "text/html; charset=utf-8" {
+			w.Header().Set("Content-Type", "text/html; charset=utf-8")
+			w.WriteHeader(status)
+			h.logger.Debug(message, logging.RequestArgs(r, status)...)
+			if err := errorpage.NotFound(h.localize(r, key)).Render(r.Context(), w); err != nil {
+				h.logger.Error("failed to render not found page", logging.RequestArgs(r, status, "error", err)...)
+			}
+			return
+		}
+	}
+	h.writeStatus(
+		w,
+		r,
 		status,
 		key,
 		message,

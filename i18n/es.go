@@ -11,6 +11,7 @@ var es = map[string]string{
 	"err.otp_rate_limited":   "Demasiadas solicitudes de código de verificación. Inténtalo más tarde.",
 	"err.route_not_found":    "Ruta no encontrada.",
 	"err.method_not_allowed": "Método no permitido para esta ruta.",
+	"err.not_acceptable":     "No hay una representación aceptable. Solicita JSON o HTML.",
 	"err.request_timeout":    "La solicitud tardó demasiado. Inténtalo de nuevo más tarde.",
 
 	"perm.change_email": "Cambiar correo de cuenta",

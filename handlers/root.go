@@ -2,7 +2,6 @@ package handlers
 
 import (
 	"net/http"
-	"strings"
 
 	"app/internal/httpx"
 	"app/templates/base"
@@ -19,12 +18,25 @@ func (h *Handler) registerRootRoutes() {
 }
 
 func (h *Handler) Root(w http.ResponseWriter, r *http.Request) {
+	w.Header().Add("Vary", "Accept, Accept-Language")
+	w.Header().Set("Cache-Control", "no-store")
+	contentType := httpx.Negotiate(r, "application/json; charset=utf-8", "text/html; charset=utf-8")
+	if contentType == "" {
+		h.writeStatus(
+			w,
+			r,
+			http.StatusNotAcceptable,
+			"err.not_acceptable",
+			"no acceptable root representation",
+		)
+		return
+	}
 	L := func(key string, args ...any) string {
 		return h.localize(r, key, args...)
 	}
 
-	if acceptsHTML(r) {
-		w.Header().Set("Content-Type", "text/html; charset=utf-8")
+	if contentType == "text/html; charset=utf-8" {
+		w.Header().Set("Content-Type", contentType)
 		page := base.Page(base.PageParams{
 			Head: base.HeadParams{
 				Title:       meta.AppTitle,
@@ -52,9 +64,4 @@ func (h *Handler) Root(w http.ResponseWriter, r *http.Request) {
 	httpx.WriteJSON(w, http.StatusOK, map[string]string{
 		"message": L("root.greeting"),
 	})
-}
-
-func acceptsHTML(r *http.Request) bool {
-	accept := r.Header.Get("Accept")
-	return strings.Contains(accept, "text/html") || strings.Contains(accept, "application/xhtml+xml")
 }
