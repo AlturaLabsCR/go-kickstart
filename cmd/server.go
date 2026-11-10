@@ -28,6 +28,9 @@ import (
 
 type serverConfig struct {
 	DatabaseDSN     string
+	AutoMigrate     bool
+	MaxConnections  int
+	CacheEnabled    bool
 	Dev             bool
 	LogLevel        string
 	LogFormat       string
@@ -61,17 +64,15 @@ func runServer(cfg serverConfig) error {
 	defer stop()
 
 	var db database.Database
-	db, err = provider.Open(ctx, cfg.DatabaseDSN)
+	db, err = provider.Open(ctx, cfg.DatabaseDSN, database.OpenOptions{SkipMigrations: !cfg.AutoMigrate, MaxConnections: cfg.MaxConnections})
 	if err != nil {
 		return err
 	}
-	cacheStore := memory.New()
-	defer func() {
-		if err := cacheStore.Close(); err != nil {
-			logger.Error("cache close error", "error", err)
-		}
-	}()
-	db = cached.New(db, cacheStore)
+	if cfg.CacheEnabled {
+		cacheStore := memory.New()
+		defer cacheStore.Close()
+		db = cached.New(db, cacheStore)
+	}
 	defer func() {
 		if err := db.Close(); err != nil {
 			logger.Error("database close error", "error", err)

@@ -79,3 +79,12 @@ db: data/app.sqlite
 # Override with APP_MAIL_FROM or --mail-from.
 mail:
   from: no-reply@example.com
+
+# Run `app migrate` separately and disable automatic DDL for replicated servers.
+database:
+  auto-migrate: true
+  max-connections: 10
+
+# Local profile cache has no cross-instance invalidation. Disabled by default.
+cache:
+  enabled: false

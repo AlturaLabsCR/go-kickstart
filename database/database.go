@@ -4,6 +4,7 @@ package database
 import "context"
 
 type Database interface {
+	Ping(context.Context) error
 	Querier() Querier
 	WithTx(ctx context.Context, fn func(q Querier) error) error
 	IsErrNotFound(err error) bool

@@ -38,6 +38,9 @@ func registerSettings(cmd *cobra.Command) {
 		{"auth.refresh-token-ttl", "auth-refresh-ttl", "refresh token TTL", 30 * 24 * time.Hour},
 		{"mail.from", "mail-from", "sender address for application emails", "no-reply@example.com"},
 		{"root", "root", "route prefix to mount the app under", ""},
+		{"database.auto-migrate", "auto-migrate", "apply migrations at server startup", true},
+		{"database.max-connections", "db-max-connections", "maximum SQL connections per replica (SQLite uses one)", 10},
+		{"cache.enabled", "cache", "cache profiles locally; other replicas may serve stale profiles", false},
 		{"db", "db", "database DSN", "data/app.sqlite"},
 	}
 	flags := cmd.PersistentFlags()
@@ -62,6 +65,9 @@ func registerSettings(cmd *cobra.Command) {
 func runServerFromConfig() error {
 	return runServer(serverConfig{
 		DatabaseDSN:     viper.GetString("db"),
+		AutoMigrate:     viper.GetBool("database.auto-migrate"),
+		MaxConnections:  viper.GetInt("database.max-connections"),
+		CacheEnabled:    viper.GetBool("cache.enabled"),
 		Dev:             viper.GetBool("dev"),
 		LogLevel:        viper.GetString("loglvl"),
 		LogFormat:       viper.GetString("logfmt"),

@@ -1,6 +1,7 @@
 package provider
 
 import (
+	"app/database"
 	"context"
 	"database/sql"
 	"path/filepath"
@@ -50,5 +51,41 @@ func TestOpenAutoMigratesSQLite(t *testing.T) {
 
 	if accountColumns == 0 {
 		t.Fatal("expected accounts table to exist after auto-migration")
+	}
+}
+
+func TestOpenChecksSchemaWithoutMigrating(t *testing.T) {
+	path := filepath.Join(t.TempDir(), "app.sqlite")
+	options := database.OpenOptions{SkipMigrations: true}
+	if db, err := Open(t.Context(), path, options); err == nil {
+		db.Close()
+		t.Fatal("accepted an uninitialized schema")
+	}
+	db, err := Open(t.Context(), path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	db.Close()
+	db, err = Open(t.Context(), path, options)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := db.Ping(t.Context()); err != nil {
+		t.Fatal(err)
+	}
+	db.Close()
+	raw, err := sql.Open("sqlite", path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer raw.Close()
+	for _, version := range []int64{0, 99999999999} {
+		if _, err := raw.Exec("UPDATE schema_migrations SET version = ?", version); err != nil {
+			t.Fatal(err)
+		}
+		if db, err := Open(t.Context(), path, options); err == nil {
+			db.Close()
+			t.Fatalf("accepted incompatible version %d", version)
+		}
 	}
 }
