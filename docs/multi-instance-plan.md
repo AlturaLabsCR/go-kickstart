@@ -33,4 +33,5 @@ References consulted (patterns, not dependencies):
 - [Kubernetes termination](https://kubernetes.io/docs/concepts/workloads/pods/pod-lifecycle/#pod-termination)
 - [controller-runtime health handlers](https://github.com/kubernetes-sigs/controller-runtime/blob/main/pkg/healthz/healthz.go)
 
-Progress and validation results will be recorded in the deployment guide.
+All four stages are implemented. Validation results and operational limits are
+recorded in [the deployment guide](multi-instance.md#verification).

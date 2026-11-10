@@ -127,4 +127,20 @@ The Go integration suite uses disposable databases when `TEST_POSTGRES_DSN` and
 Run `go test -race ./...`. See `python3 contrib/test-multi-instance.py` for a Docker smoke
 check using two independent application processes per backend.
 
+Validation completed on this branch:
+
+- `go test -race ./...` with SQLite and Docker PostgreSQL 18 / MySQL 8.4 passed.
+- Source-based Docker image build passed, including generated SQL, templates and docs.
+- The independent-process smoke test passed on both external backends, using runtime
+  SQL users without DDL privileges and read-only container filesystems. It covers
+  cross-replica login, issuance/verification budgets, refresh competition, profile
+  visibility, revocation, SIGTERM, SQL outage/recovery, schema mismatch rejection,
+  repeat migration execution and unfinished MySQL migration rejection.
+- All five Kubernetes resources passed strict kubeconform schema validation.
+- CI now builds the image and runs the smoke test after the existing Go checks.
+
+The smoke test intentionally retrieves OTPs from development logs; it does not
+contact a real SMTP provider. No Kubernetes cluster rollout or gateway propagation
+measurement was performed. Validate those against your deployment environment.
+
 The implementation plan is in [multi-instance-plan.md](multi-instance-plan.md).
