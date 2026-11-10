@@ -38,6 +38,24 @@ tags:
   - name: Authentication
   - name: Account
 paths:
+  /livez:
+    get:
+      operationId: liveness
+      summary: Process liveness
+      description: Operational route at the absolute path /livez, independent of the configured application root. Does not check SQL. Responses have no body and use Cache-Control no-store.
+      responses:
+        '204':
+          description: HTTP server is responsive.
+  /readyz:
+    get:
+      operationId: readiness
+      summary: Readiness to accept traffic
+      description: Operational route at the absolute path /readyz, independent of the configured application root. Checks SQL with a one-second timeout and rejects traffic eligibility during shutdown. Does not expose dependency details. Responses have no body and use Cache-Control no-store.
+      responses:
+        '204':
+          description: Instance is ready.
+        '503':
+          description: SQL unavailable or instance draining.
   /auth/login:
     post:
       tags:

@@ -29,6 +29,9 @@ creating your application.
 
 Session listing and individual or account-wide logout are available through the JSON API; see [session management](docs/sessions.md), including deployment notes.
 
+See [multiple instances and Kubernetes](docs/multi-instance.md) for container builds,
+separate migration jobs, probes, graceful shutdown and shared SQL configuration.
+
 ## Extending
 
 - Add a route group in `handlers/`, a registration method and its call in `registerRoutes`.

@@ -27,6 +27,8 @@ func registerSettings(cmd *cobra.Command) {
 		key, flag, usage string
 		value            any
 	}{
+		{"http.drain-delay", "drain-delay", "serve while readiness withdrawal propagates on shutdown", 5 * time.Second},
+		{"http.shutdown-timeout", "shutdown-timeout", "grace period for active HTTP requests after draining", 25 * time.Second},
 		{"dev", "dev", "enable development features and allow empty or short signing secrets", false},
 		{"host", "host", "bind host", ""},
 		{"port", "port", "bind port", 3080},
@@ -36,8 +38,15 @@ func registerSettings(cmd *cobra.Command) {
 		{"otp.secret", "otp-secret", "independent HMAC secret for verification codes", ""},
 		{"auth.access-token-ttl", "auth-access-ttl", "access token TTL", 15 * time.Minute},
 		{"auth.refresh-token-ttl", "auth-refresh-ttl", "refresh token TTL", 30 * 24 * time.Hour},
+		{"mail.smtp.address", "smtp-address", "SMTP host:port; empty disables delivery", ""},
+		{"mail.smtp.user", "smtp-user", "SMTP username", ""},
+		{"mail.smtp.password", "smtp-password", "SMTP password", ""},
+		{"mail.smtp.starttls", "smtp-starttls", "use required STARTTLS instead of implicit TLS", false},
 		{"mail.from", "mail-from", "sender address for application emails", "no-reply@example.com"},
 		{"root", "root", "route prefix to mount the app under", ""},
+		{"database.auto-migrate", "auto-migrate", "apply migrations at server startup", true},
+		{"database.max-connections", "db-max-connections", "maximum SQL connections per replica (SQLite uses one)", 10},
+		{"cache.enabled", "cache", "cache profiles locally; other replicas may serve stale profiles", false},
 		{"db", "db", "database DSN", "data/app.sqlite"},
 	}
 	flags := cmd.PersistentFlags()
@@ -61,7 +70,16 @@ func registerSettings(cmd *cobra.Command) {
 
 func runServerFromConfig() error {
 	return runServer(serverConfig{
+		SMTPAddress:     viper.GetString("mail.smtp.address"),
+		SMTPUser:        viper.GetString("mail.smtp.user"),
+		SMTPPassword:    viper.GetString("mail.smtp.password"),
+		SMTPStartTLS:    viper.GetBool("mail.smtp.starttls"),
+		DrainDelay:      viper.GetDuration("http.drain-delay"),
+		ShutdownTimeout: viper.GetDuration("http.shutdown-timeout"),
 		DatabaseDSN:     viper.GetString("db"),
+		AutoMigrate:     viper.GetBool("database.auto-migrate"),
+		MaxConnections:  viper.GetInt("database.max-connections"),
+		CacheEnabled:    viper.GetBool("cache.enabled"),
 		Dev:             viper.GetBool("dev"),
 		LogLevel:        viper.GetString("loglvl"),
 		LogFormat:       viper.GetString("logfmt"),

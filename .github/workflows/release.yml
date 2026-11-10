@@ -65,6 +65,14 @@ jobs:
             upx --best app-linux-$arch
           done
 
+      - name: Build container image
+        run: docker build --tag app:ci .
+
+      - name: Test independent replicas
+        run: python3 contrib/test-multi-instance.py
+        env:
+          APP_TEST_IMAGE: app:ci
+
       - name: Store release binaries
         if: github.event_name == 'push' && github.ref_type == 'tag'
         uses: actions/upload-artifact@v4

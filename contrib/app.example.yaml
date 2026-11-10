@@ -78,4 +78,24 @@ db: data/app.sqlite
 # Replace the mailer injected in cmd/server.go to enable actual delivery.
 # Override with APP_MAIL_FROM or --mail-from.
 mail:
+  # Implicit TLS by default (typically port 465); starttls requires STARTTLS.
+  smtp:
+    address: ""
+    user: ""
+    password: ""
+    starttls: false
   from: no-reply@example.com
+
+# Run `app migrate` separately and disable automatic DDL for replicated servers.
+database:
+  auto-migrate: true
+  max-connections: 10
+
+# Local profile cache has no cross-instance invalidation. Disabled by default.
+cache:
+  enabled: false
+
+# Kubernetes termination grace must exceed the sum, plus cleanup margin.
+http:
+  drain-delay: 5s
+  shutdown-timeout: 25s
