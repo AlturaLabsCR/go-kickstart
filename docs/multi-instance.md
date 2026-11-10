@@ -48,9 +48,9 @@ Create two Kubernetes Secrets from protected environment files:
 ```sh
 kubectl create secret generic app-runtime --from-env-file=/secure/runtime.env
 kubectl create secret generic app-migrations --from-env-file=/secure/migrations.env
-kubectl apply -f contrib/kubernetes/migrate.yaml
+kubectl apply -f contrib/k8s/migrate.yaml
 kubectl wait --for=condition=complete job/app-migrate --timeout=600s
-kubectl apply -k contrib/kubernetes
+kubectl apply -k contrib/k8s
 kubectl rollout status deployment/app
 ```
 
