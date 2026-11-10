@@ -21,13 +21,16 @@ import (
 	"app/handlers"
 	locales "app/i18n"
 	"app/internal/health"
-	"app/mailer/noop"
 	"github.com/tavocg/go-i18n"
 	secrets "github.com/tavocg/go-secrets"
 	"github.com/tavocg/go-secrets/otp"
 )
 
 type serverConfig struct {
+	SMTPAddress     string
+	SMTPUser        string
+	SMTPPassword    string
+	SMTPStartTLS    bool
 	DrainDelay      time.Duration
 	ShutdownTimeout time.Duration
 	DatabaseDSN     string
@@ -96,7 +99,13 @@ func runServer(cfg serverConfig) error {
 		return err
 	}
 
-	// Replace the noop provider below with a go-email SMTP or Mailgun client.
+	mailer, err := newMailer(cfg)
+	if err != nil {
+		return err
+	}
+	if cfg.SMTPAddress == "" {
+		logger.Warn("SMTP is not configured; verification emails will be discarded")
+	}
 	h, err := handlers.NewHandler(handlers.Options{
 		Logger:        logger,
 		Dev:           cfg.Dev,
@@ -104,7 +113,7 @@ func runServer(cfg serverConfig) error {
 		Authenticator: authenticator,
 		Localizer:     localizer,
 		RootPrefix:    cfg.RootPrefix,
-		Mailer:        noop.Mailer{},
+		Mailer:        mailer,
 		MailFrom:      cfg.MailFrom,
 		OTPSigner:     otpSigner,
 	})

@@ -78,6 +78,12 @@ db: data/app.sqlite
 # Replace the mailer injected in cmd/server.go to enable actual delivery.
 # Override with APP_MAIL_FROM or --mail-from.
 mail:
+  # Implicit TLS by default (typically port 465); starttls requires STARTTLS.
+  smtp:
+    address: ""
+    user: ""
+    password: ""
+    starttls: false
   from: no-reply@example.com
 
 # Run `app migrate` separately and disable automatic DDL for replicated servers.

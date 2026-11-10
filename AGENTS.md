@@ -195,7 +195,7 @@ h.writeError(
 - The app is intended to run behind a reverse proxy. Apply per-client-IP throttling at that proxy to the OTP routes (`/auth/login`, `/auth/verify`, `/account/email/change`, `/account/email/change/confirm`, with the configured root prefix). The application enforces persistent budgets by normalized email for login and by authenticated account for email changes; it does not impose peer-IP or global OTP budgets. Keep identity budgets even when proxy limits are enabled.
 
 - Handlers receive `github.com/tavocg/go-email/mailer.Mailer` through `handlers.Options`.
-- `cmd/server.go` injects `app/mailer/noop.Mailer` by default. Replace that provider with an SMTP or Mailgun client to deliver messages; handlers remain unchanged.
+- `cmd/mail.go` selects the existing go-email SMTP provider when `mail.smtp.address` is set; otherwise it injects `app/mailer/noop.Mailer` and startup warns that delivery is disabled. SMTP uses implicit TLS by default or required STARTTLS with `mail.smtp.starttls`; configure credentials through `mail.smtp.user/password`. Certificate verification stays enabled. Handlers remain unchanged.
 - Configure the sender with `mail.from` / `--mail-from` / `APP_MAIL_FROM`.
 - OTP messages use localized plain text and the request context with a delivery timeout. Save the challenge before sending; do not delete it on ambiguous delivery failures or reset abuse limits.
 

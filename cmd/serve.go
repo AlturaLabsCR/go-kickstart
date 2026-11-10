@@ -38,6 +38,10 @@ func registerSettings(cmd *cobra.Command) {
 		{"otp.secret", "otp-secret", "independent HMAC secret for verification codes", ""},
 		{"auth.access-token-ttl", "auth-access-ttl", "access token TTL", 15 * time.Minute},
 		{"auth.refresh-token-ttl", "auth-refresh-ttl", "refresh token TTL", 30 * 24 * time.Hour},
+		{"mail.smtp.address", "smtp-address", "SMTP host:port; empty disables delivery", ""},
+		{"mail.smtp.user", "smtp-user", "SMTP username", ""},
+		{"mail.smtp.password", "smtp-password", "SMTP password", ""},
+		{"mail.smtp.starttls", "smtp-starttls", "use required STARTTLS instead of implicit TLS", false},
 		{"mail.from", "mail-from", "sender address for application emails", "no-reply@example.com"},
 		{"root", "root", "route prefix to mount the app under", ""},
 		{"database.auto-migrate", "auto-migrate", "apply migrations at server startup", true},
@@ -66,6 +70,10 @@ func registerSettings(cmd *cobra.Command) {
 
 func runServerFromConfig() error {
 	return runServer(serverConfig{
+		SMTPAddress:     viper.GetString("mail.smtp.address"),
+		SMTPUser:        viper.GetString("mail.smtp.user"),
+		SMTPPassword:    viper.GetString("mail.smtp.password"),
+		SMTPStartTLS:    viper.GetBool("mail.smtp.starttls"),
 		DrainDelay:      viper.GetDuration("http.drain-delay"),
 		ShutdownTimeout: viper.GetDuration("http.shutdown-timeout"),
 		DatabaseDSN:     viper.GetString("db"),
