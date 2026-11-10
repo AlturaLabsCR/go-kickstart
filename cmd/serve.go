@@ -27,6 +27,8 @@ func registerSettings(cmd *cobra.Command) {
 		key, flag, usage string
 		value            any
 	}{
+		{"http.drain-delay", "drain-delay", "serve while readiness withdrawal propagates on shutdown", 5 * time.Second},
+		{"http.shutdown-timeout", "shutdown-timeout", "grace period for active HTTP requests after draining", 25 * time.Second},
 		{"dev", "dev", "enable development features and allow empty or short signing secrets", false},
 		{"host", "host", "bind host", ""},
 		{"port", "port", "bind port", 3080},
@@ -64,6 +66,8 @@ func registerSettings(cmd *cobra.Command) {
 
 func runServerFromConfig() error {
 	return runServer(serverConfig{
+		DrainDelay:      viper.GetDuration("http.drain-delay"),
+		ShutdownTimeout: viper.GetDuration("http.shutdown-timeout"),
 		DatabaseDSN:     viper.GetString("db"),
 		AutoMigrate:     viper.GetBool("database.auto-migrate"),
 		MaxConnections:  viper.GetInt("database.max-connections"),

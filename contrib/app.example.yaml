@@ -88,3 +88,8 @@ database:
 # Local profile cache has no cross-instance invalidation. Disabled by default.
 cache:
   enabled: false
+
+# Kubernetes termination grace must exceed the sum, plus cleanup margin.
+http:
+  drain-delay: 5s
+  shutdown-timeout: 25s

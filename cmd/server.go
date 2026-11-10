@@ -20,6 +20,7 @@ import (
 	"app/database/provider"
 	"app/handlers"
 	locales "app/i18n"
+	"app/internal/health"
 	"app/mailer/noop"
 	"github.com/tavocg/go-i18n"
 	secrets "github.com/tavocg/go-secrets"
@@ -27,6 +28,8 @@ import (
 )
 
 type serverConfig struct {
+	DrainDelay      time.Duration
+	ShutdownTimeout time.Duration
 	DatabaseDSN     string
 	AutoMigrate     bool
 	MaxConnections  int
@@ -45,6 +48,10 @@ type serverConfig struct {
 }
 
 func runServer(cfg serverConfig) error {
+	if cfg.DrainDelay < 0 || cfg.ShutdownTimeout <= 0 || cfg.MaxConnections < 1 {
+		return errors.New("drain delay must be nonnegative; shutdown timeout and database connections must be positive")
+	}
+
 	logger, err := newLogger(cfg.Dev, cfg.LogLevel, cfg.LogFormat)
 	if err != nil {
 		return err
@@ -107,7 +114,7 @@ func runServer(cfg serverConfig) error {
 
 	srv := &http.Server{
 		Addr:              net.JoinHostPort(cfg.Host, strconv.Itoa(cfg.Port)),
-		Handler:           h,
+		Handler:           health.New(ctx, db.Ping, h),
 		ReadHeaderTimeout: 5 * time.Second,
 		ReadTimeout:       15 * time.Second,
 		WriteTimeout:      30 * time.Second,
@@ -127,7 +134,7 @@ func runServer(cfg serverConfig) error {
 	defer stopMaintenance()
 
 	logger.Info("listening", "addr", listener.Addr().String())
-	return serveHTTP(ctx, srv, listener)
+	return serveHTTP(ctx, srv, listener, cfg.DrainDelay, cfg.ShutdownTimeout)
 }
 
 // resolveOTPSecret enforces the signing-secret policy and returns the effective
