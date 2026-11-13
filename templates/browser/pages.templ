@@ -1,0 +1,73 @@
+package browser
+
+import "time"
+
+type Session struct {
+	Device                 string
+	Created, Used, Expires int64
+	Current                bool
+}
+
+func stamp(value int64) string {
+	if value == 0 {
+		return "—"
+	}
+	return time.Unix(value, 0).UTC().Format(time.RFC3339)
+}
+
+templ Login(action, email, message string, verify, refresh bool, tr func(string) string) {
+	<section>
+		<h1>{ tr("web.login") }</h1>
+		if message!="" {
+			<p role="alert">{ message }</p>
+		}
+		<form method="post" action={ action }>
+			if verify {
+				<input type="hidden" name="action" value="verify"/>
+				<label>{ tr("web.email") }<input type="email" name="email" value={ email } readonly required/></label>
+				<label>{ tr("web.code") }<input name="otp" inputmode="numeric" autocomplete="one-time-code" pattern="[0-9]{6}" minlength="6" maxlength="6" required autofocus/></label>
+				<button type="submit">{ tr("web.verify") }</button>
+			} else {
+				<input type="hidden" name="action" value="login"/>
+				<label>{ tr("web.email") }<input type="email" name="email" value={ email } autocomplete="email" required/></label>
+				<button type="submit">{ tr("web.send") }</button>
+			}
+		</form>
+		if refresh {
+			<form method="post" action={ action }><button name="action" value="refresh">{ tr("web.continue") }</button></form>
+		}
+		if verify {
+			<a href={ action }>{ tr("web.restart") }</a>
+		}
+	</section>
+}
+
+templ Home(action, home, next string, sessions []Session, tr func(string) string) {
+	<section>
+		<h1>{ tr("web.home") }</h1>
+		<h2>{ tr("web.sessions") }</h2>
+		<form method="get" action={ home }><button>{ tr("web.reload") }</button></form>
+		<table>
+			<thead><tr><th>{ tr("web.device") }</th><th>{ tr("web.created") }</th><th>{ tr("web.used") }</th><th>{ tr("web.expires") }</th></tr></thead>
+			<tbody>
+				for _,session := range sessions {
+					<tr>
+						<td>
+							{ session.Device }
+							if session.Current {
+								<strong>({ tr("web.current") })</strong>
+							}
+						</td>
+						<td>{ stamp(session.Created) }</td>
+						<td>{ stamp(session.Used) }</td>
+						<td>{ stamp(session.Expires) }</td>
+					</tr>
+				}
+			</tbody>
+		</table>
+		if next!="" {
+			<a href={ next }>{ tr("web.next") }</a>
+		}
+		<form method="post" action={ action }><button name="action" value="logout">{ tr("web.logout") }</button></form>
+	</section>
+}

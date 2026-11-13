@@ -1,0 +1,164 @@
+package handlers
+
+import (
+	"encoding/json"
+	"net/http"
+	"net/url"
+	"strings"
+
+	"app/internal/browser"
+	"app/middleware"
+	"app/templates/base"
+	pages "app/templates/browser"
+	"app/templates/meta"
+	"github.com/a-h/templ"
+)
+
+// Remove this file and its registration call to remove the browser surface.
+// API handlers, JSON contracts and Bearer authentication are not modified.
+func (h *Handler) registerBrowserRoutes() {
+	const loginPath, homePath = "/login", "/home"
+	cookies := browser.Cookies{Path: h.links.Mount("/"), Secure: !h.dev}
+	if !strings.HasSuffix(cookies.Path, "/") {
+		cookies.Path += "/"
+	}
+	protected := middleware.AuthenticateBearer(h.logger, h.localize, h.authenticator, http.HandlerFunc(h.ListSessions))
+	login := h.links.Mount(loginPath)
+	home := h.links.Mount(homePath)
+	page := func(w http.ResponseWriter, r *http.Request, status int, title string, content templ.Component) {
+		w.Header().Set("Cache-Control", "no-store")
+		w.Header().Set("Content-Type", "text/html; charset=utf-8")
+		w.Header().Add("Vary", "Accept-Language")
+		w.Header().Set("Referrer-Policy", "no-referrer")
+		w.WriteHeader(status)
+		if err := base.Page(base.PageParams{Links: h.links, Head: base.HeadParams{Title: meta.AppTitle, Subtitle: title}, Body: base.BodyParams{Content: content}}).Render(r.Context(), w); err != nil {
+			h.logger.Error("failed to render browser page", "error", err)
+		}
+	}
+	showLogin := func(w http.ResponseWriter, r *http.Request, status int, email, message string, verify bool) {
+		tr := func(key string) string { return h.localize(r, key) }
+		page(w, r, status, tr("web.login"), pages.Login(login, email, message, verify, cookies.Read(r, "refresh") != "", tr))
+	}
+	h.Add("GET", loginPath, func(w http.ResponseWriter, r *http.Request) {
+		showLogin(w, r, 200, r.URL.Query().Get("email"), "", r.URL.Query().Get("step") == "verify")
+	})
+	csrf := http.NewCrossOriginProtection()
+	csrf.SetDenyHandler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		h.writeStatus(
+			w,
+			r,
+			http.StatusForbidden,
+			"err.permission_denied",
+			"cross-origin browser form rejected",
+		)
+	}))
+	h.AddHandler("POST", loginPath, csrf.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Cache-Control", "no-store")
+		r.Body = http.MaxBytesReader(w, r.Body, 1<<20)
+		if err := r.ParseForm(); err != nil {
+			showLogin(w, r, 400, "", h.localize(r, "err.invalid_login_body"), false)
+			return
+		}
+		email := r.PostForm.Get("email")
+		action := r.PostForm.Get("action")
+		if action == "logout" {
+			// A refresh cookie can expire before a still-valid access token.
+			if access := cookies.Read(r, "access"); access != "" {
+				if claims, err := h.authenticator.Verify(r.Context(), access); err == nil {
+					request := r.Clone(r.Context())
+					request.SetPathValue("id", claims.SessionID)
+					revoke := middleware.AuthenticateBearer(h.logger, h.localize, h.authenticator, http.HandlerFunc(h.RevokeSession))
+					reply := browser.Call(request, revoke, nil, access)
+					if reply.Status >= 400 {
+						showLogin(w, r, reply.Status, "", h.localize(r, "err.revoke_session"), false)
+						return
+					}
+				}
+			}
+			if token := cookies.Read(r, "refresh"); token != "" {
+				if err := h.authenticator.Revoke(r.Context(), token); err != nil {
+					h.writeError(
+						w,
+						r,
+						http.StatusInternalServerError,
+						err,
+						"err.revoke_session",
+						"failed to revoke browser session",
+					)
+					return
+				}
+			}
+			cookies.Clear(w)
+			http.Redirect(w, r, login, http.StatusSeeOther)
+			return
+		}
+		var reply *browser.Reply
+		switch action {
+		case "login":
+			reply = browser.Call(r, http.HandlerFunc(h.LoginOrCreateAccount), loginRequest{Email: email}, "")
+		case "verify":
+			reply = browser.Call(r, http.HandlerFunc(h.VerifyAuthenticationCode), verifyRequest{Email: email, OTP: r.PostForm.Get("otp")}, "")
+		case "refresh":
+			reply = browser.Call(r, http.HandlerFunc(h.RefreshSession), refreshRequest{RefreshToken: cookies.Read(r, "refresh")}, "")
+		default:
+			showLogin(w, r, 400, email, h.localize(r, "err.invalid_login_body"), false)
+			return
+		}
+		if reply.Status >= 400 {
+			var failure struct {
+				Error string `json:"error"`
+			}
+			if json.Unmarshal(reply.Body.Bytes(), &failure) != nil {
+				failure.Error = h.localize(r, "err.finalize_login")
+			}
+			if action == "refresh" && reply.Status == 401 {
+				cookies.Clear(w)
+			}
+			showLogin(w, r, reply.Status, email, failure.Error, action == "verify")
+			return
+		}
+		if action == "login" {
+			http.Redirect(w, r, login+"?step=verify&email="+url.QueryEscape(email), http.StatusSeeOther)
+			return
+		}
+		var tokens browser.Tokens
+		if err := json.Unmarshal(reply.Body.Bytes(), &tokens); err != nil || tokens.Access == "" || tokens.Refresh == "" {
+			showLogin(w, r, 500, email, h.localize(r, "err.issue_tokens"), false)
+			return
+		}
+		cookies.Save(w, tokens)
+		w.Header().Set("Cache-Control", "no-store")
+		http.Redirect(w, r, home, http.StatusSeeOther)
+	})))
+	h.Add("GET", homePath, func(w http.ResponseWriter, r *http.Request) {
+		reply := browser.Call(r, protected, nil, cookies.Read(r, "access"))
+		if reply.Status == 401 {
+			w.Header().Set("Cache-Control", "no-store")
+			http.Redirect(w, r, login, http.StatusSeeOther)
+			return
+		}
+		if reply.Status != 200 {
+			for key, values := range reply.HeaderMap {
+				w.Header()[key] = values
+			}
+			w.WriteHeader(reply.Status)
+			_, _ = w.Write(reply.Body.Bytes())
+			return
+		}
+		var sessions accountSessionsResponse
+		if err := json.Unmarshal(reply.Body.Bytes(), &sessions); err != nil {
+			showLogin(w, r, 500, "", h.localize(r, "err.select_sessions"), false)
+			return
+		}
+		rows := make([]pages.Session, 0, len(sessions.Sessions))
+		for _, session := range sessions.Sessions {
+			rows = append(rows, pages.Session{Device: session.UserAgent, Created: session.CreatedAt, Used: session.LastUsedAt, Expires: session.ExpiresAt, Current: session.Current})
+		}
+		tr := func(key string) string { return h.localize(r, key) }
+		next := ""
+		if sessions.NextCursor != "" {
+			next = home + "?cursor=" + url.QueryEscape(sessions.NextCursor)
+		}
+		page(w, r, 200, tr("web.home"), pages.Home(login, home, next, rows, tr))
+	})
+}

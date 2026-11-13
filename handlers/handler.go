@@ -168,4 +168,5 @@ func (h *Handler) registerRoutes() {
 	h.registerAccountRoutes()
 	h.registerRootRoutes()
 	h.registerStaticRoutes()
+	h.registerBrowserRoutes()
 }

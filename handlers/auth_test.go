@@ -8,6 +8,7 @@ import (
 	"log/slog"
 	"net/http"
 	"net/http/httptest"
+	"net/url"
 	"regexp"
 	"strconv"
 	"strings"
@@ -156,6 +157,55 @@ func TestLoginOTPIsHashedAndConsumedOnce(t *testing.T) {
 		if statuses[200] != 1 || statuses[401] != 1 {
 			t.Fatalf("concurrent verification statuses = %v", statuses)
 		}
+		t.Run("native browser session", func(t *testing.T) {
+			var cookies []*http.Cookie
+			call := func(method, path string, values url.Values, origin string) *httptest.ResponseRecorder {
+				req := httptest.NewRequest(method, path, strings.NewReader(values.Encode()))
+				req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+				req.Header.Set("User-Agent", "Browser integration test")
+				if origin != "" {
+					req.Header.Set("Origin", origin)
+				}
+				for _, cookie := range cookies {
+					req.AddCookie(cookie)
+				}
+				out := httptest.NewRecorder()
+				h.handler.ServeHTTP(out, req)
+				return out
+			}
+			form := url.Values{"action": {"login"}, "email": {"browser@example.com"}}
+			requireStatus(t, call("POST", "/login", form, "https://attacker.example"), 403)
+			requireStatus(t, call("GET", "/home", nil, ""), 303)
+			requireStatus(t, call("POST", "/login", form, ""), 303)
+			form.Set("action", "verify")
+			form.Set("otp", h.code(t))
+			signed := call("POST", "/login", form, "")
+			requireStatus(t, signed, 303)
+			cookies = signed.Result().Cookies()
+			if len(cookies) != 2 {
+				t.Fatal("missing session cookies")
+			}
+			for _, cookie := range cookies {
+				if !cookie.Secure || !cookie.HttpOnly || cookie.SameSite != http.SameSiteStrictMode || cookie.Path != "/" {
+					t.Fatal("unsafe cookie attributes")
+				}
+			}
+			home := call("GET", "/home", nil, "")
+			requireStatus(t, home, 200)
+			if !strings.Contains(home.Body.String(), "Browser integration test") || !strings.Contains(home.Body.String(), "Current") {
+				t.Fatal("home did not show current session")
+			}
+			requireStatus(t, call("GET", "/account/sessions", nil, ""), 401)
+			form = url.Values{"action": {"refresh"}}
+			refreshed := call("POST", "/login", form, "")
+			requireStatus(t, refreshed, 303)
+			cookies = refreshed.Result().Cookies()
+			requireStatus(t, call("GET", "/home", nil, ""), 200)
+			requireStatus(t, call("POST", "/login", url.Values{"action": {"logout"}}, ""), 303)
+			// Old cookies must stop authenticating after server-side revocation.
+			requireStatus(t, call("GET", "/home", nil, ""), 303)
+		})
+
 	})
 }
 
