@@ -8,15 +8,13 @@ import (
 	"net/http"
 	"net/mail"
 	"os"
-	"path"
-	"strings"
 	"time"
-	"unicode"
 
 	appauth "app/auth"
 	"app/database"
 	"app/internal/logging"
 	"app/middleware"
+	"app/routes"
 	"github.com/tavocg/go-auth"
 	"github.com/tavocg/go-email/mailer"
 	"github.com/tavocg/go-i18n"
@@ -32,7 +30,8 @@ type Handler struct {
 	db            database.Database
 	authenticator auth.Authenticator[*appauth.Claims]
 	localizer     *i18n.Localizer
-	rootPrefix    string
+	links         routes.Links
+	namedRoutes   map[routes.ID]bool
 	mailer        mailer.Mailer
 	mailFrom      string
 	otpSigner     *otp.Signer
@@ -82,18 +81,19 @@ func NewHandler(opts Options) (*Handler, error) {
 		return nil, errors.New("handler OTP signer is required")
 	}
 
-	rootPrefix, err := normalizeRootPrefix(opts.RootPrefix)
+	links, err := routes.NewLinks(opts.RootPrefix)
 	if err != nil {
 		return nil, err
 	}
 
 	next := &Handler{
+		namedRoutes:   make(map[routes.ID]bool),
 		dev:           opts.Dev,
 		logger:        logger,
 		db:            opts.DB,
 		authenticator: opts.Authenticator,
 		localizer:     opts.Localizer,
-		rootPrefix:    rootPrefix,
+		links:         links,
 		mailer:        opts.Mailer,
 		mailFrom:      sender.String(),
 		otpSigner:     opts.OTPSigner,
@@ -101,6 +101,9 @@ func NewHandler(opts Options) (*Handler, error) {
 	}
 
 	next.registerRoutes()
+	if err := next.validateRoutes(); err != nil {
+		return nil, err
+	}
 	next.entry = middleware.RequestLogger(next.logger, http.HandlerFunc(next.route))
 
 	return next, nil
@@ -113,7 +116,7 @@ func (h *Handler) Add(method, path string, fn http.HandlerFunc) {
 
 // AddHandler registers a handler with a request deadline, including its middleware.
 func (h *Handler) AddHandler(method, path string, handler http.Handler) {
-	pattern := h.routePath(path)
+	pattern := h.links.Mount(path)
 	if method != "" {
 		pattern = method + " " + pattern
 	}
@@ -134,44 +137,4 @@ func (h *Handler) registerRoutes() {
 	h.registerAccountRoutes()
 	h.registerRootRoutes()
 	h.registerStaticRoutes()
-}
-
-func (h *Handler) routePath(route string) string {
-	route = strings.TrimSpace(route)
-	if route == "" || route == "/" {
-		if h.rootPrefix == "" {
-			return "/"
-		}
-
-		return h.rootPrefix
-	}
-
-	if !strings.HasPrefix(route, "/") {
-		route = "/" + route
-	}
-
-	return h.rootPrefix + route
-}
-
-func normalizeRootPrefix(prefix string) (string, error) {
-	prefix = strings.TrimSpace(prefix)
-	if prefix == "" || prefix == "/" {
-		return "", nil
-	}
-
-	if !strings.HasPrefix(prefix, "/") {
-		prefix = "/" + prefix
-	}
-
-	prefix = strings.TrimRight(prefix, "/")
-	if prefix == "" {
-		return "", nil
-	}
-	if path.Clean(prefix) != prefix || strings.ContainsAny(prefix, "{}%?#\\") {
-		return "", errors.New("root prefix must be a clean literal URL path without wildcards, escapes, query strings or fragments")
-	}
-	if strings.ContainsFunc(prefix, func(r rune) bool { return unicode.IsSpace(r) || unicode.IsControl(r) }) {
-		return "", errors.New("root prefix cannot contain whitespace or control characters")
-	}
-	return prefix, nil
 }

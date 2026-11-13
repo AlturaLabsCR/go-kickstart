@@ -100,13 +100,15 @@ func generate() error {
 
 package templates
 
-import "strings"
+import "app/routes"
 
-// SemanticStylesheetURL returns the fingerprinted stylesheet URL under rootPrefix.
-func SemanticStylesheetURL(rootPrefix string) string {
-	return strings.TrimRight(rootPrefix, "/") + %q
+const SemanticStylesheetPath = %q
+
+// SemanticStylesheetURL builds the fingerprinted stylesheet URL for this handler.
+func SemanticStylesheetURL(links routes.Links) (string, error) {
+ return links.StaticURL(SemanticStylesheetPath)
 }
-`, semanticCommit, "/s/css/"+filename))
+`, semanticCommit, "css/"+filename))
 	if err != nil {
 		return err
 	}

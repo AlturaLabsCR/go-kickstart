@@ -1,25 +1,31 @@
 package base
 
 import "app/templates/meta"
+import "app/routes"
 
 type BodyParams struct {
 	Content templ.Component
 	Aside   templ.Component
 }
 
-templ body(params BodyParams) {
+templ body(params BodyParams, links routes.Links) {
 	<body>
 		<div class="hidden" id={ RedirectID }></div>
-		@header()
+		@header(links)
 		@main(params.Content, params.Aside)
 		@footer()
 	</body>
 }
 
-templ header() {
+templ header(links routes.Links) {
 	<header>
+		<strong>
+			{ meta.AppTitle }
+		</strong>
 		<nav>
-			<span>{ meta.AppTitle }</span>
+			<ul>
+				<li><a href={ links.URL(routes.APIDocs) }>API</a></li>
+			</ul>
 		</nav>
 	</header>
 }

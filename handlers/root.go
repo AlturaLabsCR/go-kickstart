@@ -4,17 +4,14 @@ import (
 	"net/http"
 
 	"app/internal/httpx"
+	"app/routes"
 	"app/templates/base"
 	"app/templates/meta"
 	"app/templates/root"
 )
 
 func (h *Handler) registerRootRoutes() {
-	route := "/"
-	if h.rootPrefix == "" {
-		route = "/{$}"
-	}
-	h.Add(http.MethodGet, route, h.Root)
+	h.AddRoute(routes.Root, http.HandlerFunc(h.Root))
 }
 
 func (h *Handler) Root(w http.ResponseWriter, r *http.Request) {
@@ -28,8 +25,8 @@ func (h *Handler) Root(w http.ResponseWriter, r *http.Request) {
 	if contentType == "text/html; charset=utf-8" {
 		w.Header().Set("Content-Type", contentType)
 		page := base.Page(base.PageParams{
+			Links: h.links,
 			Head: base.HeadParams{
-				RootPrefix:  h.rootPrefix,
 				Title:       meta.AppTitle,
 				Subtitle:    L("root.greeting"),
 				RobotsIndex: true,

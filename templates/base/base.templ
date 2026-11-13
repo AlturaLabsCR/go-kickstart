@@ -1,6 +1,9 @@
 package base
 
+import "app/routes"
+
 type PageParams struct {
+ Links routes.Links
 	Head HeadParams
 	Body BodyParams
 }
@@ -8,7 +11,7 @@ type PageParams struct {
 templ Page(page PageParams) {
 	<!DOCTYPE html>
 	<html>
-		@head(page.Head)
-		@body(page.Body)
+		@head(page.Head, page.Links)
+		@body(page.Body, page.Links)
 	</html>
 }

@@ -14,6 +14,8 @@ import (
 	"app/database/sqlite"
 	locales "app/i18n"
 	"app/mailer/noop"
+	"app/routes"
+	"app/templates"
 	"github.com/tavocg/go-i18n"
 	"github.com/tavocg/go-secrets/otp"
 )
@@ -151,6 +153,26 @@ func TestRoutesUseRootPrefix(t *testing.T) {
 			}
 		})
 	}
+	t.Run("named routes", func(t *testing.T) {
+		opts := testHandlerOptions(t, "/api")
+		h, err := NewHandler(opts)
+		if err != nil {
+			t.Fatal(err)
+		}
+		link, err := h.URL(routes.APIDocs)
+		if err != nil || link != "/api/s/api/" {
+			t.Fatalf("docs link = %q, %v", link, err)
+		}
+		if _, err := h.URL(routes.RevokeSession); err == nil {
+			t.Fatal("missing parameter accepted")
+		}
+		delete(h.namedRoutes, routes.Login)
+		if err := h.validateRoutes(); err == nil {
+			t.Fatal("missing route accepted")
+		}
+		h.namedRoutes[routes.Login] = true
+	})
+
 }
 
 func TestRootWithoutPrefix(t *testing.T) {
@@ -167,6 +189,43 @@ func TestRootWithoutPrefix(t *testing.T) {
 	if rec.Code != http.StatusNotFound {
 		t.Fatalf("unknown route status = %d, want 404", rec.Code)
 	}
+	// Independent handlers must render and serve their own links, including on 404.
+	handlers := []*Handler{newRoutingHandler(t, ""), newRoutingHandler(t, "/api"), newRoutingHandler(t, "/other")}
+	for _, h := range handlers {
+		rootURL, _ := h.URL(routes.Root)
+		docsURL, _ := h.URL(routes.APIDocs)
+		cssURL, err := templates.SemanticStylesheetURL(h.links)
+		if err != nil {
+			t.Fatal(err)
+		}
+		for _, page := range []struct {
+			path   string
+			status int
+		}{
+			{rootURL, 200}, {h.links.Mount("/missing/deep/path"), 404},
+		} {
+			req := httptest.NewRequest("GET", page.path, nil)
+			req.Header.Set("Accept", "text/html")
+			rec := httptest.NewRecorder()
+			h.ServeHTTP(rec, req)
+			if rec.Code != page.status || !strings.HasPrefix(rec.Header().Get("Content-Type"), "text/html") {
+				t.Fatalf("page %s: %d %s", page.path, rec.Code, rec.Body.String())
+			}
+			for _, link := range []string{docsURL, cssURL} {
+				if !strings.Contains(rec.Body.String(), `href="`+link+`"`) {
+					t.Fatalf("page %s missing link %q", page.path, link)
+				}
+			}
+		}
+		for _, link := range []string{docsURL, cssURL} {
+			rec := httptest.NewRecorder()
+			h.ServeHTTP(rec, httptest.NewRequest("GET", link, nil))
+			if rec.Code != 200 {
+				t.Fatalf("linked resource %s: %d", link, rec.Code)
+			}
+		}
+	}
+
 }
 
 func TestRouteParametersAndResponseController(t *testing.T) {
@@ -186,7 +245,7 @@ func TestRouteParametersAndResponseController(t *testing.T) {
 	}
 }
 
-func TestNormalizeRootPrefix(t *testing.T) {
+func TestLinksRootPrefix(t *testing.T) {
 	tests := []struct {
 		name    string
 		prefix  string
@@ -215,18 +274,22 @@ func TestNormalizeRootPrefix(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, err := normalizeRootPrefix(tt.prefix)
+			links, err := routes.NewLinks(tt.prefix)
+			got, _ := links.URL(routes.Root)
 			if tt.wantErr {
 				if err == nil {
-					t.Fatalf("normalizeRootPrefix(%q) = %q, want error", tt.prefix, got)
+					t.Fatalf("NewLinks(%q) = %q, want error", tt.prefix, got)
 				}
 				return
 			}
 			if err != nil {
-				t.Fatalf("normalizeRootPrefix(%q): %v", tt.prefix, err)
+				t.Fatalf("NewLinks(%q): %v", tt.prefix, err)
+			}
+			if tt.want == "" {
+				tt.want = "/"
 			}
 			if got != tt.want {
-				t.Errorf("normalizeRootPrefix(%q) = %q, want %q", tt.prefix, got, tt.want)
+				t.Errorf("NewLinks(%q) = %q, want %q", tt.prefix, got, tt.want)
 			}
 		})
 	}

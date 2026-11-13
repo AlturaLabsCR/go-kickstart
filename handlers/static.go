@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"app/routes"
 	"embed"
 	"io/fs"
 	"net/http"
@@ -15,6 +16,8 @@ func (h *Handler) registerStaticRoutes() {
 		panic("failed to mount embedded static files")
 	}
 
-	prefix := h.routePath("/s/")
-	h.AddHandler(http.MethodGet, "/s/", http.StripPrefix(prefix, http.FileServerFS(files)))
+	prefix, _ := h.URL(routes.Static)
+	server := http.StripPrefix(prefix, http.FileServerFS(files))
+	h.AddRoute(routes.Static, server)
+	h.AddRoute(routes.APIDocs, server)
 }
