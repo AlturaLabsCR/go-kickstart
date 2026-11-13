@@ -7,7 +7,9 @@
   "private": true,
   "scripts": {
     "redocly": "redocly build-docs docs/api.yaml --output handlers/static/api/index.html >/dev/null 2>&1",
-    "test": "go test ./..."
+    "test": "go test ./...",
+    "build": "npm run redocly && go generate ./templates",
+    "postinstall": "npm run build"
   },
   "devDependencies": {
     "@redocly/cli": "^2.30.3"
