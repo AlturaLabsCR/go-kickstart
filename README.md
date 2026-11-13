@@ -34,6 +34,13 @@ separate migration jobs, probes, graceful shutdown and shared SQL configuration.
 
 ## Extending
 
+- `go generate ./templates` downloads [Semantic CSS](https://github.com/tavocg/semantic)
+  at the commit pinned in `templates/semantic.go`, inlines its CSS imports and writes
+  `handlers/static/css/semantic.<sha256>.css` with the upstream licenses. It also
+  generates `templates.SemanticStylesheetURL(rootPrefix)`, used by the shared page
+  head. Update `semanticCommit` and regenerate to upgrade; changed CSS gets a new
+  URL automatically, and obsolete generated stylesheets are removed. Generation
+  requires network access; the built server embeds and serves the CSS locally.
 - Add a route group in `handlers/`, a registration method and its call in `registerRoutes`.
 - Use `Add` for a handler function and `AddHandler` for middleware-wrapped handlers;
   both apply the configured root prefix.

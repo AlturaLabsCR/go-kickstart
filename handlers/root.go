@@ -29,6 +29,7 @@ func (h *Handler) Root(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", contentType)
 		page := base.Page(base.PageParams{
 			Head: base.HeadParams{
+				RootPrefix:  h.rootPrefix,
 				Title:       meta.AppTitle,
 				Subtitle:    L("root.greeting"),
 				RobotsIndex: true,

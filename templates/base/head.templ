@@ -1,6 +1,9 @@
 package base
 
+import "app/templates"
+
 type HeadParams struct {
+	RootPrefix            string
 	Title                 string
 	Subtitle              string
 	Description           string
@@ -14,6 +17,7 @@ templ head(params HeadParams) {
 	<head>
 		<meta charset="utf-8"/>
 		<meta name="viewport" content="width=device-width, initial-scale=1.0, interactive-widget=resizes-content"/>
+		<link rel="stylesheet" href={ templates.SemanticStylesheetURL(params.RootPrefix) }/>
 		if params.Title != "" && params.Subtitle != "" {
 			<title>{ params.Subtitle + " | " + params.Title }</title>
 		} else if params.Title != "" {

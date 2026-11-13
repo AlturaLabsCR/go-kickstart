@@ -5,9 +5,9 @@ import (
 	"app/templates/meta"
 )
 
-templ NotFound(message string) {
+templ NotFound(message, rootPrefix string) {
 	@base.Page(base.PageParams{
-		Head: base.HeadParams{Title: meta.AppTitle, Subtitle: message},
+		Head: base.HeadParams{Title: meta.AppTitle, Subtitle: message, RootPrefix: rootPrefix},
 		Body: base.BodyParams{Content: notFoundContent(message)},
 	})
 }
