@@ -99,3 +99,9 @@ cache:
 http:
   drain-delay: 5s
   shutdown-timeout: 25s
+
+# Exact browser origins allowed to read API responses. Empty disables CORS.
+# APP_CORS_ORIGINS=https://web.example.com,https://admin.example.com
+# --cors-origins https://web.example.com,https://admin.example.com
+cors:
+  origins: []

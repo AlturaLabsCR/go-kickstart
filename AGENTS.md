@@ -16,6 +16,7 @@ This repository is a Go web server template for REST APIs and small HTML surface
 - `i18n/`: locale maps exposed through copying `Locales()`. User-facing strings and error messages should be represented by stable keys.
 - `docs/api.yaml`: OpenAPI source. `handlers/static/api/index.html` is generated and ignored.
 - `templates/`: `templ` HTML templates.
+- `routes/`: named method/path catalogue shared by registration and template links. Use `h.AddRoute` and `links.URL` / `h.URL`; constructor checks catalogue registration and linked embedded assets. See `docs/routes.md`. Raw `Add` routes remain available for extensions.
 
 ## Adding an Endpoint
 
@@ -36,6 +37,8 @@ This repository is a Go web server template for REST APIs and small HTML surface
    - `internal/httpx.Negotiate` accepts an ordered list of media types; the first is the fallback. To add XML or another representation to an endpoint, add its offered type and a renderer branch. Keep `Vary: Accept` on negotiated responses. See `docs/content-negotiation.md`. Request `Content-Type` does not select the response; JSON decoding accepts missing or other content types, retaining the JSON syntax, field and size checks.
    - Router-generated 404 responses use the same negotiation and cache headers, rendering `templates/errorpage/not_found.templ` when HTML is preferred. JSON is the fallback when neither representation is acceptable, preserving status 404. Matched API endpoint errors and router-generated 405 responses remain JSON.
    - `Add`/`AddHandler` apply a twenty-second context deadline around the entire registered handler, including authentication and permission checks. Propagate `r.Context()` to database and external operations. Cancellation is cooperative: it does not forcibly stop handlers that ignore their context or undo committed changes. Responses remain unbuffered; headers already sent cannot be replaced. API error helpers report an expired request deadline as localized JSON with status 504; nested operation timeouts keep their existing status while the request context is still active.
+
+   - `Add`, `AddHandler` and `AddRoute` support automatic OPTIONS. Handler `CORSOrigins` is inherited unless endpoint `RouteOptions.CORSOrigins` is non-nil; an empty slice disables CORS. Configure exact origins with `cors.origins` / `--cors-origins` / `APP_CORS_ORIGINS`; default is disabled. Register all routes before serving requests.
 
 3. Keep request/response handling consistent.
    - Define request/response structs near the handler that uses them unless they are shared.

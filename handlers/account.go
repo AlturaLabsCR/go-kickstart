@@ -13,6 +13,7 @@ import (
 	"app/database"
 	"app/internal/httpx"
 	"app/middleware"
+	"app/routes"
 	secrets "github.com/tavocg/go-secrets"
 )
 
@@ -43,13 +44,13 @@ func (h *Handler) registerAccountRoutes() {
 		))
 	}
 
-	h.AddHandler(http.MethodGet, "/account", authenticated(http.HandlerFunc(h.GetAccount)))
-	h.AddHandler(http.MethodDelete, "/account", authenticated(http.HandlerFunc(h.DeleteAccount)))
-	h.AddHandler(http.MethodGet, "/account/sessions", authenticated(http.HandlerFunc(h.ListSessions)))
-	h.AddHandler(http.MethodDelete, "/account/sessions", authenticated(http.HandlerFunc(h.RevokeSessions)))
-	h.AddHandler(http.MethodDelete, "/account/sessions/{id}", authenticated(http.HandlerFunc(h.RevokeSession)))
-	h.AddHandler(http.MethodPatch, "/account/email/change", canChangeEmail(h.RequestEmailChange))
-	h.AddHandler(http.MethodPatch, "/account/email/change/confirm", canChangeEmail(h.ConfirmEmailChange))
+	h.AddRoute(routes.Account, authenticated(http.HandlerFunc(h.GetAccount)))
+	h.AddRoute(routes.DeleteAccount, authenticated(http.HandlerFunc(h.DeleteAccount)))
+	h.AddRoute(routes.Sessions, authenticated(http.HandlerFunc(h.ListSessions)))
+	h.AddRoute(routes.RevokeSessions, authenticated(http.HandlerFunc(h.RevokeSessions)))
+	h.AddRoute(routes.RevokeSession, authenticated(http.HandlerFunc(h.RevokeSession)))
+	h.AddRoute(routes.ChangeEmail, canChangeEmail(h.RequestEmailChange))
+	h.AddRoute(routes.ConfirmEmail, canChangeEmail(h.ConfirmEmailChange))
 }
 
 func (h *Handler) GetAccount(w http.ResponseWriter, r *http.Request) {

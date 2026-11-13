@@ -1,9 +1,9 @@
 package base
 
 import "app/templates"
+import "app/routes"
 
 type HeadParams struct {
-	RootPrefix            string
 	Title                 string
 	Subtitle              string
 	Description           string
@@ -13,11 +13,11 @@ type HeadParams struct {
 
 const RedirectID = "redirect"
 
-templ head(params HeadParams) {
+templ head(params HeadParams, links routes.Links) {
 	<head>
 		<meta charset="utf-8"/>
 		<meta name="viewport" content="width=device-width, initial-scale=1.0, interactive-widget=resizes-content"/>
-		<link rel="stylesheet" href={ templates.SemanticStylesheetURL(params.RootPrefix) }/>
+		<link rel="stylesheet" href={ templates.SemanticStylesheetURL(links) }/>
 		if params.Title != "" && params.Subtitle != "" {
 			<title>{ params.Subtitle + " | " + params.Title }</title>
 		} else if params.Title != "" {

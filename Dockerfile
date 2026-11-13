@@ -6,7 +6,7 @@ RUN npm ci
 COPY docs/api.yaml docs/api.yaml
 RUN npm run redocly
 
-FROM golang:1.26.10-alpine AS build
+FROM golang:1.26.11-alpine AS build
 WORKDIR /src
 COPY go.mod go.sum ./
 RUN go mod download

@@ -10,6 +10,7 @@ import (
 	appauth "app/auth"
 	"app/database"
 	"app/internal/httpx"
+	"app/routes"
 	auth "github.com/tavocg/go-auth"
 	secrets "github.com/tavocg/go-secrets"
 )
@@ -28,9 +29,9 @@ type refreshRequest struct {
 }
 
 func (h *Handler) registerAuthRoutes() {
-	h.Add(http.MethodPost, "/auth/login", h.LoginOrCreateAccount)
-	h.Add(http.MethodPost, "/auth/verify", h.VerifyAuthenticationCode)
-	h.Add(http.MethodPost, "/auth/refresh", h.RefreshSession)
+	h.AddRoute(routes.Login, http.HandlerFunc(h.LoginOrCreateAccount))
+	h.AddRoute(routes.Verify, http.HandlerFunc(h.VerifyAuthenticationCode))
+	h.AddRoute(routes.Refresh, http.HandlerFunc(h.RefreshSession))
 }
 
 func (h *Handler) LoginOrCreateAccount(w http.ResponseWriter, r *http.Request) {

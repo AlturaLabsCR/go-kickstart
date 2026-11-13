@@ -31,6 +31,11 @@ info:
     global OTP limits. Verification codes are stored only as HMAC-SHA-256
     digests bound to their purpose and identity; plaintext codes are never
     persisted.
+    Application routes provide automatic OPTIONS responses with Allow. CORS is
+    disabled by default and configured by an origin allowlist, optionally
+    overridden per endpoint. Preflights validate the requested method and allow
+    Authorization, Content-Type, Accept and Accept-Language headers. Rejected
+    preflights return 403. Browser credentials are not enabled.
 servers:
   - url: https://example.com
     description: Production server
