@@ -4,11 +4,17 @@ Visit `<root>/login`, enter an email, then enter the six-digit code delivered by
 the configured mailer. A native form submits to `POST <root>/login`; the server
 responds with `303 See Other`, which makes the browser follow with a GET. HTML
 forms do not have a success-redirect attribute. No JavaScript is required.
+An authenticated GET to `/login` redirects to `/home` after verifying the access
+cookie against the live session record; expired or revoked cookies do not redirect.
 
 `<root>/home` requires the access cookie and lists sessions using the existing
 Bearer authentication middleware and `ListSessions` handler, including its
 100-row cursor pagination. Refresh sessions submits a native GET to `/home`;
-the adapter supplies Bearer authorization internally. Device labels are untrusted text and are escaped.
+the adapter supplies Bearer authorization internally. Each session has a Sign out
+link that opens a confirmation on `/home` (retaining its pagination cursor). The
+confirmation posts to `/login` and reuses the API session-revocation handler,
+which checks ownership. Revoking the current session also clears its cookies.
+GET links never revoke sessions. Device labels are untrusted text and are escaped.
 
 The browser adapter calls the existing login, verification and refresh handlers
 in process with JSON bodies, preserving the request context and User-Agent. It

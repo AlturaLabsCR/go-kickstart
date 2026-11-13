@@ -39,9 +39,16 @@ func (h *Handler) registerBrowserRoutes() {
 		tr := func(key string) string { return h.localize(r, key) }
 		page(w, r, status, tr("web.login"), pages.Login(login, email, message, verify, cookies.Read(r, "refresh") != "", tr))
 	}
-	h.Add("GET", loginPath, func(w http.ResponseWriter, r *http.Request) {
+	h.AddHandler("GET", loginPath, browser.RedirectAuthenticated(home, func(r *http.Request) bool {
+		token := cookies.Read(r, "access")
+		if token == "" {
+			return false
+		}
+		claims, err := h.authenticator.Verify(r.Context(), token)
+		return err == nil && claims != nil
+	}, http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		showLogin(w, r, 200, r.URL.Query().Get("email"), "", r.URL.Query().Get("step") == "verify")
-	})
+	})))
 	csrf := http.NewCrossOriginProtection()
 	csrf.SetDenyHandler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		h.writeStatus(
@@ -61,6 +68,33 @@ func (h *Handler) registerBrowserRoutes() {
 		}
 		email := r.PostForm.Get("email")
 		action := r.PostForm.Get("action")
+		if action == "revoke" {
+			request := r.Clone(r.Context())
+			id := r.PostForm.Get("session_id")
+			request.SetPathValue("id", id)
+			current := false
+			revoke := middleware.AuthenticateBearer(h.logger, h.localize, h.authenticator, http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				identity, _ := middleware.AuthenticatedIdentity(r.Context())
+				current = identity.Claims.SessionID == id
+				h.RevokeSession(w, r)
+			}))
+			reply := browser.Call(request, revoke, nil, cookies.Read(r, "access"))
+			if reply.Status == 401 {
+				http.Redirect(w, r, login, http.StatusSeeOther)
+				return
+			}
+			if reply.Status >= 400 {
+				showLogin(w, r, reply.Status, "", h.localize(r, "err.revoke_session"), false)
+				return
+			}
+			if current {
+				cookies.Clear(w)
+				http.Redirect(w, r, login, http.StatusSeeOther)
+			} else {
+				http.Redirect(w, r, home, http.StatusSeeOther)
+			}
+			return
+		}
 		if action == "logout" {
 			// A refresh cookie can expire before a still-valid access token.
 			if access := cookies.Read(r, "access"); access != "" {
@@ -152,13 +186,14 @@ func (h *Handler) registerBrowserRoutes() {
 		}
 		rows := make([]pages.Session, 0, len(sessions.Sessions))
 		for _, session := range sessions.Sessions {
-			rows = append(rows, pages.Session{Device: session.UserAgent, Created: session.CreatedAt, Used: session.LastUsedAt, Expires: session.ExpiresAt, Current: session.Current})
+			logoutURL := home + "?" + url.Values{"revoke": {session.ID}, "cursor": {r.URL.Query().Get("cursor")}}.Encode()
+			rows = append(rows, pages.Session{ID: session.ID, LogoutURL: logoutURL, Device: session.UserAgent, Created: session.CreatedAt, Used: session.LastUsedAt, Expires: session.ExpiresAt, Current: session.Current})
 		}
 		tr := func(key string) string { return h.localize(r, key) }
 		next := ""
 		if sessions.NextCursor != "" {
 			next = home + "?cursor=" + url.QueryEscape(sessions.NextCursor)
 		}
-		page(w, r, 200, tr("web.home"), pages.Home(login, home, next, rows, tr))
+		page(w, r, 200, tr("web.home"), pages.Home(login, home, next, r.URL.Query().Get("revoke"), rows, tr))
 	})
 }

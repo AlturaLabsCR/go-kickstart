@@ -176,6 +176,7 @@ func TestLoginOTPIsHashedAndConsumedOnce(t *testing.T) {
 			form := url.Values{"action": {"login"}, "email": {"browser@example.com"}}
 			requireStatus(t, call("POST", "/login", form, "https://attacker.example"), 403)
 			requireStatus(t, call("GET", "/home", nil, ""), 303)
+			requireStatus(t, call("GET", "/login", nil, ""), 200)
 			requireStatus(t, call("POST", "/login", form, ""), 303)
 			form.Set("action", "verify")
 			form.Set("otp", h.code(t))
@@ -190,6 +191,11 @@ func TestLoginOTPIsHashedAndConsumedOnce(t *testing.T) {
 					t.Fatal("unsafe cookie attributes")
 				}
 			}
+			redirected := call("GET", "/login", nil, "")
+			requireStatus(t, redirected, 303)
+			if redirected.Header().Get("Location") != "/home" || redirected.Header().Get("Cache-Control") != "no-store" {
+				t.Fatal("authenticated login did not redirect safely")
+			}
 			home := call("GET", "/home", nil, "")
 			requireStatus(t, home, 200)
 			if !strings.Contains(home.Body.String(), "Browser integration test") || !strings.Contains(home.Body.String(), "Current") {
@@ -201,9 +207,73 @@ func TestLoginOTPIsHashedAndConsumedOnce(t *testing.T) {
 			requireStatus(t, refreshed, 303)
 			cookies = refreshed.Result().Cookies()
 			requireStatus(t, call("GET", "/home", nil, ""), 200)
+			var current *auth.Claims
+			for _, cookie := range cookies {
+				if strings.HasSuffix(cookie.Name, "_access") {
+					current, err = h.auth.Verify(t.Context(), cookie.Value)
+					if err != nil {
+						t.Fatal(err)
+					}
+				}
+			}
+			if current == nil {
+				t.Fatal("missing current identity")
+			}
+			other, _, err := h.auth.Issue(t.Context(), &auth.Claims{Sub: current.Sub, UserAgent: "Other browser"})
+			if err != nil {
+				t.Fatal(err)
+			}
+			otherClaims, err := h.auth.Verify(t.Context(), other.Value)
+			if err != nil {
+				t.Fatal(err)
+			}
+			confirmation := call("GET", "/home?revoke="+otherClaims.SessionID, nil, "")
+			requireStatus(t, confirmation, 200)
+			if !strings.Contains(confirmation.Body.String(), `value="revoke"`) {
+				t.Fatal("missing revocation confirmation")
+			}
+			if _, err := h.auth.Verify(t.Context(), other.Value); err != nil {
+				t.Fatal("GET revoked a session")
+			}
+			revokeForm := url.Values{"action": {"revoke"}, "session_id": {otherClaims.SessionID}}
+			requireStatus(t, call("POST", "/login", revokeForm, "https://attacker.example"), 403)
+			requireStatus(t, call("POST", "/login", revokeForm, ""), 303)
+			if _, err := h.auth.Verify(t.Context(), other.Value); err == nil {
+				t.Fatal("other session still authenticates")
+			}
+			requireStatus(t, call("GET", "/home", nil, ""), 200)
 			requireStatus(t, call("POST", "/login", url.Values{"action": {"logout"}}, ""), 303)
 			// Old cookies must stop authenticating after server-side revocation.
 			requireStatus(t, call("GET", "/home", nil, ""), 303)
+			requireStatus(t, call("GET", "/login", nil, ""), 200)
+			access, refresh, err := h.auth.Issue(t.Context(), &auth.Claims{Sub: current.Sub})
+			if err != nil {
+				t.Fatal(err)
+			}
+			claims, err := h.auth.Verify(t.Context(), access.Value)
+			if err != nil {
+				t.Fatal(err)
+			}
+			for _, cookie := range cookies {
+				if strings.HasSuffix(cookie.Name, "_access") {
+					cookie.Value = access.Value
+				} else {
+					cookie.Value = refresh.Value
+				}
+			}
+			own := call("POST", "/login", url.Values{"action": {"revoke"}, "session_id": {claims.SessionID}}, "")
+			requireStatus(t, own, 303)
+			if own.Header().Get("Location") != "/login" {
+				t.Fatal("revoking current session did not redirect to login")
+			}
+			for _, cookie := range own.Result().Cookies() {
+				if cookie.MaxAge != -1 {
+					t.Fatal("current cookies were not cleared")
+				}
+			}
+			requireStatus(t, call("GET", "/home", nil, ""), 303)
+			requireStatus(t, call("GET", "/login", nil, ""), 200)
+
 		})
 
 	})

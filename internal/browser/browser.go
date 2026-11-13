@@ -81,3 +81,15 @@ func (c Cookies) Clear(w http.ResponseWriter) {
 	c.set(w, "access", "", -1)
 	c.set(w, "refresh", "", -1)
 }
+
+// RedirectAuthenticated keeps guest pages out of an already authenticated flow.
+func RedirectAuthenticated(target string, authenticated func(*http.Request) bool, next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if authenticated(r) {
+			w.Header().Set("Cache-Control", "no-store")
+			http.Redirect(w, r, target, http.StatusSeeOther)
+			return
+		}
+		next.ServeHTTP(w, r)
+	})
+}

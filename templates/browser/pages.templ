@@ -3,6 +3,7 @@ package browser
 import "time"
 
 type Session struct {
+	ID, LogoutURL          string
 	Device                 string
 	Created, Used, Expires int64
 	Current                bool
@@ -42,13 +43,13 @@ templ Login(action, email, message string, verify, refresh bool, tr func(string)
 	</section>
 }
 
-templ Home(action, home, next string, sessions []Session, tr func(string) string) {
+templ Home(action, home, next, confirm string, sessions []Session, tr func(string) string) {
 	<section>
 		<h1>{ tr("web.home") }</h1>
 		<h2>{ tr("web.sessions") }</h2>
 		<form method="get" action={ home }><button>{ tr("web.reload") }</button></form>
 		<table>
-			<thead><tr><th>{ tr("web.device") }</th><th>{ tr("web.created") }</th><th>{ tr("web.used") }</th><th>{ tr("web.expires") }</th></tr></thead>
+			<thead><tr><th>{ tr("web.device") }</th><th>{ tr("web.created") }</th><th>{ tr("web.used") }</th><th>{ tr("web.expires") }</th><th>{ tr("web.logout") }</th></tr></thead>
 			<tbody>
 				for _,session := range sessions {
 					<tr>
@@ -61,6 +62,17 @@ templ Home(action, home, next string, sessions []Session, tr func(string) string
 						<td>{ stamp(session.Created) }</td>
 						<td>{ stamp(session.Used) }</td>
 						<td>{ stamp(session.Expires) }</td>
+						<td>
+							if confirm==session.ID {
+								<form method="post" action={ action }>
+									<input type="hidden" name="action" value="revoke"/>
+									<input type="hidden" name="session_id" value={ session.ID }/>
+									<button>{ tr("web.confirm_logout") }</button>
+								</form>
+							} else {
+								<a href={ session.LogoutURL }>{ tr("web.logout") }</a>
+							}
+						</td>
 					</tr>
 				}
 			</tbody>
