@@ -32,6 +32,8 @@ info:
     digests bound to their purpose and identity; plaintext codes are never
     persisted.
 servers:
+  - url: https://example.com
+    description: Production server
   - url: http://localhost:3080
     description: Local development server
 tags:
