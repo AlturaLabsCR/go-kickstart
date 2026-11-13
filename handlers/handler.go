@@ -31,7 +31,10 @@ type Handler struct {
 	authenticator auth.Authenticator[*appauth.Claims]
 	localizer     *i18n.Localizer
 	links         routes.Links
+	corsOrigins   []string
 	namedRoutes   map[routes.ID]bool
+	routePolicies map[string]routePolicy
+	methods       map[string]bool
 	mailer        mailer.Mailer
 	mailFrom      string
 	otpSigner     *otp.Signer
@@ -47,6 +50,7 @@ type Options struct {
 	Authenticator auth.Authenticator[*appauth.Claims]
 	Localizer     *i18n.Localizer
 	RootPrefix    string
+	CORSOrigins   []string
 	Mailer        mailer.Mailer
 	MailFrom      string
 	OTPSigner     *otp.Signer
@@ -86,8 +90,15 @@ func NewHandler(opts Options) (*Handler, error) {
 		return nil, err
 	}
 
+	if err := validateOrigins(opts.CORSOrigins); err != nil {
+		return nil, err
+	}
+
 	next := &Handler{
+		corsOrigins:   append([]string(nil), opts.CORSOrigins...),
 		namedRoutes:   make(map[routes.ID]bool),
+		routePolicies: make(map[string]routePolicy),
+		methods:       make(map[string]bool),
 		dev:           opts.Dev,
 		logger:        logger,
 		db:            opts.DB,
@@ -110,18 +121,38 @@ func NewHandler(opts Options) (*Handler, error) {
 }
 
 // Add registers a handler function relative to the configured root prefix.
-func (h *Handler) Add(method, path string, fn http.HandlerFunc) {
-	h.AddHandler(method, path, fn)
+func (h *Handler) Add(method, path string, fn http.HandlerFunc, options ...RouteOptions) {
+	h.AddHandler(method, path, fn, options...)
 }
 
 // AddHandler registers a handler with a request deadline, including its middleware.
-func (h *Handler) AddHandler(method, path string, handler http.Handler) {
+func (h *Handler) AddHandler(method, path string, handler http.Handler, options ...RouteOptions) {
+	if len(options) > 1 {
+		panic("only one RouteOptions value is supported")
+	}
+	origins := h.corsOrigins
+	if len(options) == 1 && options[0].CORSOrigins != nil {
+		origins = options[0].CORSOrigins
+	}
+	if err := validateOrigins(origins); err != nil {
+		panic(err)
+	}
+	origins = append([]string(nil), origins...)
 	pattern := h.links.Mount(path)
 	if method != "" {
 		pattern = method + " " + pattern
 	}
 
-	h.mux.Handle(pattern, middleware.WithTimeout(requestTimeout, handler))
+	wrapped := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		corsHeaders(w, r, origins)
+		handler.ServeHTTP(w, r)
+	})
+	h.mux.Handle(pattern, middleware.WithTimeout(requestTimeout, wrapped))
+	h.routePolicies[pattern] = routePolicy{method: method, origins: origins}
+	h.methods[method] = true
+	if method == http.MethodGet {
+		h.methods[http.MethodHead] = true
+	}
 }
 
 func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {

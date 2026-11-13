@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"strings"
 	"time"
 
 	"github.com/spf13/cobra"
@@ -43,6 +44,7 @@ func registerSettings(cmd *cobra.Command) {
 		{"mail.smtp.password", "smtp-password", "SMTP password", ""},
 		{"mail.smtp.starttls", "smtp-starttls", "use required STARTTLS instead of implicit TLS", false},
 		{"mail.from", "mail-from", "sender address for application emails", "no-reply@example.com"},
+		{"cors.origins", "cors-origins", "allowed CORS origins (comma-separated); empty disables CORS", []string{}},
 		{"root", "root", "route prefix to mount the app under", ""},
 		{"database.auto-migrate", "auto-migrate", "apply migrations at server startup", true},
 		{"database.max-connections", "db-max-connections", "maximum SQL connections per replica (SQLite uses one)", 10},
@@ -55,6 +57,8 @@ func registerSettings(cmd *cobra.Command) {
 		switch value := setting.value.(type) {
 		case string:
 			flags.String(setting.flag, value, setting.usage)
+		case []string:
+			flags.StringSlice(setting.flag, value, setting.usage)
 		case bool:
 			flags.Bool(setting.flag, value, setting.usage)
 		case int:
@@ -88,8 +92,23 @@ func runServerFromConfig() error {
 		AccessTokenTTL:  viper.GetDuration("auth.access-token-ttl"),
 		RefreshTokenTTL: viper.GetDuration("auth.refresh-token-ttl"),
 		RootPrefix:      viper.GetString("root"),
+		CORSOrigins:     configuredCORSOrigins(),
 		MailFrom:        viper.GetString("mail.from"),
 		Host:            viper.GetString("host"),
 		Port:            viper.GetInt("port"),
 	})
+}
+
+// Viper leaves environment overrides as strings; accept comma-separated origins
+// consistently for flags, environment variables and YAML lists.
+func configuredCORSOrigins() []string {
+	var origins []string
+	for _, value := range viper.GetStringSlice("cors.origins") {
+		for _, origin := range strings.Split(value, ",") {
+			if origin = strings.TrimSpace(origin); origin != "" {
+				origins = append(origins, origin)
+			}
+		}
+	}
+	return origins
 }

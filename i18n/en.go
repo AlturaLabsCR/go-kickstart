@@ -47,6 +47,7 @@ var en = map[string]string{
 	"err.missing_bearer":             "Missing bearer token.",
 	"err.missing_identity":           "Missing authenticated identity.",
 	"err.missing_refresh":            "Missing refresh token.",
+	"err.cors_denied":                "CORS request denied.",
 	"err.permission_denied":          "Permission denied.",
 	"err.refresh_session":            "Failed to refresh session.",
 	"err.render_root":                "Failed to render root page.",

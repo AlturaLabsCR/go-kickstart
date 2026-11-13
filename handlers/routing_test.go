@@ -145,16 +145,17 @@ func TestRoutesUseRootPrefix(t *testing.T) {
 					t.Errorf("Cache-Control = %q, want no-store", got)
 				}
 			}
-			if tt.wantAllow && rec.Header().Get("Allow") != "GET, HEAD" {
-				t.Errorf("Allow = %q, want GET, HEAD", rec.Header().Get("Allow"))
+			if tt.wantAllow && rec.Header().Get("Allow") != "GET, HEAD, OPTIONS" {
+				t.Errorf("Allow = %q, want GET, HEAD, OPTIONS", rec.Header().Get("Allow"))
 			}
 			if tt.wantLocation != "" && rec.Header().Get("Location") != tt.wantLocation {
 				t.Errorf("Location = %q, want %q", rec.Header().Get("Location"), tt.wantLocation)
 			}
 		})
 	}
-	t.Run("named routes", func(t *testing.T) {
+	t.Run("named routes and CORS", func(t *testing.T) {
 		opts := testHandlerOptions(t, "/api")
+		opts.CORSOrigins = []string{"https://default.example"}
 		h, err := NewHandler(opts)
 		if err != nil {
 			t.Fatal(err)
@@ -171,6 +172,40 @@ func TestRoutesUseRootPrefix(t *testing.T) {
 			t.Fatal("missing route accepted")
 		}
 		h.namedRoutes[routes.Login] = true
+		endpoint := func(w http.ResponseWriter, r *http.Request) { w.WriteHeader(204) }
+		h.Add("GET", "/cors", endpoint)
+		h.Add("POST", "/cors", endpoint, RouteOptions{CORSOrigins: []string{"https://override.example"}})
+		h.Add("GET", "/disabled", endpoint, RouteOptions{CORSOrigins: []string{}})
+		for _, tc := range []struct {
+			method, path, origin, requested, headers string
+			status                                   int
+			cors                                     bool
+		}{
+			{"GET", "/api/cors", "https://default.example", "", "", 204, true},
+			{"POST", "/api/cors", "https://default.example", "", "", 204, false},
+			{"POST", "/api/cors", "https://override.example", "", "", 204, true},
+			{"GET", "/api/disabled", "https://default.example", "", "", 204, false},
+			{"OPTIONS", "/api/cors", "", "", "", 204, false},
+			{"OPTIONS", "/api/cors", "https://default.example", "GET", "Authorization, Content-Type", 204, true},
+			{"OPTIONS", "/api/cors", "https://default.example", "POST", "", 403, false},
+			{"OPTIONS", "/api/cors", "https://override.example", "POST", "", 204, true},
+			{"OPTIONS", "/api/cors", "https://override.example", "DELETE", "", 403, false},
+			{"OPTIONS", "/api/cors", "https://default.example", "GET", "X-Not-Allowed", 403, false},
+			{"OPTIONS", "/api/disabled", "https://default.example", "GET", "", 403, false},
+			{"OPTIONS", "/api/account", "https://default.example", "GET", "Authorization", 204, true},
+			{"OPTIONS", "/cors", "https://default.example", "GET", "", 404, false},
+			{"OPTIONS", "/api/missing", "https://default.example", "GET", "", 404, false},
+		} {
+			req := httptest.NewRequest(tc.method, tc.path, nil)
+			req.Header.Set("Origin", tc.origin)
+			req.Header.Set("Access-Control-Request-Method", tc.requested)
+			req.Header.Set("Access-Control-Request-Headers", tc.headers)
+			rec := httptest.NewRecorder()
+			h.ServeHTTP(rec, req)
+			if rec.Code != tc.status || (rec.Header().Get("Access-Control-Allow-Origin") != "") != tc.cors {
+				t.Fatalf("%+v: status %d, headers %v", tc, rec.Code, rec.Header())
+			}
+		}
 	})
 
 }
@@ -323,7 +358,7 @@ func TestRoutingErrorWriter(t *testing.T) {
 		}
 	})
 
-	t.Run("preserves Allow on router 405", func(t *testing.T) {
+	t.Run("includes automatic OPTIONS on router 405", func(t *testing.T) {
 		rec := httptest.NewRecorder()
 		req := httptest.NewRequest(http.MethodPost, "/api", nil)
 		w := &routingErrorWriter{ResponseWriter: rec, handler: h, request: req}
@@ -334,8 +369,8 @@ func TestRoutingErrorWriter(t *testing.T) {
 		if rec.Code != http.StatusMethodNotAllowed {
 			t.Fatalf("status = %d, want 405", rec.Code)
 		}
-		if got := rec.Header().Get("Allow"); got != "GET" {
-			t.Errorf("Allow = %q, want GET", got)
+		if got := rec.Header().Get("Allow"); got != "GET, OPTIONS" {
+			t.Errorf("Allow = %q, want GET, OPTIONS", got)
 		}
 	})
 

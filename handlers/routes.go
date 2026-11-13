@@ -10,7 +10,7 @@ import (
 )
 
 // AddRoute registers a named route. Complete registration before serving requests.
-func (h *Handler) AddRoute(id routes.ID, handler http.Handler) {
+func (h *Handler) AddRoute(id routes.ID, handler http.Handler, options ...RouteOptions) {
 	d, err := id.Definition()
 	if err != nil {
 		panic(err)
@@ -22,7 +22,7 @@ func (h *Handler) AddRoute(id routes.ID, handler http.Handler) {
 	if id == routes.Root && h.links.Mount("/") == "/" {
 		path = "/{$}"
 	}
-	h.AddHandler(d.Method, path, handler)
+	h.AddHandler(d.Method, path, handler, options...)
 	h.namedRoutes[id] = true
 }
 
