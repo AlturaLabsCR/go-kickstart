@@ -43,10 +43,10 @@ See [named routes and CORS](docs/routes.md) for shared URL helpers, startup
 validation and handler/endpoint origin policies.
 
 - `go generate ./templates` downloads [Semantic CSS](https://github.com/tavocg/semantic)
-  at the commit pinned in `templates/semantic.go`, inlines its CSS imports and writes
+  from the release tag pinned in `templates/semantic.go` and writes its minified CSS to
   `handlers/static/css/semantic.<sha256>.css` with the upstream licenses. It also
   generates `templates.SemanticStylesheetURL(links)`, used by the shared page
-  head. Update `semanticCommit` and regenerate to upgrade; changed CSS gets a new
+  head. Update `semanticTag` and regenerate to upgrade; changed CSS gets a new
   URL automatically, and obsolete generated stylesheets are removed. Generation
   requires network access; the built server embeds and serves the CSS locally.
 - `npm run browser` bundles the TypeScript frontend into
