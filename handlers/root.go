@@ -23,6 +23,7 @@ func (h *Handler) Root(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if contentType == "text/html; charset=utf-8" {
+		documentHeaders(w)
 		w.Header().Set("Content-Type", contentType)
 		page := base.Page(base.PageParams{
 			Links: h.links,

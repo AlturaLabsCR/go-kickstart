@@ -61,6 +61,9 @@ func runServer(cfg serverConfig) error {
 	if err != nil {
 		return err
 	}
+	if cfg.Dev {
+		logger.Warn("development mode allows all origins, bypasses browser CSRF checks and logs plaintext OTPs at debug level")
+	}
 
 	otpSecret, err := resolveOTPSecret(cfg, logger)
 	if err != nil {

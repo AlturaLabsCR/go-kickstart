@@ -10,6 +10,9 @@ import (
 )
 
 func (h *Handler) route(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("X-Content-Type-Options", "nosniff")
+	w.Header().Set("X-Frame-Options", "SAMEORIGIN")
+	w.Header().Set("Content-Security-Policy", "frame-ancestors 'self'")
 	if h.options(w, r) {
 		return
 	}
@@ -51,6 +54,7 @@ func (h *Handler) writeRoutingError(w http.ResponseWriter, r *http.Request, stat
 		w.Header().Add("Vary", "Accept, Accept-Language")
 		w.Header().Set("Cache-Control", "no-store")
 		if httpx.Negotiate(r, "application/json; charset=utf-8", "text/html; charset=utf-8") == "text/html; charset=utf-8" {
+			documentHeaders(w)
 			w.Header().Set("Content-Type", "text/html; charset=utf-8")
 			w.WriteHeader(status)
 			h.logger.Debug(message, logging.RequestArgs(r, status)...)

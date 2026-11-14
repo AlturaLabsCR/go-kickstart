@@ -153,3 +153,24 @@ read by JavaScript. Browser requests therefore retain cookie authentication in
 the web adapter, which supplies Bearer headers to the unchanged API handlers.
 No tokens are stored in JavaScript or browser storage. CSRF protection remains
 on every browser POST.
+
+## Document security
+
+The application handler sends `X-Content-Type-Options: nosniff`,
+`X-Frame-Options: SAMEORIGIN` and CSP `frame-ancestors 'self'`, including on API,
+static and routing responses. Same-origin framing keeps htmz working while
+blocking embedding by another origin. These headers also apply without nginx.
+
+Own rendered pages (root HTML, login/home and negotiated HTML 404) use the stricter
+policy in [handlers/security.go](../handlers/security.go): same-origin resources,
+scripts, forms and frames; no plugins or base URL overrides; data images for the
+favicon. Existing inline styles are allowed for the device layout, but inline
+scripts and eval are blocked. `Referrer-Policy: strict-origin` preserves same-origin
+form checks on HTTP LAN hosts while excluding paths and queries from referrers.
+
+Redocly receives the shared anti-framing/nosniff headers, but not the own-page
+resource policy: its generated page uses inline scripts and a CDN bundle. Do not
+weaken login/home CSP to accommodate documentation resources. Additional HTML
+surfaces should explicitly adopt the document policy after checking their needs.
+Development uses the same document protections and logs an explicit startup
+warning about permissive CORS/CSRF and plaintext OTP debug logs.

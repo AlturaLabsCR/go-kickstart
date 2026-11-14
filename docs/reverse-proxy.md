@@ -5,6 +5,9 @@ then runs Go behind [nginx](../deploy/nginx.conf) on port **80**. Go
 listens only on `127.0.0.1:3080` as an unprivileged user. TLS terminates upstream;
 there are no certificates to install in the container and no SQLite storage is
 created. Use an external MySQL or PostgreSQL database through `APP_DB`.
+Configure HSTS at the public HTTPS edge only after verifying the production
+domain and TLS. The application does not emit HSTS on HTTP or development hosts;
+enable `includeSubDomains` only if every affected subdomain supports HTTPS.
 The working directory is `/srv`, owned by root: starting from `/` would let
 configuration discovery mistake the extensionless `/app` executable for YAML.
 
