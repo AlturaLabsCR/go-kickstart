@@ -39,3 +39,30 @@ If placing a CDN or another proxy in front, configure trusted proxies and the
 client-IP rate-limit key for that deployment before relying on per-IP limits.
 For containers on different hosts/networks, replace the loopback upstream with
 the application's private address and prevent public access to its port.
+
+## Dokploy with Docker Compose
+
+Create a **Docker Compose** service in Dokploy (not an Application using Nixpacks
+or Railpack). Select the repository and set Compose Path to `./docker-compose.yml`.
+Use Compose mode, not Stack: the app is built with the existing Dockerfile.
+
+In Environment, set `MYSQL_PASSWORD`, `MYSQL_ROOT_PASSWORD`, `APP_AUTH_SECRET` and
+`APP_OTP_SECRET` to separate secrets generated with `openssl rand -hex 32`.
+Configure `APP_MAIL_FROM` and `APP_MAIL_SMTP_*` to deliver login codes.
+`APP_ROOT` is optional; nginx preserves the full request path and Host.
+
+Enable **Isolated Deployments**. In Domains, select service **nginx**, container
+port **80**, and enable HTTPS. Dokploy's gateway terminates HTTPS before nginx;
+no application certificates or published host ports are required. Use Preview
+Compose to confirm all three services retain their shared `backend` network.
+See Dokploy's [Compose setup](https://docs.dokploy.com/docs/core/docker-compose)
+and [domain settings](https://docs.dokploy.com/docs/core/docker-compose/domains).
+
+MySQL data persists in the `mysql-data` named volume. The app waits for MySQL's
+health check and applies its existing startup migrations. Configure per-client-IP
+OTP throttling at Dokploy's gateway; the app's identity quotas remain enabled.
+nginx compresses HTML, JSON and other compressible types on every route.
+
+The root Dockerfile, its ignore file, the release workflow and Kubernetes examples
+are unchanged. Each container runs its own service; no custom process supervisor
+or deployment-specific image is needed.
