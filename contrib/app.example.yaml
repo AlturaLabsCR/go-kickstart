@@ -79,6 +79,12 @@ db: data/app.sqlite
 # Override with APP_MAIL_FROM or --mail-from.
 mail:
   # Implicit TLS by default (typically port 465); starttls requires STARTTLS.
+  # Override with:
+  #   APP_MAIL_SMTP_ADDRESS=smtp.example.com:465 app serve
+  #   app serve --smtp-address smtp.example.com:465
+  #   APP_MAIL_SMTP_USER=user app serve --smtp-user user
+  #   APP_MAIL_SMTP_PASSWORD=secret app serve --smtp-password secret
+  #   APP_MAIL_SMTP_STARTTLS=true app serve --smtp-starttls
   smtp:
     address: ""
     user: ""
@@ -87,15 +93,28 @@ mail:
   from: no-reply@example.com
 
 # Run `app migrate` separately and disable automatic DDL for replicated servers.
+# Override with:
+#   APP_DATABASE_AUTO_MIGRATE=false app serve
+#   app serve --auto-migrate=false
+#   APP_DATABASE_MAX_CONNECTIONS=20 app serve
+#   app serve --db-max-connections 20
 database:
   auto-migrate: true
   max-connections: 10
 
 # Local profile cache has no cross-instance invalidation. Disabled by default.
+# Override with:
+#   APP_CACHE_ENABLED=true app serve
+#   app serve --cache
 cache:
   enabled: false
 
 # Kubernetes termination grace must exceed the sum, plus cleanup margin.
+# Override with:
+#   APP_HTTP_DRAIN_DELAY=5s app serve
+#   app serve --drain-delay 5s
+#   APP_HTTP_SHUTDOWN_TIMEOUT=25s app serve
+#   app serve --shutdown-timeout 25s
 http:
   drain-delay: 5s
   shutdown-timeout: 25s
@@ -104,4 +123,13 @@ http:
 # APP_CORS_ORIGINS=https://web.example.com,https://admin.example.com
 # --cors-origins https://web.example.com,https://admin.example.com
 cors:
+  origins: []
+
+# Exact browser origins allowed to post browser forms. The cross-origin
+# protection compares Origin with Host by default; declare the public origin when
+# a tunnel or reverse proxy rewrites Host. Unlike cors.origins, these origins are
+# trusted to change state, so keep the list minimal.
+# APP_CSRF_ORIGINS=https://web.example.com,http://desktop:3080
+# --csrf-origins https://web.example.com,http://desktop:3080
+csrf:
   origins: []
