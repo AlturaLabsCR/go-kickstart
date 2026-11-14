@@ -5,13 +5,16 @@ Go web server template for applications and REST APIs.
 ## Usage
 
 ```sh
-npm ci
-go generate ./...
+npm ci # builds Redocly and the HTML templates/stylesheets
+go generate ./database
 
 # Start a development server
 go run . --dev
 # { "msg":"listening","addr":"[::]:3080" }
 ```
+
+Browser login, protected home and session listing are described in
+[the browser authentication guide](docs/browser.md).
 
 ## Configuration
 

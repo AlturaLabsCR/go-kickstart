@@ -19,9 +19,9 @@ import (
 	"time"
 )
 
-// semanticCommit pins https://github.com/tavocg/semantic (2026-11-13).
+// semanticCommit pins https://github.com/tavocg/semantic
 // Update this commit and run go generate ./templates to update the stylesheet.
-const semanticCommit = "523373d36f06256d9ff60c2723a8c9235a368b3b"
+const semanticCommit = "970c5cda4a8b8e34b707f8221b7081608048fa01"
 
 func main() {
 	if err := generate(); err != nil {

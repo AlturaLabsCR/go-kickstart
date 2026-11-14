@@ -32,6 +32,7 @@ type Handler struct {
 	localizer     *i18n.Localizer
 	links         routes.Links
 	corsOrigins   []string
+	csrfOrigins   []string
 	namedRoutes   map[routes.ID]bool
 	routePolicies map[string]routePolicy
 	methods       map[string]bool
@@ -51,9 +52,13 @@ type Options struct {
 	Localizer     *i18n.Localizer
 	RootPrefix    string
 	CORSOrigins   []string
-	Mailer        mailer.Mailer
-	MailFrom      string
-	OTPSigner     *otp.Signer
+	// CSRFOrigins lists origins allowed to post browser forms. The
+	// cross-origin protection compares Origin with Host by default; tunnels and
+	// proxies that rewrite Host must declare the public origin here instead.
+	CSRFOrigins []string
+	Mailer      mailer.Mailer
+	MailFrom    string
+	OTPSigner   *otp.Signer
 }
 
 func NewHandler(opts Options) (*Handler, error) {
@@ -93,9 +98,13 @@ func NewHandler(opts Options) (*Handler, error) {
 	if err := validateOrigins(opts.CORSOrigins); err != nil {
 		return nil, err
 	}
+	if err := validateOrigins(opts.CSRFOrigins); err != nil {
+		return nil, err
+	}
 
 	next := &Handler{
 		corsOrigins:   append([]string(nil), opts.CORSOrigins...),
+		csrfOrigins:   append([]string(nil), opts.CSRFOrigins...),
 		namedRoutes:   make(map[routes.ID]bool),
 		routePolicies: make(map[string]routePolicy),
 		methods:       make(map[string]bool),
@@ -168,4 +177,5 @@ func (h *Handler) registerRoutes() {
 	h.registerAccountRoutes()
 	h.registerRootRoutes()
 	h.registerStaticRoutes()
+	h.registerBrowserRoutes()
 }

@@ -1,6 +1,32 @@
 package i18n
 
 var es = map[string]string{
+	"web.resuming":       "Reanudando tu sesión…",
+	"web.logout_current": "Cerrar sesión en este dispositivo",
+	"web.logout_device":  "Cerrar sesión en el dispositivo:",
+	"web.unknown_device": "Dispositivo desconocido",
+
+	"web.close":          "Cerrar",
+	"web.cancel":         "Cancelar",
+	"web.update_error":   "No se pudo actualizar. Intenta de nuevo o recarga la página.",
+	"web.confirm_logout": "Confirmar cierre de sesión",
+	"web.reload":         "Actualizar sesiones",
+	"web.login":          "Iniciar sesión",
+	"web.home":           "Inicio",
+	"web.email":          "Correo electrónico",
+	"web.code":           "Código de verificación",
+	"web.verify":         "Verificar e ingresar",
+	"web.send":           "Enviar código",
+	"web.restart":        "Solicitar otro código",
+	"web.sessions":       "Sesiones abiertas",
+	"web.device":         "Dispositivo",
+	"web.created":        "Creada",
+	"web.used":           "Último uso",
+	"web.expires":        "Expira",
+	"web.current":        "Actual",
+	"web.next":           "Siguiente página",
+	"web.logout":         "Cerrar sesión",
+
 	"mail.login.subject":        "Tu código de inicio de sesión",
 	"mail.login.body":           "Tu código de inicio de sesión es {{.Code}}. Caduca en {{.Minutes}} minutos. Si no lo solicitaste, ignora este mensaje.",
 	"mail.email_change.subject": "Confirma tu nuevo correo",

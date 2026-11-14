@@ -39,6 +39,21 @@ func (h *Handler) localize(r *http.Request, key string, args ...any) string {
 	return L(key, args...)
 }
 
+// language returns the negotiated request language. It falls back to English
+// when no localizer is configured or no offered language is acceptable, which
+// matches the translation lookup order.
+func (h *Handler) language(r *http.Request) string {
+	const fallback = "en"
+	if h.localizer == nil {
+		return fallback
+	}
+
+	if language := h.localizer.PickLanguageFromRequest(r); language != "" {
+		return language
+	}
+	return fallback
+}
+
 // normalizeEmail returns normalized email address if it meets strict rules.
 // Returns an empty string for invalid input.
 func normalizeEmail(original string) string {

@@ -1,0 +1,9 @@
+package home
+
+templ timestamp(language string, value int64, withTime bool) {
+	if value == 0 {
+		{ "—" }
+	} else {
+		<time datetime={ isoTimestamp(value) } data-local-date data-language={ language } data-clock?={ withTime }>{ date(language, value, withTime) + " UTC" }</time>
+	}
+}

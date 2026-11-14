@@ -1,18 +1,11 @@
 # syntax=docker/dockerfile:1
-FROM node:22-alpine AS docs
-WORKDIR /src
-COPY package*.json ./
-RUN npm ci
-COPY docs/api.yaml docs/api.yaml
-RUN npm run redocly
-
 FROM golang:1.26.11-alpine AS build
+RUN apk add --no-cache nodejs npm
 WORKDIR /src
 COPY go.mod go.sum ./
 RUN go mod download
 COPY . .
-RUN go generate ./database ./templates
-COPY --from=docs /src/handlers/static/api/index.html handlers/static/api/index.html
+RUN npm ci && go generate ./database
 RUN CGO_ENABLED=0 go build -trimpath -ldflags="-s -w" -o /out/app . && mkdir /data
 
 FROM scratch

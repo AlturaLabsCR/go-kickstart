@@ -1,7 +1,10 @@
 package root
 
-templ RootMain(tr func(string, ...any) string) {
+import "app/routes"
+
+templ RootMain(links routes.Links, tr func(string, ...any) string) {
 	<section>
 		<h1>{ tr("root.greeting") }</h1>
+		<a class="button" href={ links.URL(routes.LoginPage) }>{ tr("web.login") }</a>
 	</section>
 }

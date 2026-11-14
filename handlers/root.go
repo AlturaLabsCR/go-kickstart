@@ -32,7 +32,7 @@ func (h *Handler) Root(w http.ResponseWriter, r *http.Request) {
 				RobotsIndex: true,
 			},
 			Body: base.BodyParams{
-				Content: root.RootMain(L),
+				Content: root.RootMain(h.links, L),
 			},
 		})
 

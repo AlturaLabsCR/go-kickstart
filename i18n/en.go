@@ -1,6 +1,32 @@
 package i18n
 
 var en = map[string]string{
+	"web.resuming":       "Restoring your session…",
+	"web.logout_current": "Log out of this device",
+	"web.logout_device":  "Log out of device:",
+	"web.unknown_device": "Unknown device",
+
+	"web.close":          "Close",
+	"web.cancel":         "Cancel",
+	"web.update_error":   "Unable to update. Please try again or reload the page.",
+	"web.confirm_logout": "Confirm sign out",
+	"web.reload":         "Refresh sessions",
+	"web.login":          "Sign in",
+	"web.home":           "Home",
+	"web.email":          "Email",
+	"web.code":           "Verification code",
+	"web.verify":         "Verify and sign in",
+	"web.send":           "Send code",
+	"web.restart":        "Request another code",
+	"web.sessions":       "Open sessions",
+	"web.device":         "Device",
+	"web.created":        "Created",
+	"web.used":           "Last used",
+	"web.expires":        "Expires",
+	"web.current":        "Current",
+	"web.next":           "Next page",
+	"web.logout":         "Sign out",
+
 	"mail.login.subject":        "Your sign-in code",
 	"mail.login.body":           "Your sign-in code is {{.Code}}. It expires in {{.Minutes}} minutes. If you did not request it, ignore this message.",
 	"mail.email_change.subject": "Confirm your new email address",

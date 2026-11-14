@@ -46,6 +46,7 @@ type serverConfig struct {
 	RefreshTokenTTL time.Duration
 	RootPrefix      string
 	CORSOrigins     []string
+	CSRFOrigins     []string
 	MailFrom        string
 	Host            string
 	Port            int
@@ -115,6 +116,7 @@ func runServer(cfg serverConfig) error {
 		Localizer:     localizer,
 		RootPrefix:    cfg.RootPrefix,
 		CORSOrigins:   cfg.CORSOrigins,
+		CSRFOrigins:   cfg.CSRFOrigins,
 		Mailer:        mailer,
 		MailFrom:      cfg.MailFrom,
 		OTPSigner:     otpSigner,

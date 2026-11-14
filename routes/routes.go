@@ -16,6 +16,7 @@ type ID uint8
 const (
 	Root ID = iota
 	Login
+	LoginPage
 	Verify
 	Refresh
 	Account
@@ -35,6 +36,7 @@ type Definition struct{ Method, Path string }
 var definitions = [count]Definition{
 	Root:           {"GET", "/"},
 	Login:          {"POST", "/auth/login"},
+	LoginPage:      {"GET", "/login"},
 	Verify:         {"POST", "/auth/verify"},
 	Refresh:        {"POST", "/auth/refresh"},
 	Account:        {"GET", "/account"},
