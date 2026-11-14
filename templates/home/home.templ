@@ -16,7 +16,10 @@ templ Home(action, home, next string, sessions []Session, language string, tr fu
 		<h1>{ tr("web.home") }</h1>
 		<section class="card">
 			<header>
-				<hgroup><h2>{ tr("web.sessions") }</h2></hgroup>
+				<hgroup>
+					<strong>{ tr("web.sessions") }</strong>
+					<p>{ tr("web.sessions_help") }</p>
+				</hgroup>
 				<div>
 					<button type="button" class="plain" data-htmz data-href={ home + "#browser-view" } aria-label={ tr("web.reload") } title={ tr("web.reload") }>
 						<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">

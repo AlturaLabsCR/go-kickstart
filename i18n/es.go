@@ -19,6 +19,7 @@ var es = map[string]string{
 	"web.send":           "Enviar código",
 	"web.restart":        "Solicitar otro código",
 	"web.sessions":       "Sesiones abiertas",
+	"web.sessions_help":  "Administra tus sesiones activas.",
 	"web.device":         "Dispositivo",
 	"web.created":        "Creada",
 	"web.used":           "Último uso",
