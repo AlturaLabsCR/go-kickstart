@@ -52,13 +52,15 @@ Limits apply to **public IPs, not devices**, and are local to each nginx replica
 Devices sharing Wi-Fi/NAT share a budget; changing networks can change it. IP
 limits complement the application's persistent email/account quotas.
 
-| POST paths (with any application root) | Rate | Burst |
+| Method and paths (with any application root) | Rate | Burst |
 | --- | --- | --- |
-| `/auth/login`, `/account/email/change`, `/login` | 10/min | 2 |
-| `/auth/verify`, `/account/email/change/confirm` | 30/min | 5 |
-| `/auth/refresh` | 60/min | 10 |
+| POST `/auth/login`, POST `/login`, PATCH `/account/email/change` | 10/min | 2 |
+| POST `/auth/verify`, PATCH `/account/email/change/confirm` | 30/min | 5 |
+| POST `/auth/refresh` | 60/min | 10 |
 
 These are leaky-bucket average rates with immediate bursts and `429` rejections.
+POST and PATCH share their location's budget, so changing the method cannot
+bypass it. The API still accepts only the registered method for each endpoint.
 All browser form actions share the `/login` budget, including verification,
 resumption and logout. GET/HEAD and CORS preflights do not consume these budgets.
 
