@@ -125,6 +125,7 @@ export function initializeHtmz(onSwap: (content: Element) => void, onComplete: (
       const method = control.dataset.method ?? 'get';
       if (method !== 'get' && method !== 'post') return;
       const form = document.createElement('form');
+      form.hidden = true;
       form.method = method;
       form.action = control.dataset.href!;
       form.setAttribute('data-htmz', '');
