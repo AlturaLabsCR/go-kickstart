@@ -6,6 +6,8 @@ import "app/routes"
 type Session struct {
 	ID                     string
 	Device                 string
+	Browser                string
+	OS                     string
 	Created, Used, Expires int64
 	Current                bool
 }
@@ -74,10 +76,9 @@ templ Home(action, home, next string, sessions []Session, tr func(string) string
 					for _,session := range sessions {
 						<tr>
 							<td>
-								{ session.Device }
-								if session.Current {
-									<strong>({ tr("web.current") })</strong>
-								}
+								<div style="display:flex;align-items:center;gap:calc(var(--space) / 2)">
+									@device(session, tr)
+								</div>
 							</td>
 							<td>{ stamp(session.Created) }</td>
 							<td>{ stamp(session.Used) }</td>
@@ -96,6 +97,22 @@ templ Home(action, home, next string, sessions []Session, tr func(string) string
 		</article>
 		@confirmLogout("logout", action, "logout", "", "", true, tr)
 	</section>
+}
+
+templ device(session Session, tr func(string) string) {
+	{{ browserName, osName := browserIcon(session.Browser), osIcon(session.OS) }}
+	if osName != "" {
+		@deviceIcon(osName, session.OS)
+	}
+	if browserName != "" {
+		@deviceIcon(browserName, session.Browser)
+	}
+	if browserName == "" && osName == "" {
+		{ session.Device }
+	}
+	if session.Current {
+		<strong>({ tr("web.current") })</strong>
+	}
 }
 
 templ confirmLogout(id, action, operation, sessionID, device string, current bool, tr func(string) string) {

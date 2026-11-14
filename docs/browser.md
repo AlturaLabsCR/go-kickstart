@@ -22,6 +22,9 @@ link that opens a native `<dialog>` modal. Cancel and Escape dismiss it without 
 request. Confirm posts to `/login` and reuses the API session-revocation handler,
 which checks ownership. Revoking the current session also clears its cookies.
 GET links never revoke sessions. Device labels are untrusted text and are escaped.
+The device column shows the browser and operating system icons recognized from the
+stored User-Agent; each icon is omitted when its value is unknown, and the escaped
+User-Agent is shown when neither is recognized.
 
 The browser adapter calls the existing login, verification and refresh handlers
 in process with JSON bodies, preserving the request context and User-Agent. It

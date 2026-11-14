@@ -12,6 +12,7 @@ import (
 	pages "app/templates/browser"
 	"app/templates/meta"
 	"github.com/a-h/templ"
+	"github.com/mssola/useragent"
 )
 
 // Remove this file and its registration call to remove the browser surface.
@@ -186,7 +187,17 @@ func (h *Handler) registerBrowserRoutes() {
 		}
 		rows := make([]pages.Session, 0, len(sessions.Sessions))
 		for _, session := range sessions.Sessions {
-			rows = append(rows, pages.Session{ID: session.ID, Device: session.UserAgent, Created: session.CreatedAt, Used: session.LastUsedAt, Expires: session.ExpiresAt, Current: session.Current})
+			browserName, osName := deviceNames(session.UserAgent)
+			rows = append(rows, pages.Session{
+				ID:      session.ID,
+				Device:  session.UserAgent,
+				Browser: browserName,
+				OS:      osName,
+				Created: session.CreatedAt,
+				Used:    session.LastUsedAt,
+				Expires: session.ExpiresAt,
+				Current: session.Current,
+			})
 		}
 		tr := func(key string) string { return h.localize(r, key) }
 		next := ""
@@ -195,4 +206,16 @@ func (h *Handler) registerBrowserRoutes() {
 		}
 		page(w, r, 200, tr("web.home"), pages.Home(login, home, next, rows, tr))
 	})
+}
+
+// deviceNames extracts the browser and operating system shown as device icons.
+func deviceNames(userAgent string) (browserName, osName string) {
+	ua := useragent.New(userAgent)
+	browserName, _ = ua.Browser()
+	osName = ua.OSInfo().Name
+	switch ua.Platform() {
+	case "iPad", "iPhone", "iPod touch":
+		osName = "iOS"
+	}
+	return browserName, osName
 }
