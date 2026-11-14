@@ -6,14 +6,19 @@ COPY go.mod go.sum ./
 RUN go mod download
 COPY . .
 RUN npm ci && go generate ./database
-RUN CGO_ENABLED=0 go build -trimpath -ldflags="-s -w" -o /out/app . && mkdir /data
+RUN CGO_ENABLED=0 go build -trimpath -ldflags="-s -w" -o /out/app .
 
-FROM scratch
-COPY --from=build /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/ca-certificates.crt
-COPY --from=build --chown=65532:65532 /data /data
+FROM nginx:stable-alpine
+RUN apk add --no-cache su-exec \
+    && addgroup -S -g 65532 app \
+    && adduser -S -D -H -u 65532 -G app app \
+    && mkdir -p /data \
+    && chown 65532:65532 /data
+
 COPY --from=build /out/app /app
-USER 65532:65532
-WORKDIR /data
-EXPOSE 3080
-ENTRYPOINT ["/app"]
-CMD ["serve"]
+COPY contrib/nginx.example.conf /etc/nginx/conf.d/default.conf
+COPY scripts/entrypoint.sh /entrypoint.sh
+
+RUN chmod +x /entrypoint.sh
+EXPOSE 80
+ENTRYPOINT ["/entrypoint.sh"]
