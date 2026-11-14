@@ -274,7 +274,8 @@ func TestLoginOTPIsHashedAndConsumedOnce(t *testing.T) {
 			if current == nil {
 				t.Fatal("missing current identity")
 			}
-			other, _, err := h.auth.Issue(t.Context(), &auth.Claims{Sub: current.Sub, UserAgent: "Other browser"})
+			const otherDevice = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36"
+			other, _, err := h.auth.Issue(t.Context(), &auth.Claims{Sub: current.Sub, UserAgent: otherDevice})
 			if err != nil {
 				t.Fatal(err)
 			}
@@ -288,7 +289,7 @@ func TestLoginOTPIsHashedAndConsumedOnce(t *testing.T) {
 				t.Fatal("missing session revocation modal")
 			}
 			modal := regexp.MustCompile(`(?s)<dialog id="revoke-` + otherClaims.SessionID + `".*?</dialog>`).FindString(confirmation.Body.String())
-			if !strings.Contains(modal, "Log out of device:") || !strings.Contains(modal, "Other browser") {
+			if !strings.Contains(modal, "Log out of device:") || !strings.Contains(modal, "Windows Chrome") || strings.Contains(modal, otherDevice) {
 				t.Fatal("confirmation did not identify the selected device")
 			}
 			if _, err := h.auth.Verify(t.Context(), other.Value); err != nil {

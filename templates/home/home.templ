@@ -1,5 +1,7 @@
 package home
 
+import "strings"
+
 type Session struct {
 	ID                     string
 	Device                 string
@@ -43,7 +45,7 @@ templ Home(action, home, next string, sessions []Session, language string, tr fu
 							<td>@timestamp(language, session.Expires, false)</td>
 							<td>
 								<a href={ "#revoke-" + session.ID } data-dialog-open={ "revoke-" + session.ID } aria-haspopup="dialog" aria-controls={ "revoke-" + session.ID }>{ tr("web.logout") }</a>
-								@confirmLogout("revoke-"+session.ID, action, "revoke", session.ID, session.Device, session.Current, tr)
+								@confirmLogout("revoke-"+session.ID, action, "revoke", session.ID, strings.TrimSpace(session.OS+" "+session.Browser), session.Current, tr)
 							</td>
 						</tr>
 					}
