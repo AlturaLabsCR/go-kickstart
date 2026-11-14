@@ -11,9 +11,7 @@ RUN CGO_ENABLED=0 go build -trimpath -ldflags="-s -w" -o /out/app .
 FROM nginx:stable-alpine
 RUN apk add --no-cache su-exec \
     && addgroup -S -g 65532 app \
-    && adduser -S -D -H -u 65532 -G app app \
-    && mkdir -p /data \
-    && chown 65532:65532 /data
+    && adduser -S -D -H -u 65532 -G app app
 
 COPY --from=build /out/app /app
 COPY contrib/nginx.example.conf /etc/nginx/conf.d/default.conf
