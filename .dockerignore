@@ -23,3 +23,7 @@
 **/*_templ.go
 database/*/db/
 handlers/static/api/
+!contrib/
+!contrib/nginx.example.conf
+!scripts/
+!scripts/entrypoint.sh
