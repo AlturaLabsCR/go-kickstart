@@ -1,6 +1,8 @@
 package i18n
 
 var es = map[string]string{
+	"web.cancel":         "Cancelar",
+	"web.update_error":   "No se pudo actualizar. Intenta de nuevo o recarga la página.",
 	"web.confirm_logout": "Confirmar cierre de sesión",
 	"web.reload":         "Actualizar sesiones",
 	"web.login":          "Iniciar sesión",

@@ -227,10 +227,10 @@ func TestLoginOTPIsHashedAndConsumedOnce(t *testing.T) {
 			if err != nil {
 				t.Fatal(err)
 			}
-			confirmation := call("GET", "/home?revoke="+otherClaims.SessionID, nil, "")
+			confirmation := call("GET", "/home", nil, "")
 			requireStatus(t, confirmation, 200)
-			if !strings.Contains(confirmation.Body.String(), `value="revoke"`) {
-				t.Fatal("missing revocation confirmation")
+			if !strings.Contains(confirmation.Body.String(), `<dialog id="revoke-`+otherClaims.SessionID+`"`) {
+				t.Fatal("missing session revocation modal")
 			}
 			if _, err := h.auth.Verify(t.Context(), other.Value); err != nil {
 				t.Fatal("GET revoked a session")

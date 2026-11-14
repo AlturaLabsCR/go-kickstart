@@ -16,7 +16,7 @@ This repository is a Go web server template for REST APIs and small HTML surface
 - `i18n/`: locale maps exposed through copying `Locales()`. User-facing strings and error messages should be represented by stable keys.
 - `docs/api.yaml`: OpenAPI source. `handlers/static/api/index.html` is generated and ignored.
 - `templates/`: `templ` HTML templates.
-- Browser login/home are isolated in `handlers/browser.go`, `internal/browser` and `templates/browser`. Native forms use `POST /login` as a JSON-handler adapter; API handlers stay JSON/Bearer-only. See `docs/browser.md`. `npm ci` builds Redocly and the site through postinstall; SQL generation is separate.
+- Browser login/home are isolated in `handlers/browser.go`, `internal/browser` and `templates/browser`. The reusable htmz client in `frontend/browser.ts` enhances forms, links and buttons with iframe swaps and busy state; native forms use `POST /login` as a JSON-handler adapter; API handlers stay JSON/Bearer-only. See `docs/browser.md`. `npm ci` builds Redocly and the site through postinstall; SQL generation is separate.
 - `routes/`: named method/path catalogue shared by registration and template links. Use `h.AddRoute` and `links.URL` / `h.URL`; constructor checks catalogue registration and linked embedded assets. See `docs/routes.md`. Raw `Add` routes remain available for extensions.
 
 ## Adding an Endpoint

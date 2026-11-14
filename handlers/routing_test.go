@@ -85,7 +85,7 @@ func TestRoutesUseRootPrefix(t *testing.T) {
 		wantAllow    bool
 		wantLocation string
 	}{
-		{name: "browser login", method: "GET", path: "/api/login", wantStatus: 200, wantBody: `action="/api/login"`},
+		{name: "browser login", method: "GET", path: "/api/login", wantStatus: 200, wantBody: `action="/api/login#browser-view"`},
 		{name: "protected browser home", method: "GET", path: "/api/home", wantStatus: 303, wantLocation: "/api/login"},
 		{
 			name:       "root JSON",

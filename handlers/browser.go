@@ -31,7 +31,7 @@ func (h *Handler) registerBrowserRoutes() {
 		w.Header().Add("Vary", "Accept-Language")
 		w.Header().Set("Referrer-Policy", "no-referrer")
 		w.WriteHeader(status)
-		if err := base.Page(base.PageParams{Links: h.links, Head: base.HeadParams{Title: meta.AppTitle, Subtitle: title}, Body: base.BodyParams{Content: content}}).Render(r.Context(), w); err != nil {
+		if err := base.Page(base.PageParams{Links: h.links, Head: base.HeadParams{Title: meta.AppTitle, Subtitle: title}, Body: base.BodyParams{Content: pages.Surface(h.links, content, h.localize(r, "web.update_error"))}}).Render(r.Context(), w); err != nil {
 			h.logger.Error("failed to render browser page", "error", err)
 		}
 	}
@@ -186,14 +186,13 @@ func (h *Handler) registerBrowserRoutes() {
 		}
 		rows := make([]pages.Session, 0, len(sessions.Sessions))
 		for _, session := range sessions.Sessions {
-			logoutURL := home + "?" + url.Values{"revoke": {session.ID}, "cursor": {r.URL.Query().Get("cursor")}}.Encode()
-			rows = append(rows, pages.Session{ID: session.ID, LogoutURL: logoutURL, Device: session.UserAgent, Created: session.CreatedAt, Used: session.LastUsedAt, Expires: session.ExpiresAt, Current: session.Current})
+			rows = append(rows, pages.Session{ID: session.ID, Device: session.UserAgent, Created: session.CreatedAt, Used: session.LastUsedAt, Expires: session.ExpiresAt, Current: session.Current})
 		}
 		tr := func(key string) string { return h.localize(r, key) }
 		next := ""
 		if sessions.NextCursor != "" {
 			next = home + "?cursor=" + url.QueryEscape(sessions.NextCursor)
 		}
-		page(w, r, 200, tr("web.home"), pages.Home(login, home, next, r.URL.Query().Get("revoke"), rows, tr))
+		page(w, r, 200, tr("web.home"), pages.Home(login, home, next, rows, tr))
 	})
 }

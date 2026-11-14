@@ -1,9 +1,10 @@
 package browser
 
 import "time"
+import "app/routes"
 
 type Session struct {
-	ID, LogoutURL          string
+	ID                     string
 	Device                 string
 	Created, Used, Expires int64
 	Current                bool
@@ -22,20 +23,23 @@ templ Login(action, email, message string, verify, refresh bool, tr func(string)
 		if message!="" {
 			<p role="alert">{ message }</p>
 		}
-		<form method="post" action={ action }>
+		<form method="post" action={ action + "#browser-view" } data-htmz>
 			if verify {
 				<input type="hidden" name="action" value="verify"/>
-				<label>{ tr("web.email") }<input type="email" name="email" value={ email } readonly required/></label>
-				<label>{ tr("web.code") }<input name="otp" inputmode="numeric" autocomplete="one-time-code" pattern="[0-9]{6}" minlength="6" maxlength="6" required autofocus/></label>
+				<label for="login-email">{ tr("web.email") }</label>
+				<input id="login-email" type="email" name="email" value={ email } readonly required/>
+				<label for="login-otp">{ tr("web.code") }</label>
+				<input id="login-otp" name="otp" inputmode="numeric" autocomplete="one-time-code" pattern="[0-9]{6}" minlength="6" maxlength="6" required autofocus/>
 				<button type="submit">{ tr("web.verify") }</button>
 			} else {
 				<input type="hidden" name="action" value="login"/>
-				<label>{ tr("web.email") }<input type="email" name="email" value={ email } autocomplete="email" required/></label>
+				<label for="login-email">{ tr("web.email") }</label>
+				<input id="login-email" type="email" name="email" value={ email } autocomplete="email" required/>
 				<button type="submit">{ tr("web.send") }</button>
 			}
 		</form>
 		if refresh {
-			<form method="post" action={ action }><button name="action" value="refresh">{ tr("web.continue") }</button></form>
+			<form method="post" action={ action + "#browser-view" } data-htmz><button name="action" value="refresh">{ tr("web.continue") }</button></form>
 		}
 		if verify {
 			<a href={ action }>{ tr("web.restart") }</a>
@@ -43,11 +47,11 @@ templ Login(action, email, message string, verify, refresh bool, tr func(string)
 	</section>
 }
 
-templ Home(action, home, next, confirm string, sessions []Session, tr func(string) string) {
+templ Home(action, home, next string, sessions []Session, tr func(string) string) {
 	<section>
 		<h1>{ tr("web.home") }</h1>
 		<h2>{ tr("web.sessions") }</h2>
-		<form method="get" action={ home }><button>{ tr("web.reload") }</button></form>
+		<button type="button" data-htmz data-href={ home + "#browser-view" }>{ tr("web.reload") }</button>
 		<table>
 			<thead><tr><th>{ tr("web.device") }</th><th>{ tr("web.created") }</th><th>{ tr("web.used") }</th><th>{ tr("web.expires") }</th><th>{ tr("web.logout") }</th></tr></thead>
 			<tbody>
@@ -63,23 +67,38 @@ templ Home(action, home, next, confirm string, sessions []Session, tr func(strin
 						<td>{ stamp(session.Used) }</td>
 						<td>{ stamp(session.Expires) }</td>
 						<td>
-							if confirm==session.ID {
-								<form method="post" action={ action }>
-									<input type="hidden" name="action" value="revoke"/>
-									<input type="hidden" name="session_id" value={ session.ID }/>
-									<button>{ tr("web.confirm_logout") }</button>
-								</form>
-							} else {
-								<a href={ session.LogoutURL }>{ tr("web.logout") }</a>
-							}
+							<a href={ "#revoke-" + session.ID } data-dialog-open={ "revoke-" + session.ID }>{ tr("web.logout") }</a>
+							@confirmLogout("revoke-"+session.ID, action, "revoke", session.ID, tr)
 						</td>
 					</tr>
 				}
 			</tbody>
 		</table>
 		if next!="" {
-			<a href={ next }>{ tr("web.next") }</a>
+			<a href={ next } data-htmz>{ tr("web.next") }</a>
 		}
-		<form method="post" action={ action }><button name="action" value="logout">{ tr("web.logout") }</button></form>
+		<button type="button" data-dialog-open="logout">{ tr("web.logout") }</button>
+		@confirmLogout("logout", action, "logout", "", tr)
 	</section>
+}
+
+templ confirmLogout(id, action, operation, sessionID string, tr func(string) string) {
+	<dialog id={ id } aria-labelledby={ id + "-title" }>
+		<h2 id={ id + "-title" }>{ tr("web.confirm_logout") }</h2>
+		<p role="alert" data-htmz-error></p>
+		<form method="post" action={ action + "#browser-view" } data-htmz>
+			<input type="hidden" name="action" value={ operation }/>
+			<input type="hidden" name="session_id" value={ sessionID }/>
+			<button>{ tr("web.logout") }</button>
+		</form>
+		<form method="dialog"><button autofocus>{ tr("web.cancel") }</button></form>
+	</dialog>
+}
+
+templ Surface(links routes.Links, content templ.Component, message string) {
+	<div id="browser-view" data-error={ message }>
+		<p role="alert" data-htmz-error></p>
+		@content
+	</div>
+	<script type="module" src={ links.StaticURL("js/browser.js") }></script>
 }
