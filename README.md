@@ -52,7 +52,10 @@ validation and handler/endpoint origin policies.
   from the release tag pinned in `templates/semantic.go` and writes its minified CSS to
   `handlers/static/css/semantic.<sha256>.css` with the upstream licenses. It also
   generates `templates.SemanticStylesheetURL(links)`, used by the shared page
-  head. Update `semanticTag` and regenerate to upgrade; changed CSS gets a new
+  head. It verifies the CSS against `semanticSHA256` before writing files and
+  limits each CSS/license download to 1 MiB. Review the new release, compute the
+  downloaded CSS digest with `sha256sum`, then update both `semanticTag` and
+  `semanticSHA256` and regenerate to upgrade; changed CSS gets a new
   URL automatically, and obsolete generated stylesheets are removed. Generation
   requires network access; the built server embeds and serves the CSS locally.
 - `npm run browser` bundles the TypeScript frontend into
