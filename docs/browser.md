@@ -98,6 +98,8 @@ The feature is isolated in `handlers/browser.go`, `internal/browser`,
 `templates/base/browser.templ`. The frontend entry point `frontend/browser.ts`
 initializes `htmz.ts` (iframe requests, busy state and POST coordination),
 `dates.ts` (visitor-local timestamps) and `session.ts` (automatic session renewal).
+Shared form URL handling lives in `forms.ts`; it reads the action attribute
+because a control named `action` shadows the form's JavaScript property.
 They compile into a single `handlers/static/js/browser.js` bundle.
 To remove the feature, remove the `registerBrowserRoutes` call from
 `Handler.registerRoutes`, delete those sources and remove the browser build script/dependencies. The web routes use the
@@ -110,6 +112,9 @@ Go and network access for the pinned stylesheet download. SQL generation remains
 `go generate ./database`. The browser build runs ESLint, TypeScript checks and esbuild. Its generated
 `handlers/static/js/browser.js` is ignored. `npm run browser` rebuilds just the
 client. The MIT notice for the original htmz pattern is in `licenses/htmz.txt`.
+Static assets are embedded when Go builds the server. After rebuilding the
+frontend, rebuild and restart the server too; reloading the page cannot replace
+the bundle embedded in an already-running process.
 
 
 Use `form[data-htmz]` for native GET/POST submissions with fields,

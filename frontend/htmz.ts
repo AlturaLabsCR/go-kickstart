@@ -1,6 +1,8 @@
 // htmz's native iframe transport and loader pattern, adapted from Semantic:
 // https://github.com/tavocg/semantic/tree/523373d36f06256d9ff60c2723a8c9235a368b3b
 // Original htmz: Copyright 2024 Lean Rada, MIT (licenses/htmz.txt).
+import { formURL } from './forms';
+
 export function initializeHtmz(onSwap: (content: Element) => void, onComplete: () => void): void {
   const frame = document.createElement('iframe');
   frame.name = 'htmz';
@@ -33,7 +35,7 @@ export function initializeHtmz(onSwap: (content: Element) => void, onComplete: (
     const automatic = document.querySelector<HTMLFormElement>('form[data-auto-resume]');
     if (automatic) {
       finish();
-      location.replace(new URL(automatic.action).pathname + '?resume=0');
+      location.replace(formURL(automatic).pathname + '?resume=0');
       return;
     }
     const error = document.querySelector('dialog[open] [data-htmz-error]') ?? document.querySelector('#browser-view > [data-htmz-error]');
@@ -79,7 +81,7 @@ export function initializeHtmz(onSwap: (content: Element) => void, onComplete: (
     const form = event.target;
     if (event.defaultPrevented || !(form instanceof HTMLFormElement) || !form.hasAttribute('data-htmz')) return;
     const button = (event as SubmitEvent).submitter as HTMLButtonElement | null;
-    const action = button?.hasAttribute('formaction') ? button.formAction : form.action;
+    const action = button?.hasAttribute('formaction') ? button.formAction : formURL(form).href;
     const control = controls.get(form) ?? button ?? form;
     const method = button?.hasAttribute('formmethod') ? button.formMethod : form.method;
     // Web Locks serialize cookie-changing POSTs across tabs and replicas.
