@@ -147,7 +147,14 @@ func (h *Handler) registerBrowserRoutes() {
 		if action == "logout" {
 			// A refresh cookie can expire before a still-valid access token.
 			if access := cookies.Read(r, "access"); access != "" {
-				if claims, err := h.authenticator.Verify(r.Context(), access); err == nil {
+				claims, err := h.authenticator.Verify(r.Context(), access)
+				if err != nil && !errors.Is(err, goauth.ErrInvalidToken) && !errors.Is(err, goauth.ErrExpiredToken) {
+					h.logger.Error("failed to verify browser session before logout", "error", err)
+					status, _ := httpx.ErrorStatus(r.Context(), http.StatusServiceUnavailable, "err.verify_bearer")
+					showLogin(w, r, status, "", h.localize(r, "err.verify_bearer"), false)
+					return
+				}
+				if err == nil {
 					request := r.Clone(r.Context())
 					request.SetPathValue("id", claims.SessionID)
 					revoke := middleware.AuthenticateBearer(h.logger, h.localize, h.authenticator, http.HandlerFunc(h.RevokeSession))

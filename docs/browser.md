@@ -86,7 +86,14 @@ a `noscript` link opens that form. A lost successful refresh response still
 requires login: the existing one-time refresh contract has no replay recovery.
 Sign out revokes the server-side session and removes both cookies. Revocation
 invalidates issued access tokens because verification checks the uncached session
-record.
+record. If access-token verification fails because of a database or other
+dependency error, sign out returns an error and preserves both cookies for retry.
+Invalid or expired access tokens instead fall back to refresh-based revocation.
+Once that refresh identifies a session, revocation locks the account and deletes
+the stable session, including a token rotated while waiting for the lock. A
+refresh already consumed before lookup cannot identify its successor; without a
+valid access token, that case only clears the browser cookies. Consumed refresh
+hashes are not retained for replay detection or revocation of successors.
 
 `--dev` bypasses CrossOriginProtection for the browser's POST login adapter and
 permits all CORS origins; production keeps the configured origin policies.

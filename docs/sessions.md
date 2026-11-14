@@ -30,6 +30,12 @@ rotates the account generation. Requests authenticated before revocation may
 finish. After closing the current session, discard its credentials locally;
 a fresh login can create another session.
 
+Refresh-based revocation resolves the session before acquiring the account lock,
+then deletes by its stable identifier in that transaction. It therefore also
+revokes a replacement refresh issued between lookup and locking. Unknown hashes
+remain an idempotent no-op: a refresh consumed before lookup cannot identify its
+successor. This does not provide refresh-family replay detection.
+
 ## Deploying migration 20261108000
 
 Stop old application versions before starting the upgraded application. The
