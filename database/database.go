@@ -37,6 +37,13 @@ type AccountQuerier interface {
 }
 
 type SessionQuerier interface {
+	// InsertConsumedRefreshToken retains a consumed hash in the rotation transaction.
+	InsertConsumedRefreshToken(ctx context.Context, token ConsumedRefreshToken) error
+
+	// SelectRevocableSessionByHash resolves current or retained credentials for
+	// revocation only. Authorization and renewal must never accept retained hashes.
+	SelectRevocableSessionByHash(ctx context.Context, tokenHash string, now int64) (*SessionIdentity, error)
+
 	// SelectAccountAuthID returns the current account authentication identity.
 	// Authorization must read this directly from the database, never from cache.
 	SelectAccountAuthID(ctx context.Context, sub int64) (string, error)

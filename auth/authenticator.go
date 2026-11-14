@@ -108,6 +108,18 @@ func (a *Authenticator) Refresh(ctx context.Context, refreshToken string) (at *g
 		if consumed.ExpiresAt != 0 && time.Now().UTC().Unix() >= consumed.ExpiresAt {
 			return goauth.ErrExpiredToken
 		}
+		// Retention covers the original credentials' lifetime, including access
+		// tokens that outlive refresh. Legacy non-expiring refreshes get one TTL.
+		expiresAt := consumed.ExpiresAt
+		if expiresAt == 0 {
+			expiresAt = time.Now().UTC().Add(a.refreshTTL).Unix()
+		}
+		if err := q.InsertConsumedRefreshToken(ctx, database.ConsumedRefreshToken{
+			TokenHash: consumed.TokenHash, Sub: consumed.Sub, AuthID: consumed.AuthID,
+			SessionID: consumed.SessionID, ExpiresAt: max(expiresAt, consumed.AccessExpiresAt),
+		}); err != nil {
+			return err
+		}
 
 		at, rt, err = a.signSession(ctx, q, consumed)
 		return err
@@ -161,9 +173,9 @@ func (a *Authenticator) Revoke(ctx context.Context, refreshToken string) error {
 
 	// Resolve the stable session before locking, as Refresh does for SQLite.
 	// A concurrent rotation may replace the hash while we wait for the account.
-	saved, err := a.db.Querier().SelectRefreshTokenByHash(ctx, hashRefreshToken(refreshToken))
+	saved, err := a.db.Querier().SelectRevocableSessionByHash(ctx, hashRefreshToken(refreshToken), time.Now().Unix())
 	if a.db.IsErrNotFound(err) {
-		return nil // Already absent; consumed hashes cannot identify a successor.
+		return nil // Unknown or no longer retained; keep revocation idempotent.
 	}
 	if err != nil {
 		return err

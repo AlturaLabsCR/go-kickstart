@@ -91,9 +91,13 @@ dependency error, sign out returns an error and preserves both cookies for retry
 Invalid or expired access tokens instead fall back to refresh-based revocation.
 Once that refresh identifies a session, revocation locks the account and deletes
 the stable session, including a token rotated while waiting for the lock. A
-refresh already consumed before lookup cannot identify its successor; without a
-valid access token, that case only clears the browser cookies. Consumed refresh
-hashes are not retained for replay detection or revocation of successors.
+consumed refresh can also identify its successor while its hash is retained,
+so logout still revokes that session when the access cookie has expired. Only
+hashes and session identities are retained, until the original refresh/access
+credentials expire; legacy non-expiring refreshes use one configured refresh TTL
+from consumption (or the access expiry if later). Unknown or no-longer-retained
+hashes are an idempotent no-op. These references never authorize renewal, and a
+duplicate refresh request returns 401 without automatically revoking its family.
 
 `--dev` bypasses CrossOriginProtection for the browser's POST login adapter and
 permits all CORS origins; production keeps the configured origin policies.
