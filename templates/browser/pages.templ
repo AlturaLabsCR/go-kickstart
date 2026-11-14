@@ -19,30 +19,32 @@ func stamp(value int64) string {
 
 templ Login(action, email, message string, verify, refresh bool, tr func(string) string) {
 	<section>
-		<h1>{ tr("web.login") }</h1>
-		if message!="" {
-			<p role="alert">{ message }</p>
-		}
 		<form method="post" action={ action + "#browser-view" } data-htmz>
+			<h1>{ tr("web.login") }</h1>
 			if verify {
 				<input type="hidden" name="action" value="verify"/>
 				<label for="login-email">{ tr("web.email") }</label>
 				<input id="login-email" type="email" name="email" value={ email } readonly required/>
 				<label for="login-otp">{ tr("web.code") }</label>
 				<input id="login-otp" name="otp" inputmode="numeric" autocomplete="one-time-code" pattern="[0-9]{6}" minlength="6" maxlength="6" required autofocus/>
-				<button type="submit">{ tr("web.verify") }</button>
+				<footer>
+					<a class="button outline" href={ action }>{ tr("web.restart") }</a>
+					<button type="submit">{ tr("web.verify") }</button>
+				</footer>
 			} else {
 				<input type="hidden" name="action" value="login"/>
 				<label for="login-email">{ tr("web.email") }</label>
 				<input id="login-email" type="email" name="email" value={ email } autocomplete="email" required/>
-				<button type="submit">{ tr("web.send") }</button>
+				if message!="" {
+					<p role="alert">{ message }</p>
+				}
+				<footer>
+					<button type="submit">{ tr("web.send") }</button>
+				</footer>
 			}
 		</form>
 		if refresh {
 			<form method="post" action={ action + "#browser-view" } data-htmz><button name="action" value="refresh">{ tr("web.continue") }</button></form>
-		}
-		if verify {
-			<a href={ action }>{ tr("web.restart") }</a>
 		}
 	</section>
 }
