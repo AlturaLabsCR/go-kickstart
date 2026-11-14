@@ -174,3 +174,23 @@ weaken login/home CSP to accommodate documentation resources. Additional HTML
 surfaces should explicitly adopt the document policy after checking their needs.
 Development uses the same document protections and logs an explicit startup
 warning about permissive CORS/CSRF and plaintext OTP debug logs.
+
+## Input and log privacy
+
+OTP verification requires exactly six ASCII digits. Malformed codes still consume
+the persistent verification budget and return the existing localized 401 (or 429
+when exhausted), without computing the HMAC or querying the challenge. JSON body
+size limits and strict decoding remain in place.
+
+Application logs omit email fields from validation/database error context and do
+not echo JSON decoder errors, which can contain arbitrary client-supplied field
+names. Issuance logs mask both email and OTP outside development, including when
+debug logging is explicitly enabled. Development retains the validated email and
+issued code for local workflows.
+
+The verification URL still contains the email to preserve the existing
+POST/redirect/GET flow. `no-store` and the referrer policy do not remove browser
+history. See [proxy log privacy](reverse-proxy.md#client-ip-and-rate-limits) for
+access-log sanitization and the separate nginx/platform error-log limitations.
+Dependency error messages may also contain provider-supplied details; restrict
+operational log access and retention rather than treating logs as public data.

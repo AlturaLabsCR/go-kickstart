@@ -51,8 +51,6 @@ func (h *Handler) LoginOrCreateAccount(w http.ResponseWriter, r *http.Request) {
 			http.StatusBadRequest,
 			"err.invalid_login_email",
 			"invalid login email",
-			"email",
-			req.Email,
 		)
 		return
 	}
@@ -84,8 +82,6 @@ func (h *Handler) LoginOrCreateAccount(w http.ResponseWriter, r *http.Request) {
 			err,
 			"err.save_login",
 			"failed to upsert login request",
-			"email",
-			email,
 		)
 		return
 	}
@@ -94,7 +90,7 @@ func (h *Handler) LoginOrCreateAccount(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	h.logger.Debug("generated login otp", "email", email, "otp", maskedOTP(h.dev, code), "expires_at", expiresAt)
+	h.logger.Debug("generated login otp", "email", developmentValue(h.dev, email), "otp", developmentValue(h.dev, code), "expires_at", expiresAt)
 	w.WriteHeader(http.StatusNoContent)
 }
 
@@ -123,13 +119,15 @@ func (h *Handler) VerifyAuthenticationCode(w http.ResponseWriter, r *http.Reques
 			http.StatusBadRequest,
 			"err.invalid_verify_email",
 			"invalid verify email",
-			"email",
-			req.Email,
 		)
 		return
 	}
 
 	if !h.allowOTPVerification(w, r, otpPurposeLogin, email) {
+		return
+	}
+
+	if !h.checkOTP(w, r, req.OTP, "err.invalid_login_otp") {
 		return
 	}
 
@@ -169,8 +167,6 @@ func (h *Handler) VerifyAuthenticationCode(w http.ResponseWriter, r *http.Reques
 			err,
 			"err.finalize_login",
 			"failed to finalize login verification",
-			"email",
-			email,
 		)
 		return
 	}
@@ -257,9 +253,10 @@ func expiresIn(expiresAt, now int64) int64 {
 	return expiresAt - now
 }
 
-func maskedOTP(dev bool, otp string) string {
+// developmentValue is only used for bounded, validated email addresses and issued codes.
+func developmentValue(dev bool, value string) string {
 	if dev {
-		return otp
+		return value
 	}
 
 	return "******"

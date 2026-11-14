@@ -142,8 +142,6 @@ func (h *Handler) RequestEmailChange(w http.ResponseWriter, r *http.Request) {
 			http.StatusBadRequest,
 			"err.invalid_email_change",
 			"invalid account email change target",
-			"email",
-			req.NewEmail,
 			"sub",
 			sub,
 		)
@@ -164,8 +162,6 @@ func (h *Handler) RequestEmailChange(w http.ResponseWriter, r *http.Request) {
 			"account email change target matches current email",
 			"sub",
 			sub,
-			"email",
-			newEmail,
 		)
 		return
 	}
@@ -200,8 +196,6 @@ func (h *Handler) RequestEmailChange(w http.ResponseWriter, r *http.Request) {
 			"failed to upsert account email change request",
 			"sub",
 			sub,
-			"email",
-			newEmail,
 		)
 		return
 	}
@@ -210,7 +204,7 @@ func (h *Handler) RequestEmailChange(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	h.logger.Debug("generated account email change otp", "sub", sub, "email", newEmail, "otp", maskedOTP(h.dev, code), "expires_at", expiresAt)
+	h.logger.Debug("generated account email change otp", "sub", sub, "email", developmentValue(h.dev, newEmail), "otp", developmentValue(h.dev, code), "expires_at", expiresAt)
 	w.WriteHeader(http.StatusNoContent)
 }
 
@@ -231,6 +225,10 @@ func (h *Handler) ConfirmEmailChange(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if !h.allowOTPVerification(w, r, otpPurposeEmailChange, subject) {
+		return
+	}
+
+	if !h.checkOTP(w, r, req.OTP, "err.invalid_email_change_otp") {
 		return
 	}
 

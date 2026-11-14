@@ -67,6 +67,18 @@ bypass it. The API still accepts only the registered method for each endpoint.
 All browser form actions share the `/login` budget, including verification,
 resumption and logout. GET/HEAD and CORS preflights do not consume these budgets.
 
+Both nginx configurations use JSON access logs containing only method, normalized
+path (without query), status and request duration. They exclude referrers,
+cookies, Authorization and request bodies. This keeps the email in the login
+verification query out of access logs.
+
+Native nginx **error logs** have a separate format and can include the original
+request URL and referrer on upstream failures or throttling. The access-log format
+does not sanitize those messages. Restrict their access/retention and configure
+redaction in the log collector before exposing them to broader audiences; review
+Railway/Cloudflare logs as well. Disabling error diagnostics is not a substitute
+for that policy. The login email also remains in browser URL/history.
+
 nginx negotiates gzip for HTML, JSON, CSS, JS, SVG and other compressible types on
 every path, including authenticated and proxied requests. It skips known bodies
 below 256 bytes and already-compressed formats. See the

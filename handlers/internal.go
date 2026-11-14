@@ -83,11 +83,11 @@ func (h *Handler) requireIdentity(w http.ResponseWriter, r *http.Request) (middl
 func decodeBody[T any](h *Handler, w http.ResponseWriter, r *http.Request, key, message string) (T, bool) {
 	var body T
 	if err := httpx.DecodeJSON(w, r, &body); err != nil {
-		h.writeError(
+		// Decoder errors can contain arbitrary field names supplied by the client.
+		h.writeStatus(
 			w,
 			r,
 			http.StatusBadRequest,
-			err,
 			key,
 			message,
 		)
