@@ -50,7 +50,14 @@ func (h *Handler) registerBrowserRoutes() {
 	}, http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		showLogin(w, r, 200, r.URL.Query().Get("email"), "", r.URL.Query().Get("step") == "verify")
 	})))
+	// Cross-origin form posts are rejected. The debug log records why and the
+	// headers the check compares, because tunnels and proxies can rewrite Host.
 	csrf := http.NewCrossOriginProtection()
+	for _, origin := range h.csrfOrigins {
+		if err := csrf.AddTrustedOrigin(origin); err != nil {
+			h.logger.Error("failed to trust browser form origin", "origin", origin, "error", err)
+		}
+	}
 	csrf.SetDenyHandler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		h.writeStatus(
 			w,
@@ -58,6 +65,14 @@ func (h *Handler) registerBrowserRoutes() {
 			http.StatusForbidden,
 			"err.permission_denied",
 			"cross-origin browser form rejected",
+			"reason",
+			csrf.Check(r),
+			"origin",
+			r.Header.Get("Origin"),
+			"host",
+			r.Host,
+			"sec_fetch_site",
+			r.Header.Get("Sec-Fetch-Site"),
 		)
 	}))
 	h.AddHandler("POST", loginPath, csrf.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {

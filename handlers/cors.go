@@ -21,7 +21,7 @@ func validateOrigins(origins []string) error {
 	for _, origin := range origins {
 		u, err := url.Parse(origin)
 		if err != nil || (u.Scheme != "http" && u.Scheme != "https") || u.Hostname() == "" || u.User != nil || u.Path != "" || strings.ContainsAny(origin, "?#") {
-			return fmt.Errorf("invalid CORS origin %q: use an exact HTTP(S) origin without a path", origin)
+			return fmt.Errorf("invalid origin %q: use an exact HTTP(S) origin without a path", origin)
 		}
 	}
 	return nil

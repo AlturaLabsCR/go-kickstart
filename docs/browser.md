@@ -44,6 +44,18 @@ serve the application through HTTPS. `--dev` permits local HTTP with separate
 cookie names. Tokens never enter HTML, browser storage or redirect URLs. Keep
 refresh-token TTL greater than access TTL for a useful renewal window.
 
+Browser form posts pass through `http.CrossOriginProtection`, which accepts a
+request only when `Sec-Fetch-Site` is `same-origin`/`none`, or, without that
+header, when the `Origin` host equals the `Host` header. A rejected post returns
+localized 403 and renders "Unable to update" in the page. The debug log records
+the reason, `origin`, `host` and `sec_fetch_site`, which is the fastest way to
+diagnose a VPN, tunnel or reverse proxy that changes `Host`. Declare the public
+origin with `csrf.origins` / `--csrf-origins` /
+`APP_CSRF_ORIGINS` (comma-separated, exact `scheme://host[:port]` values)
+when the proxy cannot preserve `Host`; those requests bypass both checks. An
+`Origin: null` (sandboxed or in-app browsers) has no host to declare, so it can
+only pass when the browser also sends `Sec-Fetch-Site`.
+
 After access expiry, `/home` redirects to `/login`; the Continue session form
 rotates the refresh token through the existing refresh handler. Renewal uses
 POST, not a side effect of GET. Sign out revokes the server-side session using
