@@ -1,8 +1,6 @@
 #!/bin/sh
 set -eu
 
-cd /data
-
 # Start Go application as unprivileged user
 su-exec app /app serve &
 APP_PID=$!
