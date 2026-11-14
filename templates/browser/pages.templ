@@ -67,7 +67,7 @@ templ Home(action, home, next string, sessions []Session, tr func(string) string
 						<td>{ stamp(session.Used) }</td>
 						<td>{ stamp(session.Expires) }</td>
 						<td>
-							<a href={ "#revoke-" + session.ID } data-dialog-open={ "revoke-" + session.ID }>{ tr("web.logout") }</a>
+							<button type="button" class="plain" commandfor={ "revoke-" + session.ID } command="show-modal">{ tr("web.logout") }</button>
 							@confirmLogout("revoke-"+session.ID, action, "revoke", session.ID, tr)
 						</td>
 					</tr>
@@ -77,21 +77,26 @@ templ Home(action, home, next string, sessions []Session, tr func(string) string
 		if next!="" {
 			<a href={ next } data-htmz>{ tr("web.next") }</a>
 		}
-		<button type="button" data-dialog-open="logout">{ tr("web.logout") }</button>
+		<button type="button" commandfor="logout" command="show-modal">{ tr("web.logout") }</button>
 		@confirmLogout("logout", action, "logout", "", tr)
 	</section>
 }
 
 templ confirmLogout(id, action, operation, sessionID string, tr func(string) string) {
 	<dialog id={ id } aria-labelledby={ id + "-title" }>
-		<h2 id={ id + "-title" }>{ tr("web.confirm_logout") }</h2>
+		<header>
+			<h2 id={ id + "-title" }>{ tr("web.confirm_logout") }</h2>
+			<button type="button" commandfor={ id } command="close" aria-label={ tr("web.close") }>×</button>
+		</header>
 		<p role="alert" data-htmz-error></p>
-		<form method="post" action={ action + "#browser-view" } data-htmz>
+		<form id={ id + "-form" } hidden method="post" action={ action + "#browser-view" } data-htmz>
 			<input type="hidden" name="action" value={ operation }/>
 			<input type="hidden" name="session_id" value={ sessionID }/>
-			<button>{ tr("web.logout") }</button>
 		</form>
-		<form method="dialog"><button autofocus>{ tr("web.cancel") }</button></form>
+		<footer>
+			<button type="button" class="plain" commandfor={ id } command="close" autofocus>{ tr("web.cancel") }</button>
+			<button type="submit" form={ id + "-form" }>{ tr("web.logout") }</button>
+		</footer>
 	</dialog>
 }
 

@@ -5,8 +5,11 @@ the configured mailer. A native form submits to `POST <root>/login`; the server
 responds with `303 See Other`, which makes the browser follow with a GET. HTML
 forms do not have a success-redirect attribute. Forms are enhanced with a small
 TypeScript adaptation of htmz's iframe transport and Semantic's loader pattern.
-Login still submits normally if the script is unavailable; session-confirmation
-modals require the browser module.
+Login and confirmation still submit normally if the script is unavailable. Modal
+controls use native `commandfor` / `command` attributes, following Semantic;
+Cancel is `.plain`, confirm is a normal submit button, and the header has an
+accessible close button. Confirm is associated with a hidden POST form, while
+Cancel and the close button do not submit anything.
 An authenticated GET to `/login` redirects to `/home` after verifying the access
 cookie against the live session record; expired or revoked cookies do not redirect.
 

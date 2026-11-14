@@ -1,6 +1,7 @@
 package i18n
 
 var en = map[string]string{
+	"web.close":          "Close",
 	"web.cancel":         "Cancel",
 	"web.update_error":   "Unable to update. Please try again or reload the page.",
 	"web.confirm_logout": "Confirm sign out",
