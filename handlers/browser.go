@@ -45,7 +45,7 @@ func (h *Handler) registerBrowserRoutes() {
 	}
 	showLogin := func(w http.ResponseWriter, r *http.Request, status int, email, message string, verify bool) {
 		tr := func(key string) string { return h.localize(r, key) }
-		page(w, r, status, tr("web.login"), loginpage.Login(login, email, message, verify, status == http.StatusOK && r.Method == http.MethodGet && cookies.Read(r, "refresh") != "" && r.URL.Query().Get("resume") != "0" && !prefetch(r), tr))
+		page(w, r, status, tr("web.login"), loginpage.Login(login, email, message, verify, !verify && status == http.StatusOK && r.Method == http.MethodGet && cookies.Read(r, "refresh") != "" && r.URL.Query().Get("resume") != "0" && !prefetch(r), tr))
 	}
 
 	// GET never consumes a rotating token; the browser coordinates an automatic

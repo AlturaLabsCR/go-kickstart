@@ -77,7 +77,9 @@ coordination also works when requests reach different server replicas.
 
 Missing or rejected refresh credentials show the ordinary login form without a
 retry loop. A failed renewal never clears cookies, so its response cannot erase
-a newer successful session. Dependency failures return an error status and keep
+a newer successful session. The OTP verification step takes precedence over
+automatic renewal, including when cookies belong to a previous database.
+Dependency failures return an error status and keep
 the cookies. Automatic renewal requires JavaScript and Web Locks (HTTPS or
 localhost); otherwise the ordinary login form is shown. With JavaScript disabled,
 a `noscript` link opens that form. A lost successful refresh response still
