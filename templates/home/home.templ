@@ -15,11 +15,8 @@ templ Home(action, home, next string, sessions []Session, language string, tr fu
 	<section>
 		<h1>{ tr("web.home") }</h1>
 		<section class="card">
-			<header>
-				<hgroup>
-					<strong>{ tr("web.sessions") }</strong>
-					<p>{ tr("web.sessions_help") }</p>
-				</hgroup>
+			<hgroup>
+				<strong>{ tr("web.sessions") }</strong>
 				<div>
 					<button type="button" class="plain" data-htmz data-href={ home + "#browser-view" } aria-label={ tr("web.reload") } title={ tr("web.reload") }>
 						<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">
@@ -32,7 +29,8 @@ templ Home(action, home, next string, sessions []Session, language string, tr fu
 						</svg>
 					</button>
 				</div>
-			</header>
+				<p>{ tr("web.sessions_help") }</p>
+			</hgroup>
 			<table>
 				<thead><tr><th>{ tr("web.device") }</th><th>{ tr("web.created") }</th><th>{ tr("web.used") }</th><th>{ tr("web.expires") }</th><th></th></tr></thead>
 				<tbody>
