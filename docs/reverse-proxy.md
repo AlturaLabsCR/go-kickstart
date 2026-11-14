@@ -45,6 +45,9 @@ the application's private address and prevent public access to its port.
 Create a **Docker Compose** service in Dokploy (not an Application using Nixpacks
 or Railpack). Select the repository and set Compose Path to `./docker-compose.yml`.
 Use Compose mode, not Stack: the app is built with the existing Dockerfile.
+Use Docker Compose 2.23.1 or newer. nginx's configuration is included inline in
+`docker-compose.yml` using `configs.content`; no checkout file is bind-mounted
+from the Dokploy host. nginx variables use `$$` to survive Compose interpolation.
 
 In Environment, set `MYSQL_PASSWORD`, `MYSQL_ROOT_PASSWORD`, `APP_AUTH_SECRET` and
 `APP_OTP_SECRET` to separate secrets generated with `openssl rand -hex 32`.
