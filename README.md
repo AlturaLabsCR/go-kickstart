@@ -5,8 +5,8 @@ Go web server template for applications and REST APIs.
 ## Usage
 
 ```sh
-npm ci # builds Redocly and the HTML templates/stylesheets
-go generate ./database
+npm ci # installs dependencies and builds API docs, JS, HTML and stylesheets
+go generate ./... # runs all Go generators, including SQL
 
 # Start a development server
 go run . --dev
