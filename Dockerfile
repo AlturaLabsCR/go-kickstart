@@ -1,5 +1,5 @@
-# syntax=docker/dockerfile:1
-FROM golang:1.26.11-alpine AS build
+# syntax=docker/dockerfile:1@sha256:4edf897a3ffa55b89f906fc8cc78afdb3f1834cc9c7083565e611a8a7d5fe99e
+FROM golang:1.26.11-alpine@sha256:ae52b5bc6ed045a9ed26ab03dc19327a802a9cc9aa8b27ed57f5c6b60579b0bb AS build
 RUN apk add --no-cache nodejs npm
 WORKDIR /src
 COPY go.mod go.sum ./
@@ -9,8 +9,8 @@ RUN npm ci && go generate ./database
 RUN CGO_ENABLED=0 go build -trimpath -ldflags="-s -w" -o /out/app .
 
 # Standalone binary for CI, migration jobs and Kubernetes.
-FROM alpine:3 AS app
-RUN apk add --no-cache ca-certificates
+FROM alpine:3@sha256:f59abe656b692d901e184be3445e084786602108599d2a51d229c0f5a48c71bf AS app
+RUN apk upgrade --no-cache && apk add --no-cache ca-certificates
 COPY --from=build /out/app /app
 # Keep config discovery away from the extensionless /app executable.
 WORKDIR /srv
@@ -18,8 +18,8 @@ USER 65532:65532
 EXPOSE 3080
 ENTRYPOINT ["/app"]
 
-FROM nginx:stable-alpine
-RUN apk add --no-cache ca-certificates su-exec tini \
+FROM nginx:stable-alpine@sha256:901e593c95dc85f5a729f5765516321366ef4ac401821431d408897e95287d0a
+RUN apk upgrade --no-cache && apk add --no-cache ca-certificates su-exec tini \
     && addgroup -S -g 65532 app \
     && adduser -S -D -H -u 65532 -G app app
 

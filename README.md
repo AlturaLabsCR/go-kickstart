@@ -47,6 +47,8 @@ separate migration jobs, probes, graceful shutdown and shared SQL configuration.
 
 See [named routes and CORS](docs/routes.md) for shared URL helpers, startup
 validation and handler/endpoint origin policies.
+See [build security](docs/build-security.md) for CI audits, pinned build inputs
+and the weekly dependency review.
 
 - `go generate ./templates` downloads [Semantic CSS](https://github.com/tavocg/semantic)
   from the release tag pinned in `templates/semantic.go` and writes its minified CSS to
