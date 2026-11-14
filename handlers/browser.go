@@ -36,7 +36,8 @@ func (h *Handler) registerBrowserRoutes() {
 		w.Header().Set("Cache-Control", "no-store")
 		w.Header().Set("Content-Type", "text/html; charset=utf-8")
 		w.Header().Add("Vary", "Accept-Language")
-		w.Header().Set("Referrer-Policy", "no-referrer")
+		// Preserve same-origin form Origin on HTTP LAN hosts without exposing URL paths or queries.
+		w.Header().Set("Referrer-Policy", "strict-origin")
 		w.WriteHeader(status)
 		if err := base.Page(base.PageParams{Links: h.links, Head: base.HeadParams{Title: meta.AppTitle, Subtitle: title}, Body: base.BodyParams{Content: base.BrowserSurface(h.links, content, h.localize(r, "web.update_error"))}}).Render(r.Context(), w); err != nil {
 			h.logger.Error("failed to render browser page", "error", err)

@@ -175,9 +175,14 @@ func TestLoginOTPIsHashedAndConsumedOnce(t *testing.T) {
 			}
 			form := url.Values{"action": {"login"}, "email": {"browser@example.com"}}
 			requireStatus(t, call("POST", "/login", form, "https://attacker.example"), 403)
+			requireStatus(t, call("POST", "/login", form, "null"), 403)
 			requireStatus(t, call("GET", "/home", nil, ""), 303)
-			requireStatus(t, call("GET", "/login", nil, ""), 200)
-			requireStatus(t, call("POST", "/login", form, ""), 303)
+			login := call("GET", "/login", nil, "")
+			requireStatus(t, login, 200)
+			if login.Header().Get("Referrer-Policy") != "strict-origin" {
+				t.Fatal("referrer policy must preserve native form Origin on HTTP LAN hosts")
+			}
+			requireStatus(t, call("POST", "/login", form, "http://example.com"), 303)
 			form.Set("action", "verify")
 			form.Set("otp", "invalid")
 			invalid := call("POST", "/login", form, "")

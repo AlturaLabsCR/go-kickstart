@@ -60,6 +60,14 @@ when the proxy cannot preserve `Host`; those requests bypass both checks. An
 `Origin: null` (sandboxed or in-app browsers) has no host to declare, so it can
 only pass when the browser also sends `Sec-Fetch-Site`.
 
+Pages use `Referrer-Policy: strict-origin` to preserve the native form's `Origin`
+while omitting paths and query strings from `Referer`. Using `no-referrer` would
+send `Origin: null` on native POSTs, breaking CSRF checks on HTTP LAN hosts where
+`Sec-Fetch-Site` is absent. In development, `http://desktop:3080` can therefore
+submit same-origin forms without any CORS or trusted-CSRF-origin configuration.
+The environment names, when needed, are `APP_CORS_ORIGINS` and
+`APP_CSRF_ORIGINS` (plural); CORS controls cross-origin API access, not form CSRF.
+
 After access expiry, `/home` redirects to `/login` to start automatic renewal.
 The client uses Web Locks to serialize browser POSTs to the same login path
 across tabs, including renewal, verification and sign out. Requests waiting for
