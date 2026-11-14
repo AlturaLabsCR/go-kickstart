@@ -24,7 +24,13 @@ which checks ownership. Revoking the current session also clears its cookies.
 GET links never revoke sessions. Device labels are untrusted text and are escaped.
 The device column shows the browser and operating system icons recognized from the
 stored User-Agent; each icon is omitted when its value is unknown, and the escaped
-User-Agent is shown when neither is recognized.
+User-Agent is shown when neither is recognized. Created, Last used and Expires are
+rendered in the request language: Spanish puts the day before the abbreviated month
+("11 feb") and English after it ("Feb 11"). The year is only shown when it is not
+the current year, and the 12-hour clock appears only in Last used. The server emits
+a `<time>` element with the UTC instant and a UTC fallback label; the client rewrites
+it in the visitor's timezone after the first render and after every htmz swap. With
+scripting unavailable the UTC value stays visible.
 
 The browser adapter calls the existing login, verification and refresh handlers
 in process with JSON bodies, preserving the request context and User-Agent. It

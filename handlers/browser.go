@@ -204,7 +204,7 @@ func (h *Handler) registerBrowserRoutes() {
 		if sessions.NextCursor != "" {
 			next = home + "?cursor=" + url.QueryEscape(sessions.NextCursor)
 		}
-		page(w, r, 200, tr("web.home"), pages.Home(login, home, next, rows, tr))
+		page(w, r, 200, tr("web.home"), pages.Home(login, home, next, rows, h.language(r), tr))
 	})
 }
 

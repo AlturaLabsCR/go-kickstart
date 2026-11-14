@@ -2,6 +2,37 @@
 // https://github.com/tavocg/semantic/tree/523373d36f06256d9ff60c2723a8c9235a368b3b
 // Original htmz: Copyright 2024 Lean Rada, MIT (licenses/htmz.txt).
 if (window === window.top) {
+  // Sessions store their timestamps in UTC. Rewrite the server-rendered text in the
+  // visitor's timezone so the table matches the clock they already use; without
+  // scripting the UTC value and its label remain.
+  const months: Record<string, readonly string[]> = {
+    en: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],
+    es: ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'sep', 'oct', 'nov', 'dic'],
+  };
+  const clock = (value: Date, spanish: boolean): string => {
+    const hour = value.getHours() % 12 || 12;
+    const minute = String(value.getMinutes()).padStart(2, '0');
+    const morning = value.getHours() < 12;
+    const meridiem = spanish ? (morning ? 'a. m.' : 'p. m.') : (morning ? 'AM' : 'PM');
+    return `${hour}:${minute} ${meridiem}`;
+  };
+  const localizeDates = (root: ParentNode): void => {
+    const now = new Date();
+    root.querySelectorAll<HTMLTimeElement>('time[data-local-date]').forEach(element => {
+      const value = new Date(element.dateTime);
+      if (Number.isNaN(value.getTime())) return;
+      const spanish = element.dataset.language === 'es';
+      const month = (spanish ? months.es : months.en)[value.getMonth()];
+      if (!month) return;
+      let text = spanish ? `${value.getDate()} ${month}` : `${month} ${value.getDate()}`;
+      if (value.getFullYear() !== now.getFullYear()) {
+        text += spanish ? ` ${value.getFullYear()}` : `, ${value.getFullYear()}`;
+      }
+      if (element.hasAttribute('data-clock')) text += `, ${clock(value, spanish)}`;
+      element.textContent = text;
+    });
+  };
+  localizeDates(document);
   const frame = document.createElement('iframe');
   frame.name = 'htmz';
   frame.hidden = true;
@@ -33,6 +64,7 @@ if (window === window.top) {
           const target = document.querySelector(selector);
           if (!content || !target) { fail(); return; }
           target.replaceWith(content);
+          localizeDates(content);
           document.title = response!.title;
           history.replaceState(null, '', responseURL.pathname + responseURL.search);
           finish();

@@ -1,6 +1,5 @@
 package browser
 
-import "time"
 import "app/routes"
 
 type Session struct {
@@ -10,13 +9,6 @@ type Session struct {
 	OS                     string
 	Created, Used, Expires int64
 	Current                bool
-}
-
-func stamp(value int64) string {
-	if value == 0 {
-		return "—"
-	}
-	return time.Unix(value, 0).UTC().Format(time.RFC3339)
 }
 
 templ Login(action, email, message string, verify, refresh bool, tr func(string) string) {
@@ -51,7 +43,7 @@ templ Login(action, email, message string, verify, refresh bool, tr func(string)
 	</section>
 }
 
-templ Home(action, home, next string, sessions []Session, tr func(string) string) {
+templ Home(action, home, next string, sessions []Session, language string, tr func(string) string) {
 	<section>
 		<h1>{ tr("web.home") }</h1>
 		<article class="card">
@@ -71,7 +63,7 @@ templ Home(action, home, next string, sessions []Session, tr func(string) string
 				</div>
 			</header>
 			<table>
-				<thead><tr><th>{ tr("web.device") }</th><th>{ tr("web.created") }</th><th>{ tr("web.used") }</th><th>{ tr("web.expires") }</th><th>{ tr("web.logout") }</th></tr></thead>
+				<thead><tr><th>{ tr("web.device") }</th><th>{ tr("web.created") }</th><th>{ tr("web.used") }</th><th>{ tr("web.expires") }</th><th></th></tr></thead>
 				<tbody>
 					for _,session := range sessions {
 						<tr>
@@ -80,9 +72,9 @@ templ Home(action, home, next string, sessions []Session, tr func(string) string
 									@device(session, tr)
 								</div>
 							</td>
-							<td>{ stamp(session.Created) }</td>
-							<td>{ stamp(session.Used) }</td>
-							<td>{ stamp(session.Expires) }</td>
+							<td>@timestamp(language, session.Created, false)</td>
+							<td>@timestamp(language, session.Used, true)</td>
+							<td>@timestamp(language, session.Expires, false)</td>
 							<td>
 								<a href={ "#revoke-" + session.ID } data-dialog-open={ "revoke-" + session.ID } aria-haspopup="dialog" aria-controls={ "revoke-" + session.ID }>{ tr("web.logout") }</a>
 								@confirmLogout("revoke-"+session.ID, action, "revoke", session.ID, session.Device, session.Current, tr)
@@ -112,6 +104,14 @@ templ device(session Session, tr func(string) string) {
 	}
 	if session.Current {
 		<strong>({ tr("web.current") })</strong>
+	}
+}
+
+templ timestamp(language string, value int64, withTime bool) {
+	if value == 0 {
+		{ "—" }
+	} else {
+		<time datetime={ isoTimestamp(value) } data-local-date data-language={ language } data-clock?={ withTime }>{ date(language, value, withTime) + " UTC" }</time>
 	}
 }
 
