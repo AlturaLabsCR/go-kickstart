@@ -8,6 +8,7 @@ import (
 
 	"app/internal/browser"
 	"app/middleware"
+	"app/routes"
 	"app/templates/base"
 	pages "app/templates/browser"
 	"app/templates/meta"
@@ -15,8 +16,9 @@ import (
 	"github.com/mssola/useragent"
 )
 
-// Remove this file and its registration call to remove the browser surface.
-// API handlers, JSON contracts and Bearer authentication are not modified.
+// Remove this file and its registration call, plus routes.LoginPage, to remove
+// the browser surface. API handlers, JSON contracts and Bearer authentication are
+// not modified.
 func (h *Handler) registerBrowserRoutes() {
 	const loginPath, homePath = "/login", "/home"
 	cookies := browser.Cookies{Path: h.links.Mount("/"), Secure: !h.dev}
@@ -40,7 +42,7 @@ func (h *Handler) registerBrowserRoutes() {
 		tr := func(key string) string { return h.localize(r, key) }
 		page(w, r, status, tr("web.login"), pages.Login(login, email, message, verify, cookies.Read(r, "refresh") != "", tr))
 	}
-	h.AddHandler("GET", loginPath, browser.RedirectAuthenticated(home, func(r *http.Request) bool {
+	h.AddRoute(routes.LoginPage, browser.RedirectAuthenticated(home, func(r *http.Request) bool {
 		token := cookies.Read(r, "access")
 		if token == "" {
 			return false
