@@ -63,8 +63,13 @@ if (window === window.top) {
   });
   document.addEventListener('click', event => {
     if (event.defaultPrevented || event.button !== 0 || event.ctrlKey || event.metaKey || event.shiftKey || event.altKey) return;
-    const control = event.target instanceof Element ? event.target.closest<HTMLElement>('a[data-htmz], button[data-htmz][data-href]') : null;
+    const control = event.target instanceof Element ? event.target.closest<HTMLElement>('a[data-dialog-open], a[data-htmz], button[data-htmz][data-href]') : null;
     if (!control) return;
+    if (control.dataset.dialogOpen) {
+      event.preventDefault();
+      (document.getElementById(control.dataset.dialogOpen) as HTMLDialogElement).showModal();
+      return;
+    }
     if (control instanceof HTMLAnchorElement) {
       if (control.hasAttribute('download') || control.target === '_blank') return;
       if (start(control.href, control)) control.target = frame.name;

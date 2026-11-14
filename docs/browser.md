@@ -9,7 +9,8 @@ Login and confirmation still submit normally if the script is unavailable. Modal
 controls use native `commandfor` / `command` attributes, following Semantic;
 Cancel is `.plain`, confirm is a normal submit button, and the header has an
 accessible close button. Confirm is associated with a hidden POST form, while
-Cancel and the close button do not submit anything.
+Cancel and the close button do not submit anything. Per-session links use
+`data-dialog-open` to open their modal through the shared client.
 An authenticated GET to `/login` redirects to `/home` after verifying the access
 cookie against the live session record; expired or revoked cookies do not redirect.
 
