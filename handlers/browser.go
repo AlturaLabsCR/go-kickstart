@@ -66,9 +66,12 @@ func (h *Handler) registerBrowserRoutes() {
 		showLogin(w, r, http.StatusOK, r.URL.Query().Get("email"), "", r.URL.Query().Get("step") == "verify")
 	}))
 
-	// Cross-origin form posts are rejected. The debug log records why and the
-	// headers the check compares, because tunnels and proxies can rewrite Host.
+	// Production cross-origin form posts are rejected. Debug logs record the
+	// compared headers, because tunnels and proxies can rewrite Host.
 	csrf := http.NewCrossOriginProtection()
+	if h.dev {
+		csrf.AddInsecureBypassPattern("POST " + login)
+	}
 	for _, origin := range h.csrfOrigins {
 		if err := csrf.AddTrustedOrigin(origin); err != nil {
 			h.logger.Error("failed to trust browser form origin", "origin", origin, "error", err)

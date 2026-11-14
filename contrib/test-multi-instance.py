@@ -105,7 +105,7 @@ def exercise(backend):
     common = ["--read-only", "--cap-drop", "ALL", "--security-opt", "no-new-privileges",
               "-p", "127.0.0.1::3080", "-e", "APP_DB=" + runtime,
               "-e", "APP_AUTH_SECRET=" + "a" * 32, "-e", "APP_OTP_SECRET=" + "b" * 32,
-              IMAGE, "serve", "--dev", "--loglvl", "debug", "--auto-migrate=false",
+              IMAGE, "serve", "--dev", "--logfmt", "json", "--loglvl", "debug", "--auto-migrate=false",
               "--db-max-connections", "2", "--root", "/api", "--drain-delay", "2s"]
     a = start(backend + "-a", *common)
     b = start(backend + "-b", *common)

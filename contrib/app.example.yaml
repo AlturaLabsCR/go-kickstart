@@ -3,7 +3,8 @@
 # All options here are set to the default values. If no configuration file is
 # found, then these values will be used.
 
-# Enable development features like source locations in logs.
+# Enable debug/text logging by default, source locations and plaintext OTP logs.
+# Allows all CORS origins and bypasses browser form CSRF checks.
 # Allows empty or short signing secrets with warnings.
 # Override with:
 #   APP_DEV=true app serve
@@ -56,17 +57,19 @@ otp:
 #   app serve --root /prefix
 root: ""
 
-# Log output format. Valid values: json, text.
+# Log output format. Default: json, or text in development.
+# Uncomment to override the default, including in development.
 # Override with:
 #   APP_LOGFMT=text app serve
 #   app serve --logfmt text
-logfmt: json
+# logfmt: json
 
-# Minimum log level. Valid values: debug, info, warn, error.
+# Minimum log level. Default: info, or debug in development.
+# Valid values: debug, info, warn, error. Uncomment to override the default.
 # Override with:
 #   APP_LOGLVL=debug app serve
 #   app serve --loglvl debug
-loglvl: info
+# loglvl: info
 
 # Database connection string or path.
 # Override with:

@@ -153,7 +153,7 @@ func (h *Handler) AddHandler(method, path string, handler http.Handler, options 
 	}
 
 	wrapped := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		corsHeaders(w, r, origins)
+		h.corsHeaders(w, r, origins)
 		handler.ServeHTTP(w, r)
 	})
 	h.mux.Handle(pattern, middleware.WithTimeout(requestTimeout, wrapped))

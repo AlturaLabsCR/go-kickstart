@@ -30,11 +30,11 @@ func registerSettings(cmd *cobra.Command) {
 	}{
 		{"http.drain-delay", "drain-delay", "serve while readiness withdrawal propagates on shutdown", 5 * time.Second},
 		{"http.shutdown-timeout", "shutdown-timeout", "grace period for active HTTP requests after draining", 25 * time.Second},
-		{"dev", "dev", "enable development features and allow empty or short signing secrets", false},
+		{"dev", "dev", "enable debug text logs, allow all origins and development signing secrets", false},
 		{"host", "host", "bind host", ""},
 		{"port", "port", "bind port", 3080},
-		{"logfmt", "logfmt", "log format", "json"},
-		{"loglvl", "loglvl", "log level", "info"},
+		{"logfmt", "logfmt", "log format (defaults to text with --dev)", "json"},
+		{"loglvl", "loglvl", "log level (defaults to debug with --dev)", "info"},
 		{"auth.secret", "auth-secret", "JWT signing secret", ""},
 		{"otp.secret", "otp-secret", "independent HMAC secret for verification codes", ""},
 		{"auth.access-token-ttl", "auth-access-ttl", "access token TTL", 15 * time.Minute},
@@ -74,6 +74,13 @@ func registerSettings(cmd *cobra.Command) {
 }
 
 func runServerFromConfig() error {
+	level, format := "info", "json"
+	if viper.GetBool("dev") {
+		level, format = "debug", "text"
+	}
+	// Only change defaults: flags, environment and config retain their precedence.
+	viper.SetDefault("loglvl", level)
+	viper.SetDefault("logfmt", format)
 	return runServer(serverConfig{
 		SMTPAddress:     viper.GetString("mail.smtp.address"),
 		SMTPUser:        viper.GetString("mail.smtp.user"),

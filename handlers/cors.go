@@ -27,9 +27,9 @@ func validateOrigins(origins []string) error {
 	return nil
 }
 
-func corsHeaders(w http.ResponseWriter, r *http.Request, origins []string) {
+func (h *Handler) corsHeaders(w http.ResponseWriter, r *http.Request, origins []string) {
 	w.Header().Add("Vary", "Origin")
-	if origin := r.Header.Get("Origin"); origin != "" && slices.Contains(origins, origin) {
+	if origin := r.Header.Get("Origin"); origin != "" && (h.dev || slices.Contains(origins, origin)) {
 		w.Header().Set("Access-Control-Allow-Origin", origin)
 	}
 }
@@ -72,7 +72,7 @@ func (h *Handler) options(w http.ResponseWriter, r *http.Request) bool {
 	requested := r.Header.Get("Access-Control-Request-Method")
 	if origin != "" && requested != "" {
 		policy, ok := allowed[requested]
-		permitted := ok && slices.Contains(policy.origins, origin)
+		permitted := ok && (h.dev || slices.Contains(policy.origins, origin))
 		for _, header := range strings.Split(r.Header.Get("Access-Control-Request-Headers"), ",") {
 			switch strings.ToLower(strings.TrimSpace(header)) {
 			case "", "authorization", "content-type", "accept", "accept-language":

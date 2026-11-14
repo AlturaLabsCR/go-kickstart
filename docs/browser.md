@@ -48,8 +48,8 @@ serve the application through HTTPS. `--dev` permits local HTTP with separate
 cookie names. Tokens never enter HTML, browser storage or redirect URLs. Keep
 refresh-token TTL greater than access TTL for a useful renewal window.
 
-Browser form posts pass through `http.CrossOriginProtection`, which accepts a
-request only when `Sec-Fetch-Site` is `same-origin`/`none`, or, without that
+Outside development, browser form posts pass through `http.CrossOriginProtection`,
+which accepts a request only when `Sec-Fetch-Site` is `same-origin`/`none`, or, without that
 header, when the `Origin` host equals the `Host` header. A rejected post returns
 localized 403 and renders "Unable to update" in the page. The debug log records
 the reason, `origin`, `host` and `sec_fetch_site`, which is the fastest way to
@@ -88,9 +88,10 @@ Sign out revokes the server-side session and removes both cookies. Revocation
 invalidates issued access tokens because verification checks the uncached session
 record.
 
-All browser mutations use Go's CrossOriginProtection in addition to strict
-SameSite cookies. No cookie authentication is enabled on API endpoints, and no
-credentialed cross-origin CORS behavior is added. The proxy must preserve the
+`--dev` bypasses CrossOriginProtection for the browser's POST login adapter and
+permits all CORS origins; production keeps the configured origin policies.
+Browser cookies remain SameSite=Strict. No cookie authentication is enabled on
+API endpoints, and no credentialed cross-origin CORS behavior is added. The proxy must preserve the
 public Host for origin checks; forwarded headers are not used to grant trust.
 Proxy throttling must also cover `POST <root>/login`, since it can issue and
 verify OTPs. Existing application email budgets remain in effect.

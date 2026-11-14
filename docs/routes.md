@@ -31,7 +31,10 @@ the router, without invoking authentication or endpoint code. Unknown paths
 retain the normal 404 response. Explicit OPTIONS or methodless handlers own
 their OPTIONS behavior and take precedence over automatic handling.
 
-CORS is disabled by default. Set `handlers.Options.CORSOrigins`, or configure
+CORS is disabled by default outside development. With `--dev` / `Options.Dev`,
+all origins are permitted, including on endpoints with an explicit origin policy;
+method and request-header checks still apply. Set `handlers.Options.CORSOrigins`,
+or configure
 `cors.origins` / `--cors-origins` / `APP_CORS_ORIGINS`. YAML accepts a list; flags
 and environment variables accept comma-separated exact HTTP(S) origins, e.g.
 `https://web.example.com` (without a path or trailing slash).
@@ -44,8 +47,8 @@ h.AddRoute(routes.Account, handler, handlers.RouteOptions{
 })
 ```
 
-The same optional argument works on `Add` and `AddHandler`. Nil inherits; an
-explicit empty slice disables CORS for that endpoint. GET also permits HEAD.
+The same optional argument works on `Add` and `AddHandler`. Outside development,
+nil inherits; an explicit empty slice disables CORS for that endpoint. GET also permits HEAD.
 Preflights allow `Authorization`, `Content-Type`, `Accept` and `Accept-Language`.
 Disallowed origins, methods or headers return localized 403 without CORS grant
 headers. Responses from permitted actual requests, including authentication

@@ -10,11 +10,17 @@ go generate ./... # runs all Go generators, including SQL
 
 # Start a development server
 go run . --dev
-# { "msg":"listening","addr":"[::]:3080" }
+# ... level=INFO ... msg=listening addr=[::]:3080
 ```
 
 Browser login, protected home and session listing are described in
 [the browser authentication guide](docs/browser.md).
+
+`--dev` defaults to debug-level text logs with source locations, logs OTP values,
+permits all CORS origins and bypasses browser form CSRF checks. It also allows
+empty/short signing secrets with warnings and uses browser cookies suitable for
+local HTTP. An empty OTP secret becomes a temporary per-process key. Explicit
+log settings in flags, environment or configuration override the dev defaults.
 
 ## Configuration
 
