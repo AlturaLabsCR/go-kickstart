@@ -25,8 +25,8 @@ For environment variables, replace dots and hyphens in keys with underscores
 and prefix with `APP_` (for example, `APP_AUTH_ACCESS_TOKEN_TTL=15m`).
 
 Reverse proxy examples for Nginx, Caddy and Apache are in [the reverse proxy guide](docs/reverse-proxy.md).
-For Dokploy, use [Docker Compose with MySQL and nginx](docs/reverse-proxy.md#dokploy-with-docker-compose);
-the existing Dockerfile builds the application and remains in use by CI.
+The default Dockerfile runs Go behind nginx on port 80; see
+[Railway behind Cloudflare](docs/reverse-proxy.md#railway-behind-cloudflare).
 
 The starter application's name is **app** (Go module, CLI, configuration and
 build artifacts), displayed as **App** in HTML. Rename these together when

@@ -31,7 +31,7 @@ Adding a shared store alone would not distribute its process-local generations.
 
 ## Image and release sequence
 
-Build with `docker build -t app:multi-instance .`. The multistage Dockerfile
+Build with `docker build --target app -t app:multi-instance .`. The multistage Dockerfile
 regenerates sqlc, templ and API documentation and produces a non-root static
 binary with CA certificates. Node and Go are absent from the runtime image.
 Use an immutable registry tag/digest for a real release, replacing the image in

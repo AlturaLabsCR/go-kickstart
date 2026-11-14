@@ -66,7 +66,10 @@ jobs:
           done
 
       - name: Build container image
-        run: docker build --tag app:ci .
+        run: |
+          docker build --tag app:ci-web .
+          docker run --rm --entrypoint nginx app:ci-web -t
+          docker build --target app --tag app:ci .
 
       - name: Test independent replicas
         run: python3 contrib/test-multi-instance.py
