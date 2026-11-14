@@ -8,10 +8,22 @@
   "scripts": {
     "redocly": "redocly build-docs docs/api.yaml --output handlers/static/api/index.html >/dev/null 2>&1",
     "test": "go test ./...",
-    "build": "npm run redocly && go generate ./templates",
-    "postinstall": "npm run build"
+    "build": "npm run redocly && npm run browser && go generate ./templates",
+    "postinstall": "npm run build",
+    "lint": "eslint frontend",
+    "browser": "npm run lint && tsc && esbuild frontend/browser.ts --bundle --minify --format=esm --target=es2022 --outfile=handlers/static/js/browser.js"
   },
   "devDependencies": {
-    "@redocly/cli": "^2.30.3"
+    "@eslint/js": "^10.0.1",
+    "@redocly/cli": "^2.30.3",
+    "esbuild": "^0.28.2",
+    "eslint": "^10.15.0",
+    "typescript": "^6.0.3",
+    "typescript-eslint": "^8.72.2"
+  },
+  "overrides": {
+    "@typescript-eslint/typescript-estree": {
+      "minimatch": "^11.0.1"
+    }
   }
 }
