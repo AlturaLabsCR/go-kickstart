@@ -7,7 +7,7 @@ forms do not have a success-redirect attribute. Forms are enhanced with a small
 TypeScript adaptation of htmz's iframe transport and Semantic's loader pattern.
 Login and confirmation still submit normally if the script is unavailable. Modal
 controls use native `commandfor` / `command` attributes, following Semantic;
-Cancel is `.plain`, confirm is a normal submit button, and the header has an
+Cancel is `.outline`, confirm is a normal submit button, and the header has an
 accessible close button. Confirm is associated with a hidden POST form, while
 Cancel and the close button do not submit anything. Per-session links use
 `data-dialog-open` to open their modal through the shared client.
