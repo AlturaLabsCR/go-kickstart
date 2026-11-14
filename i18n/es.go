@@ -1,6 +1,10 @@
 package i18n
 
 var es = map[string]string{
+	"web.logout_current": "Cerrar sesión en este dispositivo",
+	"web.logout_device":  "Cerrar sesión en el dispositivo:",
+	"web.unknown_device": "Dispositivo desconocido",
+
 	"web.close":          "Cerrar",
 	"web.cancel":         "Cancelar",
 	"web.update_error":   "No se pudo actualizar. Intenta de nuevo o recarga la página.",

@@ -81,7 +81,7 @@ templ Home(action, home, next string, sessions []Session, tr func(string) string
 						<td>{ stamp(session.Expires) }</td>
 						<td>
 							<a href={ "#revoke-" + session.ID } data-dialog-open={ "revoke-" + session.ID } aria-haspopup="dialog" aria-controls={ "revoke-" + session.ID }>{ tr("web.logout") }</a>
-							@confirmLogout("revoke-"+session.ID, action, "revoke", session.ID, tr)
+							@confirmLogout("revoke-"+session.ID, action, "revoke", session.ID, session.Device, session.Current, tr)
 						</td>
 					</tr>
 				}
@@ -90,14 +90,28 @@ templ Home(action, home, next string, sessions []Session, tr func(string) string
 		if next!="" {
 			<a href={ next } data-htmz>{ tr("web.next") }</a>
 		}
-		@confirmLogout("logout", action, "logout", "", tr)
+		@confirmLogout("logout", action, "logout", "", "", true, tr)
 	</section>
 }
 
-templ confirmLogout(id, action, operation, sessionID string, tr func(string) string) {
-	<dialog id={ id } aria-labelledby={ id + "-title" }>
+templ confirmLogout(id, action, operation, sessionID, device string, current bool, tr func(string) string) {
+	<dialog id={ id } aria-labelledby={ id + "-title" } aria-describedby={ id + "-description" }>
 		<header>
-			<h2 id={ id + "-title" }>{ tr("web.confirm_logout") }</h2>
+			<hgroup>
+				<h2 id={ id + "-title" }>{ tr("web.confirm_logout") }</h2>
+				<p id={ id + "-description" }>
+					if current {
+						{ tr("web.logout_current") }
+					} else {
+						{ tr("web.logout_device") + " " }
+						if device!="" {
+							{ device }
+						} else {
+							{ tr("web.unknown_device") }
+						}
+					}
+				</p>
+			</hgroup>
 			<button type="button" commandfor={ id } command="close" aria-label={ tr("web.close") }>×</button>
 		</header>
 		<p role="alert" data-htmz-error></p>

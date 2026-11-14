@@ -232,6 +232,10 @@ func TestLoginOTPIsHashedAndConsumedOnce(t *testing.T) {
 			if !strings.Contains(confirmation.Body.String(), `<dialog id="revoke-`+otherClaims.SessionID+`"`) {
 				t.Fatal("missing session revocation modal")
 			}
+			modal := regexp.MustCompile(`(?s)<dialog id="revoke-` + otherClaims.SessionID + `".*?</dialog>`).FindString(confirmation.Body.String())
+			if !strings.Contains(modal, "Log out of device:") || !strings.Contains(modal, "Other browser") {
+				t.Fatal("confirmation did not identify the selected device")
+			}
 			if _, err := h.auth.Verify(t.Context(), other.Value); err != nil {
 				t.Fatal("GET revoked a session")
 			}

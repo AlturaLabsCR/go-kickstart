@@ -1,6 +1,10 @@
 package i18n
 
 var en = map[string]string{
+	"web.logout_current": "Log out of this device",
+	"web.logout_device":  "Log out of device:",
+	"web.unknown_device": "Unknown device",
+
 	"web.close":          "Close",
 	"web.cancel":         "Cancel",
 	"web.update_error":   "Unable to update. Please try again or reload the page.",
