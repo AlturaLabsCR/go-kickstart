@@ -179,6 +179,12 @@ func TestLoginOTPIsHashedAndConsumedOnce(t *testing.T) {
 			requireStatus(t, call("GET", "/login", nil, ""), 200)
 			requireStatus(t, call("POST", "/login", form, ""), 303)
 			form.Set("action", "verify")
+			form.Set("otp", "invalid")
+			invalid := call("POST", "/login", form, "")
+			requireStatus(t, invalid, 401)
+			if !strings.Contains(invalid.Body.String(), `role="alert">Invalid login verification code.`) || !strings.Contains(invalid.Body.String(), `id="login-otp"`) {
+				t.Fatal("verification error was not visible beside the code input")
+			}
 			form.Set("otp", h.code(t))
 			signed := call("POST", "/login", form, "")
 			requireStatus(t, signed, 303)
@@ -202,10 +208,59 @@ func TestLoginOTPIsHashedAndConsumedOnce(t *testing.T) {
 				t.Fatal("home did not show current session")
 			}
 			requireStatus(t, call("GET", "/account/sessions", nil, ""), 401)
-			form = url.Values{"action": {"refresh"}}
-			refreshed := call("POST", "/login", form, "")
-			requireStatus(t, refreshed, 303)
-			cookies = refreshed.Result().Cookies()
+			// Speculative requests must not consume the rotating refresh token.
+			expired := make([]*http.Cookie, 0, len(cookies))
+			for _, cookie := range cookies {
+				if !strings.HasSuffix(cookie.Name, "_access") {
+					expired = append(expired, cookie)
+				}
+			}
+			cookies = expired
+			speculative := httptest.NewRequest("GET", "/login", nil)
+			speculative.Header.Set("Sec-Purpose", "prefetch")
+			for _, cookie := range cookies {
+				speculative.AddCookie(cookie)
+			}
+			prefetched := httptest.NewRecorder()
+			h.handler.ServeHTTP(prefetched, speculative)
+			requireStatus(t, prefetched, 200)
+			if len(prefetched.Result().Cookies()) != 0 {
+				t.Fatal("prefetch consumed the refresh token")
+			}
+			// All GETs are read-only; the client submits the hidden renewal form.
+			pending := call("GET", "/login", nil, "")
+			requireStatus(t, pending, 200)
+			if len(pending.Result().Cookies()) != 0 || !strings.Contains(pending.Body.String(), "data-auto-resume") || strings.Contains(pending.Body.String(), "Continue session") {
+				t.Fatal("GET did not offer safe automatic resumption")
+			}
+			requireStatus(t, call("POST", "/login", url.Values{"action": {"resume"}}, "https://attacker.example"), 403)
+			staleCookies := append([]*http.Cookie(nil), cookies...)
+			resumed := call("POST", "/login", url.Values{"action": {"resume"}}, "")
+			requireStatus(t, resumed, 303)
+			if resumed.Header().Get("Location") != "/home" {
+				t.Fatal("expired access cookie did not resume the session")
+			}
+			cookies = resumed.Result().Cookies()
+			if len(cookies) != 2 {
+				t.Fatal("resumed session did not set new cookies")
+			}
+			// A queued tab reads the updated access cookie and must not rotate again.
+			queued := call("POST", "/login", url.Values{"action": {"resume"}}, "")
+			requireStatus(t, queued, 303)
+			if len(queued.Result().Cookies()) != 0 {
+				t.Fatal("queued renewal rotated an already valid session")
+			}
+			stale := httptest.NewRequest("POST", "/login", strings.NewReader("action=resume"))
+			stale.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+			for _, cookie := range staleCookies {
+				stale.AddCookie(cookie)
+			}
+			failed := httptest.NewRecorder()
+			h.handler.ServeHTTP(failed, stale)
+			requireStatus(t, failed, 200)
+			if len(failed.Result().Cookies()) != 0 || strings.Contains(failed.Body.String(), "data-auto-resume") {
+				t.Fatal("stale renewal cleared cookies or restarted renewal")
+			}
 			requireStatus(t, call("GET", "/home", nil, ""), 200)
 			var current *auth.Claims
 			for _, cookie := range cookies {
@@ -277,6 +332,26 @@ func TestLoginOTPIsHashedAndConsumedOnce(t *testing.T) {
 			}
 			requireStatus(t, call("GET", "/home", nil, ""), 303)
 			requireStatus(t, call("GET", "/login", nil, ""), 200)
+			// Dependency failures must remain errors, preserving existing credentials.
+			at, rt, err := h.auth.Issue(t.Context(), &auth.Claims{Sub: current.Sub})
+			if err != nil {
+				t.Fatal(err)
+			}
+			for _, cookie := range cookies {
+				if strings.HasSuffix(cookie.Name, "_access") {
+					cookie.Value = at.Value
+				} else {
+					cookie.Value = rt.Value
+				}
+			}
+			if err := db.Close(); err != nil {
+				t.Fatal(err)
+			}
+			unavailable := call("GET", "/login", nil, "")
+			requireStatus(t, unavailable, 503)
+			if len(unavailable.Result().Cookies()) != 0 || strings.Contains(unavailable.Body.String(), "data-auto-resume") {
+				t.Fatal("backend failure mutated credentials or initiated renewal")
+			}
 
 		})
 

@@ -39,14 +39,34 @@ if (window === window.top) {
   let busy: HTMLElement[] = [];
   let timer: ReturnType<typeof setTimeout> | undefined;
   let selector = '#browser-view';
+  let waiting = false;
+  let completed: (() => void) | undefined;
+  let waitingControl: HTMLElement | undefined;
+  let temporaryForm: HTMLFormElement | undefined;
+  const permitted = new WeakSet<HTMLFormElement>();
+  const controls = new WeakMap<HTMLFormElement, HTMLElement>();
   const finish = () => {
     clearTimeout(timer);
+    waitingControl?.removeAttribute('aria-busy');
+    waitingControl = undefined;
+    temporaryForm?.remove();
+    temporaryForm = undefined;
     busy.forEach(element => element.removeAttribute('aria-busy'));
     busy = [];
     frame.remove(); // Reset iframe history and allow repeated GET requests.
     document.body.append(frame);
+    const done = completed;
+    completed = undefined;
+    done?.();
   };
   const fail = () => {
+    waiting = false;
+    const automatic = document.querySelector<HTMLFormElement>('form[data-auto-resume]');
+    if (automatic) {
+      finish();
+      location.replace(new URL(automatic.action).pathname + '?resume=0');
+      return;
+    }
     const error = document.querySelector('dialog[open] [data-htmz-error]') ?? document.querySelector('#browser-view > [data-htmz-error]');
     if (error) error.textContent = document.getElementById('browser-view')?.dataset.error ?? '';
     finish();
@@ -68,6 +88,7 @@ if (window === window.top) {
           document.title = response!.title;
           history.replaceState(null, '', responseURL.pathname + responseURL.search);
           finish();
+          resume();
         } catch { fail(); }
       });
     } catch { fail(); }
@@ -75,7 +96,7 @@ if (window === window.top) {
   frame.addEventListener('error', fail);
   document.body.append(frame);
   const start = (url: string, control: HTMLElement, form?: HTMLFormElement) => {
-    if (busy.length) return false;
+    if (busy.length || waiting) return false;
     const action = new URL(url, document.baseURI);
     if (action.origin !== location.origin) return false;
     selector = action.hash || '#browser-view';
@@ -90,7 +111,29 @@ if (window === window.top) {
     if (event.defaultPrevented || !(form instanceof HTMLFormElement) || !form.hasAttribute('data-htmz')) return;
     const button = (event as SubmitEvent).submitter as HTMLButtonElement | null;
     const action = button?.hasAttribute('formaction') ? button.formAction : form.action;
-    if (!start(action, button ?? form, form)) { event.preventDefault(); return; }
+    const control = controls.get(form) ?? button ?? form;
+    const method = button?.hasAttribute('formmethod') ? button.formMethod : form.method;
+    // Web Locks serialize cookie-changing POSTs across tabs and replicas.
+    // Cookies are read by the browser when the queued request actually starts.
+    if (method.toLowerCase() === 'post' && navigator.locks && !permitted.has(form)) {
+      event.preventDefault();
+      if (busy.length || waiting) { if (controls.has(form)) form.remove(); return; }
+      waiting = true;
+      waitingControl = control;
+      control.setAttribute('aria-busy', 'true');
+      const key = 'browser-session:' + new URL(action, document.baseURI).pathname;
+      void navigator.locks.request(key, { signal: AbortSignal.timeout(30_000) }, () => new Promise<void>(resolve => {
+        waiting = false;
+        completed = resolve;
+        permitted.add(form);
+        form.requestSubmit(button ?? undefined);
+        permitted.delete(form);
+        if (!busy.length) finish(); // Form was detached or became invalid while waiting.
+      })).catch(fail);
+      return;
+    }
+    if (!start(action, control, form)) { event.preventDefault(); if (controls.has(form)) form.remove(); return; }
+    if (controls.has(form)) temporaryForm = form;
     form.target = frame.name;
   });
   document.addEventListener('click', event => {
@@ -113,15 +156,28 @@ if (window === window.top) {
       const form = document.createElement('form');
       form.method = method;
       form.action = control.dataset.href!;
-      if (!start(form.action, control, form)) return;
+      form.setAttribute('data-htmz', '');
+      controls.set(form, control);
       if (control.name) {
         const input = document.createElement('input');
         input.name = control.name; input.value = control.value; form.append(input);
       }
-      form.target = frame.name;
       document.body.append(form);
-      form.submit();
-      form.remove();
+      form.requestSubmit();
     }
   });
+  function resume(): void {
+    const form = document.querySelector<HTMLFormElement>('form[data-auto-resume]');
+    if (!form) return;
+    // Without a secure-context Web Locks API, show ordinary login rather than
+    // risk racing one-time refresh tokens in independent browsing contexts.
+    if (!navigator.locks) { location.replace(new URL(form.action).pathname + '?resume=0'); return; }
+    form.requestSubmit();
+  }
+  if ('prerendering' in document && document.prerendering) {
+    document.addEventListener('prerenderingchange', () => location.reload(), { once: true });
+  } else {
+    resume();
+  }
+
 }

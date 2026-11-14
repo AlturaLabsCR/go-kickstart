@@ -12,7 +12,11 @@ accessible close button. Confirm is associated with a hidden POST form, while
 Cancel and the close button do not submit anything. Per-session links use
 `data-dialog-open` to open their modal through the shared client.
 An authenticated GET to `/login` redirects to `/home` after verifying the access
-cookie against the live session record; expired or revoked cookies do not redirect.
+cookie against the live session record. When only the refresh cookie remains,
+the page automatically submits `action=resume` to the existing `POST /login` and
+returns to `/home` if renewal succeeds. There is no separate continuation button.
+GET requests never rotate tokens or change cookies. Prefetch and prerender
+requests do not start renewal; an activated prerender reloads to check the session.
 
 `<root>/home` requires the access cookie and lists sessions using the existing
 Bearer authentication middleware and `ListSessions` handler, including its
@@ -56,11 +60,23 @@ when the proxy cannot preserve `Host`; those requests bypass both checks. An
 `Origin: null` (sandboxed or in-app browsers) has no host to declare, so it can
 only pass when the browser also sends `Sec-Fetch-Site`.
 
-After access expiry, `/home` redirects to `/login`; the Continue session form
-rotates the refresh token through the existing refresh handler. Renewal uses
-POST, not a side effect of GET. Sign out revokes the server-side session using
-its refresh token and removes both cookies. Revocation invalidates issued access
-tokens because verification checks the uncached session record.
+After access expiry, `/home` redirects to `/login` to start automatic renewal.
+The client uses Web Locks to serialize browser POSTs to the same login path
+across tabs, including renewal, verification and sign out. Requests waiting for
+the lock send the latest cookies when they start. The renewal handler rechecks
+access first, so another tab's successful renewal avoids a second rotation. This
+coordination also works when requests reach different server replicas.
+
+Missing or rejected refresh credentials show the ordinary login form without a
+retry loop. A failed renewal never clears cookies, so its response cannot erase
+a newer successful session. Dependency failures return an error status and keep
+the cookies. Automatic renewal requires JavaScript and Web Locks (HTTPS or
+localhost); otherwise the ordinary login form is shown. With JavaScript disabled,
+a `noscript` link opens that form. A lost successful refresh response still
+requires login: the existing one-time refresh contract has no replay recovery.
+Sign out revokes the server-side session and removes both cookies. Revocation
+invalidates issued access tokens because verification checks the uncached session
+record.
 
 All browser mutations use Go's CrossOriginProtection in addition to strict
 SameSite cookies. No cookie authentication is enabled on API endpoints, and no

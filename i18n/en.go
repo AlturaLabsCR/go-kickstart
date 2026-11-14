@@ -1,6 +1,7 @@
 package i18n
 
 var en = map[string]string{
+	"web.resuming":       "Restoring your session…",
 	"web.logout_current": "Log out of this device",
 	"web.logout_device":  "Log out of device:",
 	"web.unknown_device": "Unknown device",
@@ -16,7 +17,6 @@ var en = map[string]string{
 	"web.code":           "Verification code",
 	"web.verify":         "Verify and sign in",
 	"web.send":           "Send code",
-	"web.continue":       "Continue session",
 	"web.restart":        "Request another code",
 	"web.sessions":       "Open sessions",
 	"web.device":         "Device",

@@ -11,10 +11,20 @@ type Session struct {
 	Current                bool
 }
 
-templ Login(action, email, message string, verify, refresh bool, tr func(string) string) {
+templ Login(action, email, message string, verify, resume bool, tr func(string) string) {
 	<section>
-		<form method="post" action={ action + "#browser-view" } data-htmz>
+		if resume {
+			<p role="status">{ tr("web.resuming") }</p>
+			<form hidden method="post" action={ action + "#browser-view" } data-htmz data-auto-resume>
+				<input type="hidden" name="action" value="resume"/>
+			</form>
+			<noscript><a href={ action + "?resume=0" }>{ tr("web.login") }</a></noscript>
+		}
+		<form hidden?={ resume } method="post" action={ action + "#browser-view" } data-htmz>
 			<h1>{ tr("web.login") }</h1>
+			if message!="" {
+				<p role="alert">{ message }</p>
+			}
 			if verify {
 				<input type="hidden" name="action" value="verify"/>
 				<label for="login-email">{ tr("web.email") }</label>
@@ -29,24 +39,18 @@ templ Login(action, email, message string, verify, refresh bool, tr func(string)
 				<input type="hidden" name="action" value="login"/>
 				<label for="login-email">{ tr("web.email") }</label>
 				<input id="login-email" type="email" name="email" value={ email } autocomplete="email" required/>
-				if message!="" {
-					<p role="alert">{ message }</p>
-				}
 				<footer>
 					<button type="submit">{ tr("web.send") }</button>
 				</footer>
 			}
 		</form>
-		if refresh {
-			<form method="post" action={ action + "#browser-view" } data-htmz><button name="action" value="refresh">{ tr("web.continue") }</button></form>
-		}
 	</section>
 }
 
 templ Home(action, home, next string, sessions []Session, language string, tr func(string) string) {
 	<section>
 		<h1>{ tr("web.home") }</h1>
-		<article class="card">
+		<section class="card">
 			<header>
 				<hgroup><h2>{ tr("web.sessions") }</h2></hgroup>
 				<div>
@@ -86,7 +90,7 @@ templ Home(action, home, next string, sessions []Session, language string, tr fu
 			if next!="" {
 				<a href={ next } data-htmz>{ tr("web.next") }</a>
 			}
-		</article>
+		</section>
 		@confirmLogout("logout", action, "logout", "", "", true, tr)
 	</section>
 }
