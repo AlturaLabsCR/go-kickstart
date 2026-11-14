@@ -10,10 +10,15 @@ with `--host 127.0.0.1 --port 3080` and configure its secrets as usual.
 | Caddy | [`contrib/Caddyfile.example`](../contrib/Caddyfile.example) | Copy to `/etc/caddy/Caddyfile`; run `caddy validate --config /etc/caddy/Caddyfile`. Caddy manages HTTPS for a domain pointing to this server with ports 80/443 reachable. |
 | Apache 2.4 | [`contrib/apache.example.conf`](../contrib/apache.example.conf) | Enable `ssl`, `proxy`, `proxy_http`, `headers`, `filter`, `deflate`, `alias` and listening on 80/443. Install the certificate/key; include the virtual hosts; run `apachectl configtest`. On Debian/Ubuntu, use `a2enmod` to enable modules. |
 
-All three preserve the request path and negotiate gzip for text assets under
-`/s/`. API responses are outside that compression scope. If using `--root /app`,
-prepend `/app` to the static matcher and Nginx's rate-limited paths; keep the
-proxy upstream mapping unchanged so the application receives the prefix.
+All three preserve the request path. Nginx negotiates gzip for HTML, JSON and
+other compressible types on every path, including responses to authenticated
+requests and requests through another proxy. Bodies with a known size below
+256 bytes and already-compressed binary formats are left uncompressed. See the
+[Nginx gzip module](https://nginx.org/en/docs/http/ngx_http_gzip_module.html).
+Caddy and Apache limit compression to text assets under `/s/`.
+If using `--root /app`, prepend `/app` to Caddy/Apache's static matcher and
+Nginx's rate-limited paths; keep the proxy upstream mapping unchanged so the
+application receives the prefix. Nginx's compression already covers the prefix.
 
 Nginx includes per-IP limits: issuance 10/minute, verification 30/minute and
 refresh 60/minute, with small bursts and `429` rejections. These are tunable

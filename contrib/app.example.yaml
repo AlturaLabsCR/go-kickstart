@@ -24,6 +24,7 @@ port: 3080
 
 # Auth settings.
 # Signing secrets require at least 32 bytes outside development mode.
+# Generate 32 random bytes as 64 hex characters: openssl rand -hex 32
 # Override with:
 #   APP_AUTH_SECRET=change-me app serve --dev
 #   app serve --dev --auth-secret change-me
@@ -38,6 +39,7 @@ auth:
 
 # Independent HMAC key used to store verification codes as keyed digests.
 # Use at least 32 random bytes outside development; it must differ from auth.secret.
+# Generate independently: openssl rand -hex 32 (do not reuse auth.secret).
 # In development, an empty value uses a temporary key that changes on restart.
 # Rotating this key invalidates every pending verification code.
 # Override with:
