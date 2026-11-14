@@ -86,6 +86,7 @@ func TestRoutesUseRootPrefix(t *testing.T) {
 		wantLocation string
 	}{
 		{name: "browser login", method: "GET", path: "/api/login", wantStatus: 200, wantBody: `action="/api/login#browser-view"`},
+		{name: "fingerprinted JavaScript", method: "GET", path: "/api/s/" + templates.MainScriptPath, wantStatus: 200},
 		{name: "protected browser home", method: "GET", path: "/api/home", wantStatus: 303, wantLocation: "/api/login"},
 		{
 			name:       "root JSON",
@@ -138,6 +139,9 @@ func TestRoutesUseRootPrefix(t *testing.T) {
 			}
 			if tt.wantBody != "" && !strings.Contains(rec.Body.String(), tt.wantBody) {
 				t.Errorf("body = %q, want containing %q", rec.Body.String(), tt.wantBody)
+			}
+			if tt.name == "browser login" && !strings.Contains(rec.Body.String(), `src="/api/s/`+templates.MainScriptPath+`"`) {
+				t.Error("login did not reference the fingerprinted bundle under the root prefix")
 			}
 			if tt.wantJSON {
 				if got := rec.Header().Get("Content-Type"); !strings.HasPrefix(got, "application/json") {

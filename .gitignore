@@ -7,6 +7,7 @@ data/
 *.html
 *_templ.go
 /templates/stylesheet_generated.go
+/templates/javascript_generated.go
 /handlers/static/css/semantic.*.css
 /handlers/static/css/semantic*.LICENSE.txt
 

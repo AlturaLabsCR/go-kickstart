@@ -11,7 +11,7 @@
     "build": "npm run redocly && npm run browser && go generate ./templates",
     "postinstall": "npm run build",
     "lint": "eslint frontend",
-    "browser": "npm run lint && tsc && esbuild frontend/browser.ts --bundle --minify --format=esm --target=es2022 --outfile=handlers/static/js/browser.js"
+    "browser": "npm run lint && tsc && esbuild frontend/main.ts --bundle --minify --format=esm --target=es2022 --outfile=handlers/static/js/main.js && go run templates/javascript.go"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",

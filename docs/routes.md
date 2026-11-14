@@ -12,8 +12,8 @@ Parameterized routes require values: `h.URL(routes.RevokeSession, sessionID)`.
 Values are escaped as individual path segments; missing or extra values fail.
 
 The compiler checks symbol names and Go types. `NewHandler` additionally checks
-that every catalogue entry was registered and that the linked API documentation
-and generated stylesheet exist in the embedded filesystem. Renaming a route
+that every catalogue entry was registered and that the linked API documentation,
+generated stylesheet and JavaScript bundle exist in the embedded filesystem. Renaming a route
 breaks references at compilation; forgetting registration fails construction.
 This does not statically inspect arbitrary URL strings. Use the named helpers
 for internal links. Dynamic identifiers are validated when constructing a URL;

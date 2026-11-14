@@ -95,22 +95,27 @@ verify OTPs. Existing application email budgets remain in effect.
 
 The feature is isolated in `handlers/browser.go`, `internal/browser`,
 `templates/login` and `templates/home`, with the shared wrapper in
-`templates/base/browser.templ`. The frontend entry point `frontend/browser.ts`
+`templates/base/browser.templ`. The frontend entry point `frontend/main.ts`
 initializes `htmz.ts` (iframe requests, busy state and POST coordination),
 `dates.ts` (visitor-local timestamps) and `session.ts` (automatic session renewal).
 Shared form URL handling lives in `forms.ts`; it reads the action attribute
 because a control named `action` shadows the form's JavaScript property.
-They compile into a single `handlers/static/js/browser.js` bundle.
+They compile into a single `handlers/static/js/main.<sha256>.js` bundle.
 To remove the feature, remove the `registerBrowserRoutes` call from
-`Handler.registerRoutes`, delete those sources and remove the browser build script/dependencies. The web routes use the
-handler's optional registration API, so the mandatory API route catalogue does
-not need to change. Locale entries beginning with `web.` may then be removed.
+`Handler.registerRoutes`, the `routes.LoginPage` entry and the root page's sign-in
+link, then delete the browser sources. If removing the client build too, remove
+its build script/dependencies and `MainScriptPath` check in `Handler.validateRoutes`.
+Locale entries beginning with `web.` may then be removed.
 
 `npm ci` installs the locked Node dependencies and builds both Redocly and the
 site (Semantic CSS plus templ generation) via its postinstall script. It requires
 Go and network access for the pinned stylesheet download. SQL generation remains
 `go generate ./database`. The browser build runs ESLint, TypeScript checks and esbuild. Its generated
-`handlers/static/js/browser.js` is ignored. `npm run browser` rebuilds just the
+`handlers/static/js/main.<sha256>.js` is ignored. `templates/javascript.go`
+fingerprints the final bundle and generates `templates.MainScriptURL(links)`
+in the ignored `templates/javascript_generated.go`, preserving the root prefix.
+Changed contents get a new URL, identical contents keep it, and obsolete bundles
+are removed after publishing the replacement. `npm run browser` rebuilds just the
 client. The MIT notice for the original htmz pattern is in `licenses/htmz.txt`.
 Static assets are embedded when Go builds the server. After rebuilding the
 frontend, rebuild and restart the server too; reloading the page cannot replace
