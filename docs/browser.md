@@ -85,9 +85,14 @@ public Host for origin checks; forwarded headers are not used to grant trust.
 Proxy throttling must also cover `POST <root>/login`, since it can issue and
 verify OTPs. Existing application email budgets remain in effect.
 
-The feature is isolated in `handlers/browser.go`, `internal/browser` and
-`templates/browser`, with its small client in `frontend/browser.ts`. To remove it, remove the `registerBrowserRoutes` call from
-`Handler.registerRoutes` and delete those sources and remove the browser build script/dependencies. The web routes use the
+The feature is isolated in `handlers/browser.go`, `internal/browser`,
+`templates/login` and `templates/home`, with the shared wrapper in
+`templates/base/browser.templ`. The frontend entry point `frontend/browser.ts`
+initializes `htmz.ts` (iframe requests, busy state and POST coordination),
+`dates.ts` (visitor-local timestamps) and `session.ts` (automatic session renewal).
+They compile into a single `handlers/static/js/browser.js` bundle.
+To remove the feature, remove the `registerBrowserRoutes` call from
+`Handler.registerRoutes`, delete those sources and remove the browser build script/dependencies. The web routes use the
 handler's optional registration API, so the mandatory API route catalogue does
 not need to change. Locale entries beginning with `web.` may then be removed.
 

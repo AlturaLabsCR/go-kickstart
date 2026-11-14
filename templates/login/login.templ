@@ -1,0 +1,37 @@
+package login
+
+templ Login(action, email, message string, verify, resume bool, tr func(string) string) {
+	<section>
+		if resume {
+			<p role="status">{ tr("web.resuming") }</p>
+			<form hidden method="post" action={ action + "#browser-view" } data-htmz data-auto-resume>
+				<input type="hidden" name="action" value="resume"/>
+			</form>
+			<noscript><a href={ action + "?resume=0" }>{ tr("web.login") }</a></noscript>
+		}
+		<form hidden?={ resume } method="post" action={ action + "#browser-view" } data-htmz>
+			<h1>{ tr("web.login") }</h1>
+			if message!="" {
+				<p role="alert">{ message }</p>
+			}
+			if verify {
+				<input type="hidden" name="action" value="verify"/>
+				<label for="login-email">{ tr("web.email") }</label>
+				<input id="login-email" type="email" name="email" value={ email } readonly required/>
+				<label for="login-otp">{ tr("web.code") }</label>
+				<input id="login-otp" name="otp" inputmode="numeric" autocomplete="one-time-code" pattern="[0-9]{6}" minlength="6" maxlength="6" required autofocus/>
+				<footer>
+					<a class="button outline" href={ action }>{ tr("web.restart") }</a>
+					<button type="submit">{ tr("web.verify") }</button>
+				</footer>
+			} else {
+				<input type="hidden" name="action" value="login"/>
+				<label for="login-email">{ tr("web.email") }</label>
+				<input id="login-email" type="email" name="email" value={ email } autocomplete="email" required/>
+				<footer>
+					<button type="submit">{ tr("web.send") }</button>
+				</footer>
+			}
+		</form>
+	</section>
+}

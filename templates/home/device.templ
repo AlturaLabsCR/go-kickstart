@@ -1,0 +1,17 @@
+package home
+
+templ device(session Session, tr func(string) string) {
+	{{ browserName, osName := browserIcon(session.Browser), osIcon(session.OS) }}
+	if osName != "" {
+		@deviceIcon(osName, session.OS)
+	}
+	if browserName != "" {
+		@deviceIcon(browserName, session.Browser)
+	}
+	if browserName == "" && osName == "" {
+		{ session.Device }
+	}
+	if session.Current {
+		<strong>({ tr("web.current") })</strong>
+	}
+}

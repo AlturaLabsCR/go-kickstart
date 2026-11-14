@@ -1,0 +1,11 @@
+package base
+
+import "app/routes"
+
+templ BrowserSurface(links routes.Links, content templ.Component, message string) {
+	<div id="browser-view" data-error={ message }>
+		<p role="alert" data-htmz-error></p>
+		@content
+	</div>
+	<script type="module" src={ links.StaticURL("js/browser.js") }></script>
+}
