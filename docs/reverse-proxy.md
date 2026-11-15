@@ -91,6 +91,8 @@ container if either exits, and forwards termination to Go before gracefully
 stopping nginx. `tini` handles PID 1 signal forwarding and orphaned processes.
 The image explicitly uses `SIGTERM`, overriding nginx's inherited `SIGQUIT`.
 For an explicit CLI command, `docker run ... IMAGE migrate` runs only Go.
+Use [separate SQL credentials](database-privileges.md) for that migration job and
+set `APP_DATABASE_AUTO_MIGRATE=false` on production server replicas afterward.
 
 CI and Kubernetes use the standalone, non-root `app` target instead:
 

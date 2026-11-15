@@ -98,6 +98,8 @@ mail:
   from: no-reply@example.com
 
 # Run `app migrate` separately and disable automatic DDL for replicated servers.
+# Give the migration job its own SQL credentials; replicas use DML-only accounts.
+# See docs/database-privileges.md for grants and read-only schema metadata.
 # Override with:
 #   APP_DATABASE_AUTO_MIGRATE=false app serve
 #   app serve --auto-migrate=false

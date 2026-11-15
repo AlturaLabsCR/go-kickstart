@@ -59,6 +59,8 @@ Do not apply the Deployment if migrations fail. The runtime SQL user needs norma
 application DML, maintenance DELETEs and SELECT on migration metadata (including
 `schema_migration_pending` on MySQL); it does not need DDL. PostgreSQL grants must
 cover tables and sequences created by the migration owner, including future ones.
+See [database privileges](database-privileges.md) for explicit MySQL grants and
+the separation of migration and runtime connections.
 
 `--auto-migrate=false` reads metadata without creating tables or taking migration
 locks and requires the **exact** latest embedded migration version. Missing,

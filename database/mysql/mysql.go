@@ -36,8 +36,13 @@ func Open(ctx context.Context, connStr string, options database.OpenOptions) (*M
 	if cfg.DBName == "" {
 		return nil, fmt.Errorf("mysql database name is required")
 	}
-	// Embedded migrations contain multiple statements per file.
-	cfg.MultiStatements = true
+	// Even a DSN override must not enable multiple statements in the runtime pool.
+	cfg.MultiStatements = false
+	if !options.SkipMigrations {
+		if err := applyMigrations(ctx, cfg); err != nil {
+			return nil, err
+		}
+	}
 
 	connector, err := mysqldriver.NewConnector(cfg)
 	if err != nil {
@@ -69,9 +74,11 @@ func Open(ctx context.Context, connStr string, options database.OpenOptions) (*M
 		}
 		return q.GetSchemaMigrationVersion(ctx)
 	}
-	if err := database.PrepareSchema(ctx, migrationFiles, version, func(ctx context.Context) error { return applyMigrations(ctx, conn) }, options.SkipMigrations); err != nil {
-		_ = conn.Close()
-		return nil, err
+	if options.SkipMigrations {
+		if err := database.PrepareSchema(ctx, migrationFiles, version, nil, true); err != nil {
+			_ = conn.Close()
+			return nil, err
+		}
 	}
 
 	return &MySQL{conn: conn}, nil
