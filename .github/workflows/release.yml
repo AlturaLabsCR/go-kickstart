@@ -44,11 +44,17 @@ jobs:
           node-version: 22
           cache: npm
 
-      - name: Setup
+      - name: Audit npm dependencies
+        run: npm audit --audit-level=high
+
+      - name: Install documentation dependencies
+        run: npm ci
+
+      - name: Generate code and assets
+        run: go generate ./...
+
+      - name: Install release tools
         run: |
-          npm audit --audit-level=high
-          npm ci
-          go generate ./database
           sudo apt-get update
           sudo apt-get install -y upx-ucl
 

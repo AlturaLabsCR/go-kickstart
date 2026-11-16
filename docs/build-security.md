@@ -8,7 +8,10 @@ build reproducible byte for byte. Alpine repositories and vulnerability database
 remain live, and runtime stages apply `apk upgrade` to pick up security fixes.
 
 CI runs on pushes, pull requests and Mondays at 09:00 UTC. It audits all npm
-dependencies, including build tools, before `npm ci` runs installation scripts.
+dependencies, including build tools, before `npm ci` installs the locked packages.
+`setup-node` supplies Node/npm and caches downloads, not `node_modules`; installation
+is still required on each runner. There is no project postinstall build. A single
+`go generate ./...` step generates all sources and assets before testing/building.
 It also runs existing Go tests and govulncheck, then scans both the nginx runtime
 and standalone Go image. Trivy receives exported image archives and temporary
 storage, without a Docker socket, repository credentials or privileged mode.

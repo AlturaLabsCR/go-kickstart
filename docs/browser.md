@@ -70,7 +70,9 @@ With JavaScript unavailable, login still submits normally. A noscript link bypas
 automatic restoration. Dashboard controls depending on Datastar stay disabled when
 the module cannot load; this avoids partially functional reactive actions.
 
-`npm ci` builds Redocly and runs `go generate ./templates`; no frontend bundler or
-ESLint is required. SQL generation is separate. Rebuild/restart Go after generating
+`npm ci` installs documentation dependencies. Then `go generate ./...` generates
+Redocly docs, SQL code, templates and assets; `go build` compiles them into the
+binary. No npm postinstall build, frontend bundler or ESLint is required. For
+template-only edits, use `go generate ./templates`. Rebuild/restart Go after generating
 assets. Remove browser registration, login route references, browser handlers and
 templates to remove the surface; API contracts remain independent.

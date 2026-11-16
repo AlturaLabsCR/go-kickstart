@@ -4,14 +4,32 @@ Go web server template for applications and REST APIs.
 
 ## Usage
 
-```sh
-npm ci # installs dependencies and builds API docs, JS, HTML and stylesheets
-go generate ./... # runs all Go generators, including SQL
+Requirements: Go 1.26.11 or newer (see `go.mod`), Node.js 22.12 or newer and
+npm 10 or newer. Run these commands from the repository root:
 
-# Start a development server
-go run . --dev
-# ... level=INFO ... msg=listening addr=[::]:3080
+```sh
+npm ci               # install the exact documentation dependencies from the lockfile
+go generate ./...   # generate API docs, SQL code, templates and pinned assets
+go run . --dev      # start the development server
 ```
+
+For a compiled binary, replace the last command with:
+
+```sh
+go build -o app .
+```
+
+Run `npm ci` on a fresh checkout or when `package-lock.json` changes. After that,
+`go generate ./...` followed by `go build -o app .` is sufficient. Generation
+requires network access to download Go tools and pinned assets; Node/npm are
+build-time dependencies and are not needed to run the resulting binary.
+Generated files are ignored, so a fresh checkout must generate before building.
+Go downloads its module/tool dependencies automatically; it does not install npm
+dependencies or run generators as part of `go build`.
+
+For focused edits, use `go generate ./docs`, `go generate ./database` or
+`go generate ./templates`. CI and Docker follow the same install → generate →
+build sequence, without an npm installation hook that builds files implicitly.
 
 Browser login, protected home and session listing are described in
 [the browser authentication guide](docs/browser.md).
@@ -67,8 +85,8 @@ and the weekly dependency review.
   `templates/datastar.go`, verifies its SHA-256 and generates its static path and
   SRI integrity value. The head loads the external module only on reactive pages.
   Browser interactions live in templ attributes and `templates/interactions.go`;
-  no frontend bundler, TypeScript or ESLint is required. `npm ci` builds Redocly
-  and generates templates through postinstall. See [browser authentication](docs/browser.md).
+  no frontend bundler, TypeScript or ESLint is required. `npm ci` installs the
+  documentation tool; `go generate ./...` runs all generators. See [browser authentication](docs/browser.md).
 - Add a route group in `handlers/`, a registration method and its call in `registerRoutes`.
 - Use `Add` for a handler function and `AddHandler` for middleware-wrapped handlers;
   both apply the configured root prefix.

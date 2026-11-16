@@ -5,7 +5,7 @@ WORKDIR /src
 COPY go.mod go.sum ./
 RUN go mod download
 COPY . .
-RUN npm ci && go generate ./database
+RUN npm ci && go generate ./...
 RUN CGO_ENABLED=0 go build -trimpath -ldflags="-s -w" -o /out/app .
 
 # Standalone binary for CI, migration jobs and Kubernetes.
