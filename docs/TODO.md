@@ -103,6 +103,8 @@ Controles existentes que deben conservarse:
 
 ### 7. Aprovechar los assets con hash y afinar compresión
 
+Cambio solicitado después del plan: Semantic se incrusta en el HTML una vez por contexto de render con templ.OnceHandle. El CSS estático y su URL siguen disponibles, pero las páginas propias ya no los solicitan. htmz conserva el head principal; las respuestas siguen siendo HTML completo e incluyen CSS en su documento de iframe. La recomendación de caché externa se mantiene para JS y consumidores opcionales del CSS; no implica volver a externalizar el estilo solicitado por el usuario.
+
 - [ ] **Oportunidad confirmada por inspección.** `handlers/static.go` usa FileServerFS sin `Cache-Control` propio para CSS/JS fingerprinted. Añadir `public, max-age=31536000, immutable` únicamente a assets existentes e inmutables identificados por el manifiesto/hash, en respuestas válidas. No aplicar a `/login`, `/home`, API, HTML de documentación, directorios ni 404.
 - [ ] Mantener HTML autenticado y tokens con `no-store`. No añadir caché compartida de páginas de sesión en nginx/Cloudflare. Comprobar que el despliegue gradual sirve los assets referenciados por HTML de ambas versiones: las imágenes actuales solo incluyen el bundle vigente. Caché immutable no resuelve el primer fetch enviado a una réplica de otra versión; conservar assets anteriores o publicarlos en almacenamiento común si se hacen despliegues mixtos.
 - [ ] Medir gzip nivel 5 frente a niveles menores y el coste de recomprimir bundles. Solo si compensa, precomprimir assets durante build y servirlos con negociación correcta (`Vary`, HEAD, rangos, `gzip;q=0`); no duplicar ahora todo el árbol de estáticos entre Go y nginx.

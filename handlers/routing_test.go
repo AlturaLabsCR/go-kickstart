@@ -252,10 +252,11 @@ func TestRootWithoutPrefix(t *testing.T) {
 			if rec.Code != page.status || !strings.HasPrefix(rec.Header().Get("Content-Type"), "text/html") {
 				t.Fatalf("page %s: %d %s", page.path, rec.Code, rec.Body.String())
 			}
-			for _, link := range []string{docsURL, cssURL} {
-				if !strings.Contains(rec.Body.String(), `href="`+link+`"`) {
-					t.Fatalf("page %s missing link %q", page.path, link)
-				}
+			if strings.Count(rec.Body.String(), `<style id="semantic-style">`) != 1 {
+				t.Fatalf("page %s must include the stylesheet exactly once", page.path)
+			}
+			if !strings.Contains(rec.Body.String(), `href="`+docsURL+`"`) {
+				t.Fatalf("page %s missing link %q", page.path, docsURL)
 			}
 		}
 		for _, link := range []string{docsURL, cssURL} {

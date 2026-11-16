@@ -53,8 +53,11 @@ and the weekly dependency review.
 - `go generate ./templates` downloads [Semantic CSS](https://github.com/tavocg/semantic)
   from the release tag pinned in `templates/semantic.go` and writes its minified CSS to
   `handlers/static/css/semantic.<sha256>.css` with the upstream licenses. It also
-  generates `templates.SemanticStylesheetURL(links)`, used by the shared page
-  head. It verifies the CSS against `semanticSHA256` before writing files and
+  generates `templates.SemanticStylesheet()`, rendered inline in the shared page
+  head once per document through templ's OnceHandle. htmz swaps preserve that
+  head; each new HTML document includes the CSS again. The static CSS and
+  `templates.SemanticStylesheetURL(links)` remain available to other consumers.
+  It verifies the CSS against `semanticSHA256` before writing files and
   limits each CSS/license download to 1 MiB. Review the new release, compute the
   downloaded CSS digest with `sha256sum`, then update both `semanticTag` and
   `semanticSHA256` and regenerate to upgrade; changed CSS gets a new

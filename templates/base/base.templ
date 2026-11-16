@@ -11,7 +11,7 @@ type PageParams struct {
 templ Page(page PageParams) {
 	<!DOCTYPE html>
 	<html>
-		@head(page.Head, page.Links)
+		@head(page.Head)
 		@body(page.Body, page.Links)
 	</html>
 }

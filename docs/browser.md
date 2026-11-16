@@ -156,6 +156,14 @@ on every browser POST.
 
 ## Document security
 
+The shared head embeds the pinned Semantic stylesheet in `<style>` once per
+render context, using templ's OnceHandle. No stylesheet request is needed for
+these pages. htmz replaces only `#browser-view`, preserving the main document's
+style element. Responses still contain full HTML (including the hidden iframe's
+own stylesheet); each new document carries the CSS rather than sharing an
+external browser-cached file. Only the verified build-time asset is rendered as
+raw HTML, and generation rejects a CSS HTML `</style` closing tag.
+
 The application handler sends `X-Content-Type-Options: nosniff`,
 `X-Frame-Options: SAMEORIGIN` and CSP `frame-ancestors 'self'`, including on API,
 static and routing responses. Same-origin framing keeps htmz working while
