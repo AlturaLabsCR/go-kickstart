@@ -18,6 +18,7 @@ This repository is a Go web server template for REST APIs and small HTML surface
 - `templates/`: `templ` HTML templates.
 - Browser login/home are isolated in `handlers/browser.go`, `internal/browser`, `templates/login` and `templates/home`, with a shared wrapper in `templates/base/browser.templ`. `frontend/main.ts` initializes the htmz transport, date formatting and session renewal modules and builds into one fingerprinted `main.<sha256>.js` bundle, inlined once per browser document through `templates.MainScript` with a generated CSP SHA-256 hash. `templates.MainScriptURL` remains available for external consumers. The reusable htmz client enhances forms, links and buttons with iframe swaps and busy state; native forms use `POST /login` as a JSON-handler adapter; API handlers stay JSON/Bearer-only. See `docs/browser.md`. `npm ci` builds Redocly and the site through postinstall; SQL generation is separate.
 - `routes/`: named method/path catalogue shared by registration and template links. Use `h.AddRoute` and `links.URL` / `h.URL`; constructor checks catalogue registration and linked embedded assets. See `docs/routes.md`. Raw `Add` routes remain available for extensions.
+- `handlers/browser_home.go` renders the account dashboard and adapts email-change forms through the CSRF-protected POST login route, reusing JSON handlers and live email-change permissions. Dashboard templates use Semantic components and minimal grid layout; email addresses and codes stay out of redirect URLs.
 
 ## Adding an Endpoint
 

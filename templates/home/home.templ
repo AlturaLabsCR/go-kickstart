@@ -1,6 +1,6 @@
 package home
 
-import "strings"
+import "strconv"
 
 type Session struct {
 	ID                     string
@@ -11,51 +11,42 @@ type Session struct {
 	Current                bool
 }
 
-templ Home(action, home, next string, sessions []Session, language string, tr func(string) string) {
-	<section>
-		<h1>{ tr("web.home") }</h1>
-		<section class="card">
-			<hgroup>
-				<strong>{ tr("web.sessions") }</strong>
-				<div>
-					<button type="button" class="plain" data-htmz data-href={ home + "#browser-view" } aria-label={ tr("web.reload") } title={ tr("web.reload") }>
-						<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">
-							<path d="M3 12a9 9 0 0 1 15.36-6.36L21 8M21 3v5h-5M21 12a9 9 0 0 1-15.36 6.36L3 16M3 21v-5h5"></path>
-						</svg>
-					</button>
-					<button type="button" class="plain" commandfor="logout" command="show-modal" aria-label={ tr("web.logout") } title={ tr("web.logout") }>
-						<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">
-							<path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"></path>
-						</svg>
-					</button>
-				</div>
-				<p>{ tr("web.sessions_help") }</p>
-			</hgroup>
-			<table>
-				<thead><tr><th>{ tr("web.device") }</th><th>{ tr("web.created") }</th><th>{ tr("web.used") }</th><th>{ tr("web.expires") }</th><th></th></tr></thead>
-				<tbody>
-					for _,session := range sessions {
-						<tr>
-							<td>
-								<div style="display:flex;align-items:center;gap:calc(var(--space) / 2)">
-									@device(session, tr)
-								</div>
-							</td>
-							<td>@timestamp(language, session.Created, false)</td>
-							<td>@timestamp(language, session.Used, true)</td>
-							<td>@timestamp(language, session.Expires, false)</td>
-							<td>
-								<a href={ "#revoke-" + session.ID } data-dialog-open={ "revoke-" + session.ID } aria-haspopup="dialog" aria-controls={ "revoke-" + session.ID }>{ tr("web.logout") }</a>
-								@confirmLogout("revoke-"+session.ID, action, "revoke", session.ID, strings.TrimSpace(session.OS+" "+session.Browser), session.Current, tr)
-							</td>
-						</tr>
-					}
-				</tbody>
-			</table>
-			if next!="" {
-				<a href={ next } data-htmz>{ tr("web.next") }</a>
-			}
-		</section>
-		@confirmLogout("logout", action, "logout", "", "", true, tr)
-	</section>
+
+type View struct {
+ Email string
+ CreatedAt int64
+ VerifyEmail bool
+ Notice string
+ Failed bool
+}
+
+templ Home(action, home, next string, sessions []Session, language string, view View, tr func(string) string) {
+ <section>
+  <header>
+   <hgroup><p class="primary">{ tr("web.workspace") }</p><h1>{ tr("web.account_overview") }</h1><p>{ tr("web.account_intro") }</p></hgroup>
+  </header>
+  <nav aria-label={ tr("web.account_sections") }><ul><li><a href="#profile">{ tr("web.profile") }</a></li><li><a href="#email-change">{ tr("web.change_email") }</a></li><li><a href="#sessions">{ tr("web.sessions") }</a></li></ul></nav>
+  if view.Notice!="" {
+   if view.Failed {
+    <blockquote class="alert" role="alert">{ view.Notice }</blockquote>
+   } else {
+    <blockquote class="tip" role="status">{ view.Notice }</blockquote>
+   }
+  }
+  <div id="profile" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,16rem),1fr));gap:1rem">
+   <div class="card"><label for="account-email">{ tr("web.email") }</label><input id="account-email" type="email" value={ view.Email } readonly/><small class="mute">{ tr("web.current_email") }</small></div>
+   <dl class="card"><dt class="mute">{ tr("web.member_since") }</dt><dd><strong>@timestamp(language, view.CreatedAt, false)</strong></dd><dd>{ tr("web.member_help") }</dd></dl>
+   <dl class="card"><dt class="mute">{ tr("web.sessions_shown") }</dt><dd><strong>{ strconv.Itoa(len(sessions)) }</strong></dd><dd>{ tr("web.sessions_page_help") }</dd></dl>
+  </div>
+  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,22rem),1fr));gap:1rem">
+   @emailChange(action, home, view.VerifyEmail, tr)
+   <section class="card">
+    <hgroup><strong>{ tr("web.account_security") }</strong><p>{ tr("web.account_security_help") }</p></hgroup>
+    <p><span class="tag green">{ tr("web.passwordless") }</span> <span class="tag blue">{ tr("web.session_controls") }</span></p>
+    <details><summary>{ tr("web.email_change_explained") }</summary><p>{ tr("web.email_change_explanation") }</p></details>
+    <details><summary>{ tr("web.session_explained") }</summary><p>{ tr("web.session_explanation") }</p></details>
+   </section>
+  </div>
+  @sessionList(action, home, next, sessions, tr, language)
+ </section>
 }

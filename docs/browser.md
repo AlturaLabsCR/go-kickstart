@@ -36,6 +36,27 @@ a `<time>` element with the UTC instant and a UTC fallback label; the client rew
 it in the visitor's timezone after the first render and after every htmz swap. With
 scripting unavailable the UTC value stays visible.
 
+The dashboard includes the account email, creation date and number of sessions
+on the current page (not a total across cursor pages). Its layout uses Semantic
+cards, native details/forms and responsive grids; it has no sidebar or additional
+client code. Profile and session reads share one verified request identity.
+
+Changing email submits native forms through the same CSRF-protected
+`POST <root>/login` adapter: `email_change` reuses `RequestEmailChange` and
+`email_confirm` reuses `ConfirmEmailChange`, with Bearer authentication and the
+same live `perm.change_email` check as the API. Codes go to the new address and
+the existing email remains unchanged until confirmation succeeds. Wrong or
+expired codes retain the confirmation form; quotas and localized errors come
+from the existing JSON handlers. A missing/expired login instead redirects to
+the login page. Cookies are not changed by email confirmation.
+
+Successful submissions use 303 redirects to `/home?email=verify` or
+`/home?email=updated`. These flags only select presentation/feedback; they neither
+authorize changes nor put the new email/code in the URL. The "Already have a
+code?" link reopens confirmation after a reload or session renewal. All paths use
+the application prefix. Browser dashboard wiring lives in `handlers/browser_home.go`
+and templates in `templates/home`; the public API endpoints are unchanged.
+
 The browser adapter calls the existing login, verification and refresh handlers
 in process with JSON bodies, preserving the request context and User-Agent. It
 reuses their validation, persistent quotas, OTP consumption and session issuance.

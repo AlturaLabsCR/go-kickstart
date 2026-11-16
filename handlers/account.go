@@ -35,13 +35,7 @@ func (h *Handler) registerAccountRoutes() {
 		return middleware.AuthenticateBearer(h.logger, h.localize, h.authenticator, next)
 	}
 	canChangeEmail := func(fn http.HandlerFunc) http.Handler {
-		return authenticated(middleware.RequirePermission(
-			h.logger,
-			h.localize,
-			h.db.Querier(),
-			database.PermissionChangeEmail,
-			fn,
-		))
+		return authenticated(h.requireEmailChangePermission(fn))
 	}
 
 	h.AddRoute(routes.Account, authenticated(http.HandlerFunc(h.GetAccount)))
@@ -51,6 +45,10 @@ func (h *Handler) registerAccountRoutes() {
 	h.AddRoute(routes.RevokeSession, authenticated(http.HandlerFunc(h.RevokeSession)))
 	h.AddRoute(routes.ChangeEmail, canChangeEmail(h.RequestEmailChange))
 	h.AddRoute(routes.ConfirmEmail, canChangeEmail(h.ConfirmEmailChange))
+}
+
+func (h *Handler) requireEmailChangePermission(next http.Handler) http.Handler {
+	return middleware.RequirePermission(h.logger, h.localize, h.db.Querier(), database.PermissionChangeEmail, next)
 }
 
 func (h *Handler) GetAccount(w http.ResponseWriter, r *http.Request) {

@@ -1,0 +1,19 @@
+package home
+
+templ emailChange(action, home string, verify bool, tr func(string) string) {
+ <form id="email-change" method="post" action={ action + "#browser-view" } data-htmz>
+  <hgroup><strong>{ tr("web.change_email") }</strong><p>{ tr("web.change_email_help") }</p></hgroup>
+  if verify {
+   <input type="hidden" name="action" value="email_confirm"/>
+   <label for="email-change-otp">{ tr("web.code") }</label>
+   <input id="email-change-otp" name="otp" inputmode="numeric" autocomplete="one-time-code" pattern="[0-9]{6}" minlength="6" maxlength="6" required/>
+   <small class="mute">{ tr("web.email_code_help") }</small>
+   <footer><a class="button outline" href={ home } data-htmz>{ tr("web.cancel") }</a><button type="submit">{ tr("web.confirm_email") }</button></footer>
+  } else {
+   <input type="hidden" name="action" value="email_change"/>
+   <label for="new-email">{ tr("web.new_email") }</label>
+   <input id="new-email" type="email" name="new_email" autocomplete="email" maxlength="254" required/>
+   <footer><a href={ home + "?email=verify" } data-htmz>{ tr("web.have_code") }</a><button type="submit">{ tr("web.send_code") }</button></footer>
+  }
+ </form>
+}
