@@ -58,7 +58,7 @@ func (h *Handler) browserHome(w http.ResponseWriter, r *http.Request, cookies br
 			if !ok {
 				return
 			}
-			view.Email, view.CreatedAt = account.Email, account.CreatedAt
+			view.Email = account.Email
 		}
 		h.ListSessions(w, r)
 	}))
@@ -98,7 +98,7 @@ func (h *Handler) browserHome(w http.ResponseWriter, r *http.Request, cookies br
 		w.Header().Set("Cache-Control", "no-store")
 		w.Header().Set("Content-Type", "text/html; charset=utf-8")
 		w.Header().Add("Vary", "Accept-Language")
-		if err := homepage.SessionsFragment(login, home, next, rows, tr, h.language(r)).Render(r.Context(), w); err != nil {
+		if err := homepage.Sessions(login, home, next, rows, tr, h.language(r)).Render(r.Context(), w); err != nil {
 			h.logger.Error("failed to render browser sessions", "error", err)
 		}
 		return

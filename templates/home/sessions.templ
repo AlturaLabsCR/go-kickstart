@@ -1,7 +1,6 @@
 package home
 
 import "strings"
-import "strconv"
 
 templ Sessions(action, home, next string, sessions []Session, tr func(string) string, language string) {
 	<section id="sessions" class="card" data-refresh={ home + "?fragment=sessions" } data-effect="if ($refreshSessions) { $refreshSessions = false; document.querySelector('dialog[open]')?.close(); @refresh(el.dataset.refresh) }">
@@ -49,13 +48,4 @@ templ Sessions(action, home, next string, sessions []Session, tr func(string) st
 		}
 		@confirmLogout("logout", action, "logout", "", "", true, tr)
 	</section>
-}
-
-templ sessionCount(count int) {
-	<strong id="session-count">{ strconv.Itoa(count) }</strong>
-}
-
-templ SessionsFragment(action, home, next string, sessions []Session, tr func(string) string, language string) {
-	@Sessions(action, home, next, sessions, tr, language)
-	@sessionCount(len(sessions))
 }

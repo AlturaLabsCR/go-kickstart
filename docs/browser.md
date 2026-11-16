@@ -17,10 +17,9 @@ refresh TTL longer than the access TTL for a useful renewal window.
 ## Dashboard and Datastar
 
 `GET <root>/home` authenticates with the access cookie, then shares the verified
-identity between profile and session reads. It shows the email, account creation
-date, sessions on the current cursor page, email-change controls and security
-information. Session pages contain up to 100 rows; the count is not an account
-wide total. Styling uses Semantic and minimal responsive grid layout.
+identity between profile and session reads. It shows the email, sessions on the
+current cursor page, email-change controls and security information. Session pages
+contain up to 100 rows. Styling uses Semantic and minimal responsive grid layout.
 
 Only this page dynamically imports Datastar as an external ES module from
 `<root>/s/js/datastar.<version>.js`. Module loading is deferred; landing/login do
@@ -50,11 +49,11 @@ All dashboard forms use the same `@submit()` action in `frontend/main.ts`:
 
 Refresh and pagination share `@refresh()`, wrapping Datastar GET with no signals,
 a same-origin check, busy/error handling and a 30-second timeout.
-`GET /home?fragment=sessions` renders only the sessions card and count, reusing the
+`GET /home?fragment=sessions` renders only the sessions card, reusing the
 same API session-list handler. It avoids the profile lookup, document wrapper,
-CSS and scripts. Datastar morphs those two elements, preserving the email form,
-profile, document header/footer and focus where possible. Server-rendering rows
-avoids duplicating device icons, translations, escaping and table templates in
+CSS and scripts. Datastar morphs that section, preserving the email form,
+account heading, document header/footer and focus where possible. Rendering rows
+on the server avoids duplicating device icons, translations, escaping and table templates in
 JavaScript. JSON serves mutations/messages; HTML serves this list fragment.
 
 Every session has an escaped device label and a Sign out link opening a native

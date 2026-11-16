@@ -139,7 +139,7 @@ Cambio solicitado: sustituir htmz por formularios nativos y Datastar; esta decis
 - [x] Landing y login usan navegación/formularios nativos; solo el estado de restauración automática carga el pequeño controlador de sesión.
 - [x] El dashboard carga Datastar desde el binario, fijado por tag y SHA-256, como módulo externo. CSP usa nonce aleatorio por documento, sin `unsafe-eval`.
 - [x] Un único `@submit()` adapta formularios a JSON con validación nativa, errores localizados, busy, timeout y Web Locks para los POST fetch. No expone tokens ni cambia autenticación Bearer de la API; mantiene CSRF y permisos del adaptador.
-- [x] Refresh/paginación actualizan solo el fragmento de sesiones y su contador. No reconstruyen perfil, formularios, header/footer ni assets. El renderizado de filas se conserva en Go.
+- [x] Refresh/paginación actualizan solo el fragmento de sesiones. No reconstruyen perfil, formularios, header/footer ni assets. El renderizado de filas se conserva en Go.
 - [x] Los modales usan `dialog` y `commandfor`; los enlaces de sesión abren el modal mediante Datastar. No hay iframes ni formularios temporales.
 - [x] Renovación automática conserva la coordinación entre pestañas y el fallback sin Web Locks; nunca rota en GET, limpia cookies tras un fallo ni reintenta mutaciones ambiguas. Los formularios nativos de login ya no se interceptan para serializarlos.
 - [ ] Alinear `/home` y POST `/login` con IDs del catálogo al abordar las rutas web: siguen siendo rutas raw prefijadas. Mantener la capacidad de eliminar esta superficie sin afectar la API.

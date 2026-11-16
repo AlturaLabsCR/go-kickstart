@@ -14,7 +14,6 @@ type Session struct {
 
 type View struct {
 	Email       string
-	CreatedAt   int64
 	VerifyEmail bool
 	Notice      string
 	Failed      bool
@@ -35,11 +34,6 @@ templ Home(action, home, next, datastar string, sessions []Session, language str
 		}
 		<p role="alert" hidden data-attr:hidden="!$error" data-text="$error"></p>
 		<p role="status" hidden data-attr:hidden="!$notice" data-text="$notice"></p>
-		<div id="profile" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,16rem),1fr));gap:1rem">
-			<div class="card"><label for="account-email">{ tr("web.email") }</label><input id="account-email" type="email" value={ view.Email } data-attr:value="$email" readonly/><small class="mute">{ tr("web.current_email") }</small></div>
-			<dl class="card"><dt class="mute">{ tr("web.member_since") }</dt><dd><strong>@timestamp(language, view.CreatedAt, false)</strong></dd><dd>{ tr("web.member_help") }</dd></dl>
-			<dl class="card"><dt class="mute">{ tr("web.sessions_shown") }</dt><dd>@sessionCount(len(sessions))</dd><dd>{ tr("web.sessions_page_help") }</dd></dl>
-		</div>
 		<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,22rem),1fr));gap:1rem">
 			@emailChange(action, home, view.VerifyEmail, tr)
 			@Sessions(action, home, next, sessions, tr, language)
