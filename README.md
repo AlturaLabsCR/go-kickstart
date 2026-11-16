@@ -65,7 +65,9 @@ and the weekly dependency review.
   requires network access; the built server embeds and serves the CSS locally.
 - `npm run browser` bundles the TypeScript frontend into
   `handlers/static/js/main.<sha256>.js` and generates
-  `templates.MainScriptURL(links)`. Changed contents get a new URL automatically,
+  `templates.MainScript()`, rendered inline once per browser document, with its
+  generated SHA-256 authorized by CSP. `templates.MainScriptURL(links)` remains
+  available for external consumers; changed contents get a new URL automatically,
   and obsolete bundles are removed. `npm ci` also runs this build.
 - Add a route group in `handlers/`, a registration method and its call in `registerRoutes`.
 - Use `Add` for a handler function and `AddHandler` for middleware-wrapped handlers;

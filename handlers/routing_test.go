@@ -140,8 +140,13 @@ func TestRoutesUseRootPrefix(t *testing.T) {
 			if tt.wantBody != "" && !strings.Contains(rec.Body.String(), tt.wantBody) {
 				t.Errorf("body = %q, want containing %q", rec.Body.String(), tt.wantBody)
 			}
-			if tt.name == "browser login" && !strings.Contains(rec.Body.String(), `src="/api/s/`+templates.MainScriptPath+`"`) {
-				t.Error("login did not reference the fingerprinted bundle under the root prefix")
+			if tt.name == "browser login" {
+				if strings.Count(rec.Body.String(), `<script id="main-script" type="module">`) != 1 {
+					t.Error("login did not include the inline bundle exactly once")
+				}
+				if !strings.Contains(rec.Header().Get("Content-Security-Policy"), "'"+templates.MainScriptCSPHash+"'") {
+					t.Error("login CSP did not authorize the inline bundle hash")
+				}
 			}
 			if tt.wantJSON {
 				if got := rec.Header().Get("Content-Type"); !strings.HasPrefix(got, "application/json") {

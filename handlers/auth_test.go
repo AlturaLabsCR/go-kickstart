@@ -158,6 +158,7 @@ func TestLoginOTPIsHashedAndConsumedOnce(t *testing.T) {
 			t.Fatalf("concurrent verification statuses = %v", statuses)
 		}
 		t.Run("native browser session", func(t *testing.T) {
+			autoResumeForm := regexp.MustCompile(`<form\b[^>]*\bdata-auto-resume(?:[\s=>])`)
 			var cookies []*http.Cookie
 			call := func(method, path string, values url.Values, origin string) *httptest.ResponseRecorder {
 				req := httptest.NewRequest(method, path, strings.NewReader(values.Encode()))
@@ -235,7 +236,7 @@ func TestLoginOTPIsHashedAndConsumedOnce(t *testing.T) {
 			// All GETs are read-only; the client submits the hidden renewal form.
 			pending := call("GET", "/login", nil, "")
 			requireStatus(t, pending, 200)
-			if len(pending.Result().Cookies()) != 0 || !strings.Contains(pending.Body.String(), "data-auto-resume") || strings.Contains(pending.Body.String(), "Continue session") {
+			if len(pending.Result().Cookies()) != 0 || !autoResumeForm.MatchString(pending.Body.String()) || strings.Contains(pending.Body.String(), "Continue session") {
 				t.Fatal("GET did not offer safe automatic resumption")
 			}
 			requireStatus(t, call("POST", "/login", url.Values{"action": {"resume"}}, "https://attacker.example"), 403)
@@ -263,7 +264,7 @@ func TestLoginOTPIsHashedAndConsumedOnce(t *testing.T) {
 			failed := httptest.NewRecorder()
 			h.handler.ServeHTTP(failed, stale)
 			requireStatus(t, failed, 200)
-			if len(failed.Result().Cookies()) != 0 || strings.Contains(failed.Body.String(), "data-auto-resume") {
+			if len(failed.Result().Cookies()) != 0 || autoResumeForm.MatchString(failed.Body.String()) {
 				t.Fatal("stale renewal cleared cookies or restarted renewal")
 			}
 			requireStatus(t, call("GET", "/home", nil, ""), 200)
@@ -355,7 +356,7 @@ func TestLoginOTPIsHashedAndConsumedOnce(t *testing.T) {
 			}
 			unavailable := call("GET", "/login", nil, "")
 			requireStatus(t, unavailable, 503)
-			if len(unavailable.Result().Cookies()) != 0 || strings.Contains(unavailable.Body.String(), "data-auto-resume") {
+			if len(unavailable.Result().Cookies()) != 0 || autoResumeForm.MatchString(unavailable.Body.String()) {
 				t.Fatal("backend failure mutated credentials or initiated renewal")
 			}
 

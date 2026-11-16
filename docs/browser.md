@@ -114,7 +114,10 @@ initializes `htmz.ts` (iframe requests, busy state and POST coordination),
 `dates.ts` (visitor-local timestamps) and `session.ts` (automatic session renewal).
 Shared form URL handling lives in `forms.ts`; it reads the action attribute
 because a control named `action` shadows the form's JavaScript property.
-They compile into a single `handlers/static/js/main.<sha256>.js` bundle.
+They compile into one bundle, rendered inline once per document by
+`templates.MainScript()` using templ's OnceHandle. The generated module remains
+outside `#browser-view`, so swaps do not rerun the parent document's script.
+The bundled `window === window.top` guard prevents initialization in the iframe.
 To remove the feature, remove the `registerBrowserRoutes` call from
 `Handler.registerRoutes`, the `routes.LoginPage` entry and the root page's sign-in
 link, then delete the browser sources. If removing the client build too, remove
@@ -126,12 +129,13 @@ site (Semantic CSS plus templ generation) via its postinstall script. It require
 Go and network access for the pinned stylesheet download. SQL generation remains
 `go generate ./database`. The browser build runs ESLint, TypeScript checks and esbuild. Its generated
 `handlers/static/js/main.<sha256>.js` is ignored. `templates/javascript.go`
-fingerprints the final bundle and generates `templates.MainScriptURL(links)`
-in the ignored `templates/javascript_generated.go`, preserving the root prefix.
+fingerprints the final bundle and generates the inline component, its CSP hash
+and the optional `templates.MainScriptURL(links)` helper in the ignored
+`templates/javascript_generated.go`, preserving the root prefix for external use.
 Changed contents get a new URL, identical contents keep it, and obsolete bundles
 are removed after publishing the replacement. `npm run browser` rebuilds just the
 client. The MIT notice for the original htmz pattern is in `licenses/htmz.txt`.
-Static assets are embedded when Go builds the server. After rebuilding the
+The generated inline bundle and static assets are embedded when Go builds the server. After rebuilding the
 frontend, rebuild and restart the server too; reloading the page cannot replace
 the bundle embedded in an already-running process.
 
@@ -172,8 +176,11 @@ blocking embedding by another origin. These headers also apply without nginx.
 Own rendered pages (root HTML, login/home and negotiated HTML 404) use the stricter
 policy in [handlers/security.go](../handlers/security.go): same-origin resources,
 scripts, forms and frames; no plugins or base URL overrides; data images for the
-favicon. Existing inline styles are allowed for the device layout, but inline
-scripts and eval are blocked. `Referrer-Policy: strict-origin` preserves same-origin
+favicon. The inline module is authorized by its generated SHA-256 CSP hash,
+calculated over the exact script content, including its trailing newline. Other
+inline scripts and eval remain blocked. Generation rejects an HTML `</script`
+closing tag before publishing the bundle. Existing inline styles are allowed.
+`Referrer-Policy: strict-origin` preserves same-origin
 form checks on HTTP LAN hosts while excluding paths and queries from referrers.
 
 Redocly receives the shared anti-framing/nosniff headers, but not the own-page
