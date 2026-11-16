@@ -1,6 +1,7 @@
 # Browser authentication
 
-Landing and login use native HTML POST forms. Their small `onsubmit` handler marks
+The landing links directly to login, which redirects authenticated users to home.
+Login uses native HTML POST forms. Their small `onsubmit` handler marks
 the submit button busy and disables duplicate clicks; CSP authorizes only that
 exact handler with a SHA-256 hash. Native server redirects still drive login and
 OTP verification. Ordinary login does not load Datastar.
