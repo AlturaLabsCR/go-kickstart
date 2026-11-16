@@ -11,7 +11,7 @@ templ Login(action, email, message string, verify, resume bool, tr func(string) 
 			</form>
 			<noscript><a href={ action + "?resume=0" }>{ tr("web.login") }</a></noscript>
 		}
-		<form style="max-width:36rem" onsubmit={ templ.JSUnsafeFuncCall(templates.NativeBusy) } hidden?={ resume } method="post" action={ action }>
+		<form style="max-width:36rem;margin-inline:auto" onsubmit={ templ.JSUnsafeFuncCall(templates.NativeBusy) } hidden?={ resume } method="post" action={ action }>
 			<h1>{ tr("web.login") }</h1>
 			if message!="" {
 				<p role="alert">{ message }</p>
