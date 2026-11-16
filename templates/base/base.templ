@@ -16,7 +16,7 @@ if page.Nonce != "" {
 	attrs["data-nonce"] = page.Nonce
 } }}
 	<html { attrs... }>
-		@head(page.Head)
+		@head(page.Head, page.Links, page.Nonce != "")
 		@body(page.Body, page.Links)
 	</html>
 }

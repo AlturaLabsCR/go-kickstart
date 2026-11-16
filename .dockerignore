@@ -4,9 +4,6 @@
 !*.go
 !package.json
 !package-lock.json
-!frontend/
-!tsconfig.json
-!eslint.config.mjs
 !licenses/
 !auth/
 !cache/

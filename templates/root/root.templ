@@ -3,6 +3,7 @@ package root
 import (
  "fmt"
  "app/routes"
+ "app/templates"
 )
 
 templ RootMain(links routes.Links, tr func(string, ...any) string) {
@@ -41,7 +42,7 @@ templ RootMain(links routes.Links, tr func(string, ...any) string) {
     <p class="landing-eyebrow primary"><span aria-hidden="true">✳</span>{ tr("root.eyebrow") }</p>
     <h1 id="landing-title">{ tr("root.headline") }<br/><span class="primary">{ tr("root.headline_accent") }</span></h1>
     <p class="landing-lead">{ tr("root.description") }</p>
-    <form method="post" action={ links.URL(routes.LoginPage) }>
+    <form onsubmit={ templ.JSUnsafeFuncCall(templates.NativeBusy) } method="post" action={ links.URL(routes.LoginPage) }>
      <input type="hidden" name="action" value="login"/>
      <label for="landing-email">{ tr("web.email") }</label>
      <input id="landing-email" type="email" name="email" autocomplete="email" required/>

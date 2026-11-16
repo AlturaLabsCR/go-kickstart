@@ -1,7 +1,6 @@
 package home
 
 import "encoding/json"
-import "app/templates"
 
 type Session struct {
 	ID                     string
@@ -19,9 +18,9 @@ type View struct {
 	Failed      bool
 }
 
-templ Home(action, home, next, datastar string, sessions []Session, language string, view View, tr func(string) string) {
-	{{ signals, _ := json.Marshal(map[string]any{"email": view.Email, "emailVerify": view.VerifyEmail, "error": "", "notice": "", "busy": false, "refreshSessions": false, "redirect": ""}) }}
-	<section data-datastar-url={ datastar } data-signals={ string(signals) } data-update-error={ tr("web.update_error") } data-effect="if ($redirect && new URL($redirect, location.href).origin === location.origin) location.assign($redirect)">
+templ Home(action, home, next string, sessions []Session, language string, view View, tr func(string) string) {
+	{{ signals, _ := json.Marshal(map[string]any{"email": view.Email, "emailVerify": view.VerifyEmail, "error": "", "notice": "", "busy": false, "refreshSessions": false, "redirect": "", "failure": tr("web.update_error")}) }}
+	<section data-signals={ string(signals) } data-on:datastar-fetch="if (evt.detail.type === 'error') $error = $failure" data-effect="if ($redirect && new URL($redirect, location.href).origin === location.origin) location.assign($redirect)">
 		<header>
 			<hgroup><p class="primary">{ tr("web.workspace") }</p><h1>{ tr("web.account_overview") }</h1><p data-text="$email">{ view.Email }</p></hgroup>
 		</header>
@@ -44,6 +43,5 @@ templ Home(action, home, next, datastar string, sessions []Session, language str
 			<details><summary>{ tr("web.email_change_explained") }</summary><p>{ tr("web.email_change_explanation") }</p></details>
 			<details><summary>{ tr("web.session_explained") }</summary><p>{ tr("web.session_explanation") }</p></details>
 		</section>
-		@templates.MainScript()
 	</section>
 }

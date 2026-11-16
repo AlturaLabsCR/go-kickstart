@@ -34,7 +34,8 @@ func (h *Handler) registerBrowserRoutes() {
 			httpx.WriteJSONError(w, status, message)
 			return
 		}
-		page(w, r, status, tr("web.login"), loginpage.Login(login, email, message, verify, !verify && status == http.StatusOK && r.Method == http.MethodGet && cookies.Read(r, "refresh") != "" && r.URL.Query().Get("resume") != "0" && !prefetch(r), tr), false)
+		resume := !verify && status == http.StatusOK && r.Method == http.MethodGet && cookies.Read(r, "refresh") != "" && r.URL.Query().Get("resume") != "0" && !prefetch(r)
+		page(w, r, status, tr("web.login"), loginpage.Login(login, email, message, verify, resume, tr), resume)
 	}
 
 	// GET never consumes a rotating token; the browser coordinates an automatic

@@ -210,7 +210,7 @@ func TestLoginOTPIsHashedAndConsumedOnce(t *testing.T) {
 			}
 			home := call("GET", "/home", nil, "")
 			requireStatus(t, home, 200)
-			if !strings.Contains(home.Body.String(), "Browser integration test") || !strings.Contains(home.Body.String(), "Current") {
+			if !strings.Contains(home.Body.String(), `class="tag info"`) || !strings.Contains(home.Body.String(), "Current") {
 				t.Fatal("home did not show current session")
 			}
 			requireStatus(t, call("GET", "/account/sessions", nil, ""), 401)
@@ -295,7 +295,7 @@ func TestLoginOTPIsHashedAndConsumedOnce(t *testing.T) {
 				t.Fatal("missing session revocation modal")
 			}
 			modal := regexp.MustCompile(`(?s)<dialog id="revoke-` + otherClaims.SessionID + `".*?</dialog>`).FindString(confirmation.Body.String())
-			if !strings.Contains(modal, "Log out of device:") || !strings.Contains(modal, "Windows Chrome") || strings.Contains(modal, otherDevice) {
+			if !strings.Contains(modal, "Log out of device:") || !strings.Contains(modal, "Chrome (Windows)") || strings.Contains(modal, otherDevice) {
 				t.Fatal("confirmation did not identify the selected device")
 			}
 			if _, err := h.auth.Verify(t.Context(), other.Value); err != nil {

@@ -11,7 +11,6 @@ import (
 	"app/internal/browser"
 	"app/internal/httpx"
 	"app/middleware"
-	"app/templates"
 	"app/templates/base"
 	homepage "app/templates/home"
 	"app/templates/meta"
@@ -103,8 +102,7 @@ func (h *Handler) browserHome(w http.ResponseWriter, r *http.Request, cookies br
 		}
 		return
 	}
-	datastar, _ := h.links.StaticURL(templates.DatastarScriptPath)
-	h.browserPage(w, r, status, tr("web.home"), homepage.Home(login, home, next, datastar, rows, h.language(r), view, tr), true)
+	h.browserPage(w, r, status, tr("web.home"), homepage.Home(login, home, next, rows, h.language(r), view, tr), true)
 }
 
 // Browser forms adapt existing JSON handlers, retaining live permission checks.

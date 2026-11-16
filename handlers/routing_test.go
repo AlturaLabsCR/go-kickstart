@@ -86,7 +86,7 @@ func TestRoutesUseRootPrefix(t *testing.T) {
 		wantLocation string
 	}{
 		{name: "browser login", method: "GET", path: "/api/login", wantStatus: 200, wantBody: `action="/api/login"`},
-		{name: "fingerprinted JavaScript", method: "GET", path: "/api/s/" + templates.MainScriptPath, wantStatus: 200},
+		{name: "pinned Datastar", method: "GET", path: "/api/s/" + templates.DatastarScriptPath, wantStatus: 200},
 		{name: "protected browser home", method: "GET", path: "/api/home", wantStatus: 303, wantLocation: "/api/login"},
 		{
 			name:       "root JSON",
@@ -142,10 +142,10 @@ func TestRoutesUseRootPrefix(t *testing.T) {
 			}
 			if tt.name == "browser login" {
 				if strings.Contains(rec.Body.String(), "<script") {
-					t.Error("ordinary login must use native forms without JavaScript")
+					t.Error("ordinary login must not load scripts")
 				}
-				if !strings.Contains(rec.Header().Get("Content-Security-Policy"), "'"+templates.MainScriptCSPHash+"'") {
-					t.Error("login CSP did not authorize the inline bundle hash")
+				if !strings.Contains(rec.Header().Get("Content-Security-Policy"), "'"+templates.NativeBusyHash+"'") {
+					t.Error("login CSP did not authorize the native busy handler")
 				}
 			}
 			if tt.wantJSON {

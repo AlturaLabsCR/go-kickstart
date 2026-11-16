@@ -6,13 +6,12 @@ templ Login(action, email, message string, verify, resume bool, tr func(string) 
 	<section>
 		if resume {
 			<p role="status">{ tr("web.resuming") }</p>
-			<form hidden method="post" action={ action } data-auto-resume>
+			<form hidden method="post" action={ action } data-auto-resume data-signals="{busy:false,error:'',notice:'',failure:'restore failed',refreshSessions:false}" data-init={ "(async () => { if (document.prerendering) {document.addEventListener('prerenderingchange',()=>location.reload(),{once:true});} else if (!navigator.locks) {location.replace(el.getAttribute('action')+'?resume=0');} else { await " + templates.Submit + "; if ($error) location.replace(el.getAttribute('action')+'?resume=0'); } })()" }>
 				<input type="hidden" name="action" value="resume"/>
 			</form>
-			@templates.MainScript()
 			<noscript><a href={ action + "?resume=0" }>{ tr("web.login") }</a></noscript>
 		}
-		<form hidden?={ resume } method="post" action={ action }>
+		<form onsubmit={ templ.JSUnsafeFuncCall(templates.NativeBusy) } hidden?={ resume } method="post" action={ action }>
 			<h1>{ tr("web.login") }</h1>
 			if message!="" {
 				<p role="alert">{ message }</p>

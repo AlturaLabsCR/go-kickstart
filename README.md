@@ -63,16 +63,12 @@ and the weekly dependency review.
   `semanticSHA256` and regenerate to upgrade; changed CSS gets a new
   URL automatically, and obsolete generated stylesheets are removed. Generation
   requires network access; the built server embeds and serves the CSS locally.
-- `npm run browser` bundles the TypeScript frontend into
-  `handlers/static/js/main.<sha256>.js` and generates
-  `templates.MainScript()`, rendered inline once per browser document, with its
-  generated SHA-256 authorized by CSP. `templates.MainScriptURL(links)` remains
-  available for external consumers; changed contents get a new URL automatically,
-  and obsolete bundles are removed. `npm ci` also runs this build.
-  It downloads the Datastar version and SHA-256 pinned in `templates/javascript.go`
-  into `handlers/static/js/`, with its license. Go embeds this external module;
-  only the dashboard loads it. Ordinary login uses native forms without scripts.
-  See [browser authentication](docs/browser.md) for the JSON adapter and CSP.
+- `go generate ./templates` also downloads the Datastar release pinned in
+  `templates/datastar.go`, verifies its SHA-256 and generates its static path and
+  SRI integrity value. The head loads the external module only on reactive pages.
+  Browser interactions live in templ attributes and `templates/interactions.go`;
+  no frontend bundler, TypeScript or ESLint is required. `npm ci` builds Redocly
+  and generates templates through postinstall. See [browser authentication](docs/browser.md).
 - Add a route group in `handlers/`, a registration method and its call in `registerRoutes`.
 - Use `Add` for a handler function and `AddHandler` for middleware-wrapped handlers;
   both apply the configured root prefix.

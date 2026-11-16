@@ -171,3 +171,5 @@ No crear nuevas suites permanentes sin la autorización exigida por `AGENTS.md`;
 - No editar migraciones publicadas ni borrar sesiones de usuarios para simplificar una migración. El diseño de replay/retención debe acordarse antes de cambiar esquema.
 - El [RFC 9700, sección 4.14](https://www.rfc-editor.org/rfc/rfc9700.html#section-4.14) sirve como referencia para protección de refresh; esta aplicación no se presenta como servidor OAuth completo. Distinguir rotación, detección de replay y caducidad absoluta.
 - Sin CSS adicional, cambios de API ni nuevos endpoints por defecto. Menos líneas es un beneficio secundario, no una razón para quitar verificaciones, fallback o modularidad.
+
+Actualización de presentación: se retiró el frontend TypeScript/ESLint. Datastar se carga en el head con SRI; las expresiones compartidas están en templates/interactions.go. Fechas usan Intl del navegador y los dispositivos se muestran como texto. Esto reemplaza las recomendaciones del paso 10 sobre bundle/ESLint y la duplicación de fechas del paso 11.
