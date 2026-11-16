@@ -188,7 +188,7 @@ func TestLoginOTPIsHashedAndConsumedOnce(t *testing.T) {
 			form.Set("otp", "invalid")
 			invalid := call("POST", "/login", form, "")
 			requireStatus(t, invalid, 401)
-			if !strings.Contains(invalid.Body.String(), `role="alert">Invalid login verification code.`) || !strings.Contains(invalid.Body.String(), `id="login-otp"`) {
+			if !strings.Contains(invalid.Body.String(), `class="warn" role="alert">Invalid login verification code.`) || !strings.Contains(invalid.Body.String(), `id="login-otp"`) {
 				t.Fatal("verification error was not visible beside the code input")
 			}
 			form.Set("otp", h.code(t))

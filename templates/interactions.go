@@ -17,7 +17,7 @@ var NativeBusyHash = func() string {
 // Shared by native dashboard forms and automatic restoration. Keep the lock
 // until response cookies are applied; never retry an ambiguous mutation.
 const Submit = `(async () => { if (!$busy && el.reportValidity()) {
- $busy = true; $error = ''; $notice = '';
+ $busy = true; $error = ''; $notice = ''; $errorForm = el.id;
  try {
   const url = new URL(el.getAttribute('action'), location.href);
   if (url.origin !== location.origin) throw new Error();
@@ -39,7 +39,7 @@ const Submit = `(async () => { if (!$busy && el.reportValidity()) {
 } })()`
 
 const Refresh = `(async () => { if (!$busy) {
- $busy = true; $error = '';
+ $busy = true; $error = ''; $errorForm = '';
  const controller = new AbortController();
  const timer = setTimeout(() => { $error = $failure; controller.abort(); },30000);
  try { await @get(el.dataset.refresh, {filterSignals:{include:/^$/}, retry:'never', openWhenHidden:true, requestCancellation:controller}); }
@@ -49,8 +49,8 @@ const Refresh = `(async () => { if (!$busy) {
 
 // Real disabled/inert attributes protect controls before the module initializes.
 func Button() templ.Attributes {
-	return templ.Attributes{"disabled": true, "data-attr:disabled": "$busy", "data-attr:aria-busy": "$busy"}
+	return templ.Attributes{"disabled": true, "data-attr:disabled": "$busy", "data-attr:aria-busy": "$busy ? 'true' : 'false'"}
 }
 func Link() templ.Attributes {
-	return templ.Attributes{"inert": true, "aria-disabled": "true", "data-attr:inert": "$busy", "data-attr:aria-disabled": "$busy", "data-attr:aria-busy": "$busy"}
+	return templ.Attributes{"inert": true, "aria-disabled": "true", "data-attr:inert": "$busy", "data-attr:aria-disabled": "$busy ? 'true' : 'false'", "data-attr:aria-busy": "$busy ? 'true' : 'false'"}
 }
