@@ -46,7 +46,7 @@ var en = map[string]string{
 	"root.next_title":           "Take a look under the hood.",
 	"root.next_description":     "Explore the endpoints, then start building your own.",
 
-	"web.resuming":       "Restoring your session…",
+	"web.resuming":       "Restoring session.",
 	"web.logout_current": "Log out of this device",
 	"web.logout_device":  "Log out of device:",
 	"web.unknown_device": "Unknown device",

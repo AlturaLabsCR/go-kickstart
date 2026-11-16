@@ -5,7 +5,7 @@ import "app/templates"
 templ Login(action, email, message string, verify, resume bool, tr func(string) string) {
 	<section>
 		if resume {
-			<p role="status">{ tr("web.resuming") }</p>
+			<div class="card" aria-busy="true" role="status">{ tr("web.resuming") }</div>
 			<form hidden method="post" action={ action } data-auto-resume data-signals="{busy:false,error:'',notice:'',failure:'restore failed',errorForm:'',refreshSessions:false}" data-init={ "(async () => { if (document.prerendering) {document.addEventListener('prerenderingchange',()=>location.reload(),{once:true});} else if (!navigator.locks) {location.replace(el.getAttribute('action')+'?resume=0');} else { await " + templates.Submit + "; if ($error) location.replace(el.getAttribute('action')+'?resume=0'); } })()" }>
 				<input type="hidden" name="action" value="resume"/>
 			</form>

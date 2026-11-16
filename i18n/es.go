@@ -46,7 +46,7 @@ var es = map[string]string{
 	"root.next_title":           "Conoce lo que hay detrás.",
 	"root.next_description":     "Explora los endpoints y empieza a construir lo tuyo.",
 
-	"web.resuming":       "Reanudando tu sesión…",
+	"web.resuming":       "Restaurando sesión.",
 	"web.logout_current": "Cerrar sesión en este dispositivo",
 	"web.logout_device":  "Cerrar sesión en el dispositivo:",
 	"web.unknown_device": "Dispositivo desconocido",
