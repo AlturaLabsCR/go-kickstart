@@ -1,15 +1,18 @@
 package login
 
+import "app/templates"
+
 templ Login(action, email, message string, verify, resume bool, tr func(string) string) {
 	<section>
 		if resume {
 			<p role="status">{ tr("web.resuming") }</p>
-			<form hidden method="post" action={ action + "#browser-view" } data-htmz data-auto-resume>
+			<form hidden method="post" action={ action } data-auto-resume>
 				<input type="hidden" name="action" value="resume"/>
 			</form>
+			@templates.MainScript()
 			<noscript><a href={ action + "?resume=0" }>{ tr("web.login") }</a></noscript>
 		}
-		<form hidden?={ resume } method="post" action={ action + "#browser-view" } data-htmz>
+		<form hidden?={ resume } method="post" action={ action }>
 			<h1>{ tr("web.login") }</h1>
 			if message!="" {
 				<p role="alert">{ message }</p>

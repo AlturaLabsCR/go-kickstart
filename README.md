@@ -54,8 +54,8 @@ and the weekly dependency review.
   from the release tag pinned in `templates/semantic.go` and writes its minified CSS to
   `handlers/static/css/semantic.<sha256>.css` with the upstream licenses. It also
   generates `templates.SemanticStylesheet()`, rendered inline in the shared page
-  head once per document through templ's OnceHandle. htmz swaps preserve that
-  head; each new HTML document includes the CSS again. The static CSS and
+  head once per document through templ's OnceHandle. Dashboard fragment updates
+  preserve that head; each new HTML document includes the CSS again. The static CSS and
   `templates.SemanticStylesheetURL(links)` remain available to other consumers.
   It verifies the CSS against `semanticSHA256` before writing files and
   limits each CSS/license download to 1 MiB. Review the new release, compute the
@@ -69,6 +69,10 @@ and the weekly dependency review.
   generated SHA-256 authorized by CSP. `templates.MainScriptURL(links)` remains
   available for external consumers; changed contents get a new URL automatically,
   and obsolete bundles are removed. `npm ci` also runs this build.
+  It downloads the Datastar version and SHA-256 pinned in `templates/javascript.go`
+  into `handlers/static/js/`, with its license. Go embeds this external module;
+  only the dashboard loads it. Ordinary login uses native forms without scripts.
+  See [browser authentication](docs/browser.md) for the JSON adapter and CSP.
 - Add a route group in `handlers/`, a registration method and its call in `registerRoutes`.
 - Use `Add` for a handler function and `AddHandler` for middleware-wrapped handlers;
   both apply the configured root prefix.

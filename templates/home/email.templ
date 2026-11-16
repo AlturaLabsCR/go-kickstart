@@ -1,19 +1,20 @@
 package home
 
 templ emailChange(action, home string, verify bool, tr func(string) string) {
- <form id="email-change" method="post" action={ action + "#browser-view" } data-htmz>
-  <hgroup><strong>{ tr("web.change_email") }</strong><p>{ tr("web.change_email_help") }</p></hgroup>
-  if verify {
-   <input type="hidden" name="action" value="email_confirm"/>
-   <label for="email-change-otp">{ tr("web.code") }</label>
-   <input id="email-change-otp" name="otp" inputmode="numeric" autocomplete="one-time-code" pattern="[0-9]{6}" minlength="6" maxlength="6" required/>
-   <small class="mute">{ tr("web.email_code_help") }</small>
-   <footer><a class="button outline" href={ home } data-htmz>{ tr("web.cancel") }</a><button type="submit">{ tr("web.confirm_email") }</button></footer>
-  } else {
-   <input type="hidden" name="action" value="email_change"/>
-   <label for="new-email">{ tr("web.new_email") }</label>
-   <input id="new-email" type="email" name="new_email" autocomplete="email" maxlength="254" required/>
-   <footer><a href={ home + "?email=verify" } data-htmz>{ tr("web.have_code") }</a><button type="submit">{ tr("web.send_code") }</button></footer>
-  }
- </form>
+	<section id="email-change">
+		<form hidden?={ verify } data-attr:hidden="$emailVerify" method="post" action={ action } data-on:submit="@submit()" data-attr:aria-busy="$busy">
+			<hgroup><strong>{ tr("web.change_email") }</strong><p>{ tr("web.change_email_help") }</p></hgroup>
+			<input type="hidden" name="action" value="email_change"/>
+			<label for="new-email">{ tr("web.new_email") }</label>
+			<input id="new-email" type="email" name="new_email" autocomplete="email" maxlength="254" required/>
+			<footer><a href={ home + "?email=verify" } data-on:click__prevent="$emailVerify = true; $error = ''">{ tr("web.have_code") }</a><button type="submit" data-attr:disabled="$busy">{ tr("web.send_code") }</button></footer>
+		</form>
+		<form hidden?={ !verify } data-attr:hidden="!$emailVerify" method="post" action={ action } data-on:submit="@submit()" data-attr:aria-busy="$busy">
+			<input type="hidden" name="action" value="email_confirm"/>
+			<label for="email-change-otp">{ tr("web.code") }</label>
+			<input id="email-change-otp" name="otp" inputmode="numeric" autocomplete="one-time-code" pattern="[0-9]{6}" minlength="6" maxlength="6" required/>
+			<small class="mute">{ tr("web.email_code_help") }</small>
+			<footer><a class="button outline" href={ home } data-on:click__prevent="$emailVerify = false; $error = ''">{ tr("web.cancel") }</a><button type="submit" data-attr:disabled="$busy">{ tr("web.confirm_email") }</button></footer>
+		</form>
+	</section>
 }

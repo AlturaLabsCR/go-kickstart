@@ -1,18 +1,15 @@
 import { formURL } from './forms';
-
-export function resumeSession(): void {
-  const form = document.querySelector<HTMLFormElement>('form[data-auto-resume]');
-  if (!form) return;
-  // Without a secure-context Web Locks API, show ordinary login rather than
-  // risk racing one-time refresh tokens in independent browsing contexts.
-  if (!navigator.locks) { location.replace(formURL(form).pathname + '?resume=0'); return; }
-  form.requestSubmit();
-}
+import { postForm, redirect } from './request';
 
 export function initializeSession(): void {
+  const form = document.querySelector<HTMLFormElement>('form[data-auto-resume]');
+  if (!form) return;
   if ('prerendering' in document && document.prerendering) {
     document.addEventListener('prerenderingchange', () => location.reload(), { once: true });
-  } else {
-    resumeSession();
+    return;
   }
+  const fallback = () => location.replace(formURL(form).pathname + '?resume=0');
+  // One-time refresh tokens need secure-context, origin-wide coordination.
+  if (!navigator.locks) { fallback(); return; }
+  void postForm(form).then(result => result.redirect ? redirect(result.redirect) : fallback()).catch(fallback);
 }

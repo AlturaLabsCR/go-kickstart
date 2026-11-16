@@ -30,7 +30,11 @@ func (h *Handler) registerBrowserRoutes() {
 	page := h.browserPage
 	showLogin := func(w http.ResponseWriter, r *http.Request, status int, email, message string, verify bool) {
 		tr := func(key string) string { return h.localize(r, key) }
-		page(w, r, status, tr("web.login"), loginpage.Login(login, email, message, verify, !verify && status == http.StatusOK && r.Method == http.MethodGet && cookies.Read(r, "refresh") != "" && r.URL.Query().Get("resume") != "0" && !prefetch(r), tr))
+		if browserJSON(r) && status >= 400 {
+			httpx.WriteJSONError(w, status, message)
+			return
+		}
+		page(w, r, status, tr("web.login"), loginpage.Login(login, email, message, verify, !verify && status == http.StatusOK && r.Method == http.MethodGet && cookies.Read(r, "refresh") != "" && r.URL.Query().Get("resume") != "0" && !prefetch(r), tr), false)
 	}
 
 	// GET never consumes a rotating token; the browser coordinates an automatic
@@ -45,7 +49,7 @@ func (h *Handler) registerBrowserRoutes() {
 		}
 		if authenticated {
 			w.Header().Set("Cache-Control", "no-store")
-			http.Redirect(w, r, home, http.StatusSeeOther)
+			browserRedirect(w, r, home)
 			return
 		}
 		showLogin(w, r, http.StatusOK, r.URL.Query().Get("email"), "", r.URL.Query().Get("step") == "verify")
@@ -80,6 +84,7 @@ func (h *Handler) registerBrowserRoutes() {
 		)
 	}))
 	h.AddHandler("POST", loginPath, csrf.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Add("Vary", "Accept")
 		w.Header().Set("Cache-Control", "no-store")
 		r.Body = http.MaxBytesReader(w, r.Body, 1<<20)
 		if err := r.ParseForm(); err != nil {
@@ -92,7 +97,11 @@ func (h *Handler) registerBrowserRoutes() {
 		if action == "resume" {
 			authenticated, status := h.resumeSession(w, r, cookies)
 			if authenticated {
-				http.Redirect(w, r, home, http.StatusSeeOther)
+				browserRedirect(w, r, home)
+				return
+			}
+			if browserJSON(r) && status < 400 {
+				browserRedirect(w, r, login+"?resume=0")
 				return
 			}
 			message := ""
@@ -118,18 +127,24 @@ func (h *Handler) registerBrowserRoutes() {
 			}))
 			reply := browser.Call(request, revoke, nil, cookies.Read(r, "access"))
 			if reply.Status == 401 {
-				http.Redirect(w, r, login, http.StatusSeeOther)
+				browserRedirect(w, r, login)
 				return
 			}
 			if reply.Status >= 400 {
+				if browserJSON(r) {
+					browserForward(w, reply)
+					return
+				}
 				showLogin(w, r, reply.Status, "", h.localize(r, "err.revoke_session"), false)
 				return
 			}
 			if current {
 				cookies.Clear(w)
-				http.Redirect(w, r, login, http.StatusSeeOther)
+				browserRedirect(w, r, login)
+			} else if browserJSON(r) {
+				httpx.WriteJSON(w, 200, map[string]any{"refreshSessions": true, "error": ""})
 			} else {
-				http.Redirect(w, r, home, http.StatusSeeOther)
+				browserRedirect(w, r, home)
 			}
 			return
 		}
@@ -168,7 +183,7 @@ func (h *Handler) registerBrowserRoutes() {
 				}
 			}
 			cookies.Clear(w)
-			http.Redirect(w, r, login, http.StatusSeeOther)
+			browserRedirect(w, r, login)
 			return
 		}
 		var reply *browser.Reply
@@ -202,9 +217,10 @@ func (h *Handler) registerBrowserRoutes() {
 		}
 		cookies.Save(w, tokens)
 		w.Header().Set("Cache-Control", "no-store")
-		http.Redirect(w, r, home, http.StatusSeeOther)
+		browserRedirect(w, r, home)
 	})))
 	h.Add("GET", homePath, func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Add("Vary", "Accept")
 		notice := ""
 		if r.URL.Query().Get("email") == "updated" {
 			notice = h.localize(r, "web.email_updated")

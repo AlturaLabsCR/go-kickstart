@@ -14,7 +14,7 @@ templ RootMain(links routes.Links, tr func(string, ...any) string) {
   .landing h1 { margin-block: 1.25rem; font-size: clamp(2.5rem,4.5vw,4.5rem); line-height: 1.08; letter-spacing: -.055em; }
   .landing-lead { max-width: 35rem; color: var(--fs); line-height: 1.8; }
   .landing-actions { display: flex; flex-wrap: wrap; gap: .6rem; margin-block: 1.5rem 1rem; }
-  .landing-actions a, .landing-next a { display: inline-flex; align-items: center; gap: .5rem; }
+  .landing-actions :is(a,button), .landing-next a { display: inline-flex; align-items: center; gap: .5rem; }
   .landing-preview { padding: 1.25rem; background: var(--b); box-shadow: 0 1rem 3rem #0001; transform: rotate(1deg); }
   .landing-preview header { flex-wrap: wrap; gap: .5rem; margin-bottom: 1.25rem; }
   .landing-preview pre { margin-block: 1rem 1.5rem; padding: 1.25rem; font-size: .9rem; white-space: pre-wrap; overflow-wrap: anywhere; }
@@ -41,10 +41,15 @@ templ RootMain(links routes.Links, tr func(string, ...any) string) {
     <p class="landing-eyebrow primary"><span aria-hidden="true">✳</span>{ tr("root.eyebrow") }</p>
     <h1 id="landing-title">{ tr("root.headline") }<br/><span class="primary">{ tr("root.headline_accent") }</span></h1>
     <p class="landing-lead">{ tr("root.description") }</p>
-    <div class="landing-actions">
-     <a class="button" href={ links.URL(routes.LoginPage) }>{ tr("root.start") }<span aria-hidden="true"> →</span></a>
-     <a class="button outline" href={ links.URL(routes.APIDocs) }>{ tr("root.explore_api") }</a>
-    </div>
+    <form method="post" action={ links.URL(routes.LoginPage) }>
+     <input type="hidden" name="action" value="login"/>
+     <label for="landing-email">{ tr("web.email") }</label>
+     <input id="landing-email" type="email" name="email" autocomplete="email" required/>
+     <div class="landing-actions">
+      <button type="submit">{ tr("root.start") }<span aria-hidden="true"> →</span></button>
+      <a class="button outline" href={ links.URL(routes.APIDocs) }>{ tr("root.explore_api") }</a>
+     </div>
+    </form>
     <small class="mute">{ tr("root.foundation") }</small>
    </section>
    <figure class="card landing-preview" aria-labelledby="preview-title">

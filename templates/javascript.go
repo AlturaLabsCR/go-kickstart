@@ -9,9 +9,17 @@ import (
 	"encoding/base64"
 	"fmt"
 	"go/format"
+	"io"
+	"net/http"
 	"os"
 	"path/filepath"
+	"time"
 )
+
+// Official self-hosted bundle, including CSP nonce support. Update both together.
+const datastarTag = "v1.0.5"
+const datastarSHA256 = "7380e0344b7f937d80ad70ededa1c28578173157ee4748be1850991491d911fd"
+const datastarPath = "js/datastar." + datastarTag + ".js"
 
 func main() {
 	if err := generate(); err != nil {
@@ -22,6 +30,9 @@ func main() {
 
 func generate() error {
 	const dir = "handlers/static/js"
+	if err := downloadDatastar(); err != nil {
+		return err
+	}
 	bundle := filepath.Join(dir, "main.js")
 	data, err := os.ReadFile(bundle)
 	if err != nil {
@@ -40,6 +51,7 @@ import "app/routes"
 import "github.com/a-h/templ"
 
 const MainScriptPath = %q
+const DatastarScriptPath = %q
 const MainScriptCSPHash = %q
 
 // Only the generated local bundle is rendered as raw HTML.
@@ -52,7 +64,7 @@ func MainScript() templ.Component { return mainScript.Once() }
 func MainScriptURL(links routes.Links) (string, error) {
  return links.StaticURL(MainScriptPath)
 }
-`, "js/"+filename, "sha256-"+base64.StdEncoding.EncodeToString(digest[:]), "<script id=\"main-script\" type=\"module\">"+string(data)+"</script>"))
+`, "js/"+filename, datastarPath, "sha256-"+base64.StdEncoding.EncodeToString(digest[:]), "<script id=\"main-script\" type=\"module\">"+string(data)+"</script>"))
 	if err != nil {
 		return err
 	}
@@ -66,13 +78,55 @@ func MainScriptURL(links routes.Links) (string, error) {
 	if err != nil {
 		return err
 	}
+	datastarFiles, err := filepath.Glob(filepath.Join(dir, "datastar.*.js"))
+	if err != nil {
+		return err
+	}
+	previous = append(previous, datastarFiles...)
 	previous = append(previous, filepath.Join(dir, "browser.js"))
 	for _, name := range previous {
-		if filepath.Base(name) != filename {
+		if filepath.Base(name) != filename && name != filepath.Join("handlers/static", datastarPath) {
 			if err := os.Remove(name); err != nil && !os.IsNotExist(err) {
 				return err
 			}
 		}
 	}
 	return nil
+}
+
+// Download only at build time, never while serving requests. Verify cached bytes too.
+func downloadDatastar() error {
+	client := &http.Client{Timeout: 30 * time.Second}
+	for _, file := range []struct{ path, source, digest string }{
+		{"handlers/static/" + datastarPath, "bundles/datastar.js", datastarSHA256},
+		{"licenses/datastar.txt", "LICENSE.md", "17da0e216d3c6a819526f5b72a6a44d84d34bcd9beb4191ac6af89c1508ef08f"},
+	} {
+		data, err := os.ReadFile(file.path)
+		if err == nil && fmt.Sprintf("%x", sha256.Sum256(data)) == file.digest {
+			continue
+		}
+		response, err := client.Get("https://raw.githubusercontent.com/starfederation/datastar/" + datastarTag + "/" + file.source)
+		if err != nil {
+			return err
+		}
+		data, err = io.ReadAll(io.LimitReader(response.Body, (1<<20)+1))
+		response.Body.Close()
+		if err != nil {
+			return err
+		}
+		if response.StatusCode != http.StatusOK || len(data) > 1<<20 || fmt.Sprintf("%x", sha256.Sum256(data)) != file.digest {
+			return fmt.Errorf("invalid Datastar download: %s", file.source)
+		}
+		if err := os.MkdirAll(filepath.Dir(file.path), 0755); err != nil {
+			return err
+		}
+		if err := os.WriteFile(file.path, data, 0644); err != nil {
+			return err
+		}
+	}
+	license, err := os.ReadFile("licenses/datastar.txt")
+	if err != nil {
+		return err
+	}
+	return os.WriteFile("handlers/static/js/datastar.LICENSE.txt", license, 0644)
 }

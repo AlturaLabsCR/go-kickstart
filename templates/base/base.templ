@@ -3,14 +3,19 @@ package base
 import "app/routes"
 
 type PageParams struct {
- Links routes.Links
-	Head HeadParams
-	Body BodyParams
+	Nonce string
+	Links routes.Links
+	Head  HeadParams
+	Body  BodyParams
 }
 
 templ Page(page PageParams) {
 	<!DOCTYPE html>
-	<html>
+	{{ attrs := templ.Attributes{}
+if page.Nonce != "" {
+	attrs["data-nonce"] = page.Nonce
+} }}
+	<html { attrs... }>
 		@head(page.Head)
 		@body(page.Body, page.Links)
 	</html>

@@ -3,8 +3,10 @@ package home
 templ confirmLogout(id, action, operation, sessionID, device string, current bool, tr func(string) string) {
 	<dialog id={ id } aria-labelledby={ id + "-title" } aria-describedby={ id + "-description" }>
 		<hgroup>
-			<h2 id={ id + "-title" }>{ tr("web.confirm_logout") }</h2>
-			<button type="button" commandfor={ id } command="close" aria-label={ tr("web.close") }>×</button>
+			<header>
+				<h2 id={ id + "-title" }>{ tr("web.confirm_logout") }</h2>
+				<button type="button" commandfor={ id } command="close" aria-label={ tr("web.close") }>×</button>
+			</header>
 			<p id={ id + "-description" }>
 				if current {
 					{ tr("web.logout_current") }
@@ -18,14 +20,14 @@ templ confirmLogout(id, action, operation, sessionID, device string, current boo
 				}
 			</p>
 		</hgroup>
-		<p role="alert" data-htmz-error></p>
-		<form id={ id + "-form" } hidden method="post" action={ action + "#browser-view" } data-htmz>
+		<p role="alert" hidden data-attr:hidden="!$error" data-text="$error"></p>
+		<form id={ id + "-form" } hidden method="post" action={ action } data-on:submit="@submit()" data-attr:aria-busy="$busy">
 			<input type="hidden" name="action" value={ operation }/>
 			<input type="hidden" name="session_id" value={ sessionID }/>
 		</form>
 		<footer>
 			<button type="button" class="outline" commandfor={ id } command="close" autofocus>{ tr("web.cancel") }</button>
-			<button type="submit" form={ id + "-form" }>{ tr("web.logout") }</button>
+			<button type="submit" form={ id + "-form" } data-attr:disabled="$busy">{ tr("web.logout") }</button>
 		</footer>
 	</dialog>
 }

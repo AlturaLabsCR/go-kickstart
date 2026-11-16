@@ -1,6 +1,7 @@
 package home
 
-import "strconv"
+import "encoding/json"
+import "app/templates"
 
 type Session struct {
 	ID                     string
@@ -11,42 +12,44 @@ type Session struct {
 	Current                bool
 }
 
-
 type View struct {
- Email string
- CreatedAt int64
- VerifyEmail bool
- Notice string
- Failed bool
+	Email       string
+	CreatedAt   int64
+	VerifyEmail bool
+	Notice      string
+	Failed      bool
 }
 
-templ Home(action, home, next string, sessions []Session, language string, view View, tr func(string) string) {
- <section>
-  <header>
-   <hgroup><p class="primary">{ tr("web.workspace") }</p><h1>{ tr("web.account_overview") }</h1><p>{ tr("web.account_intro") }</p></hgroup>
-  </header>
-  <nav aria-label={ tr("web.account_sections") }><ul><li><a href="#profile">{ tr("web.profile") }</a></li><li><a href="#email-change">{ tr("web.change_email") }</a></li><li><a href="#sessions">{ tr("web.sessions") }</a></li></ul></nav>
-  if view.Notice!="" {
-   if view.Failed {
-    <blockquote class="alert" role="alert">{ view.Notice }</blockquote>
-   } else {
-    <blockquote class="tip" role="status">{ view.Notice }</blockquote>
-   }
-  }
-  <div id="profile" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,16rem),1fr));gap:1rem">
-   <div class="card"><label for="account-email">{ tr("web.email") }</label><input id="account-email" type="email" value={ view.Email } readonly/><small class="mute">{ tr("web.current_email") }</small></div>
-   <dl class="card"><dt class="mute">{ tr("web.member_since") }</dt><dd><strong>@timestamp(language, view.CreatedAt, false)</strong></dd><dd>{ tr("web.member_help") }</dd></dl>
-   <dl class="card"><dt class="mute">{ tr("web.sessions_shown") }</dt><dd><strong>{ strconv.Itoa(len(sessions)) }</strong></dd><dd>{ tr("web.sessions_page_help") }</dd></dl>
-  </div>
-  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,22rem),1fr));gap:1rem">
-   @emailChange(action, home, view.VerifyEmail, tr)
-   <section class="card">
-    <hgroup><strong>{ tr("web.account_security") }</strong><p>{ tr("web.account_security_help") }</p></hgroup>
-    <p><span class="tag green">{ tr("web.passwordless") }</span> <span class="tag blue">{ tr("web.session_controls") }</span></p>
-    <details><summary>{ tr("web.email_change_explained") }</summary><p>{ tr("web.email_change_explanation") }</p></details>
-    <details><summary>{ tr("web.session_explained") }</summary><p>{ tr("web.session_explanation") }</p></details>
-   </section>
-  </div>
-  @sessionList(action, home, next, sessions, tr, language)
- </section>
+templ Home(action, home, next, datastar string, sessions []Session, language string, view View, tr func(string) string) {
+	{{ signals, _ := json.Marshal(map[string]any{"email": view.Email, "emailVerify": view.VerifyEmail, "error": "", "notice": "", "busy": false, "refreshSessions": false, "redirect": ""}) }}
+	<section data-datastar-url={ datastar } data-signals={ string(signals) } data-update-error={ tr("web.update_error") } data-effect="if ($redirect && new URL($redirect, location.href).origin === location.origin) location.assign($redirect)">
+		<header>
+			<hgroup><p class="primary">{ tr("web.workspace") }</p><h1>{ tr("web.account_overview") }</h1><p data-text="$email">{ view.Email }</p></hgroup>
+		</header>
+		if view.Notice!="" {
+			if view.Failed {
+				<blockquote class="alert" role="alert">{ view.Notice }</blockquote>
+			} else {
+				<blockquote class="tip" role="status">{ view.Notice }</blockquote>
+			}
+		}
+		<p role="alert" hidden data-attr:hidden="!$error" data-text="$error"></p>
+		<p role="status" hidden data-attr:hidden="!$notice" data-text="$notice"></p>
+		<div id="profile" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,16rem),1fr));gap:1rem">
+			<div class="card"><label for="account-email">{ tr("web.email") }</label><input id="account-email" type="email" value={ view.Email } data-attr:value="$email" readonly/><small class="mute">{ tr("web.current_email") }</small></div>
+			<dl class="card"><dt class="mute">{ tr("web.member_since") }</dt><dd><strong>@timestamp(language, view.CreatedAt, false)</strong></dd><dd>{ tr("web.member_help") }</dd></dl>
+			<dl class="card"><dt class="mute">{ tr("web.sessions_shown") }</dt><dd>@sessionCount(len(sessions))</dd><dd>{ tr("web.sessions_page_help") }</dd></dl>
+		</div>
+		<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,22rem),1fr));gap:1rem">
+			@emailChange(action, home, view.VerifyEmail, tr)
+			@Sessions(action, home, next, sessions, tr, language)
+		</div>
+		<section>
+			<hgroup><strong>{ tr("web.account_security") }</strong><p>{ tr("web.account_security_help") }</p></hgroup>
+			<p><span class="tag green">{ tr("web.passwordless") }</span> <span class="tag blue">{ tr("web.session_controls") }</span></p>
+			<details><summary>{ tr("web.email_change_explained") }</summary><p>{ tr("web.email_change_explanation") }</p></details>
+			<details><summary>{ tr("web.session_explained") }</summary><p>{ tr("web.session_explanation") }</p></details>
+		</section>
+		@templates.MainScript()
+	</section>
 }
