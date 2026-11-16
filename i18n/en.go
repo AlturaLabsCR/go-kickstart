@@ -17,7 +17,7 @@ var en = map[string]string{
 	"web.confirm_email":            "Confirm email",
 	"web.new_email":                "New email address",
 	"web.have_code":                "Already have a code?",
-	"web.send_code":                "Send verification code",
+	"web.send_code":                "Send code",
 	"web.email_updated":            "Your email address has been updated.",
 
 	"root.title":                "A head start for your next idea",
