@@ -10,7 +10,6 @@ type BodyParams struct {
 
 templ body(params BodyParams, links routes.Links) {
 	<body>
-		<div class="hidden" id={ RedirectID }></div>
 		@header(links)
 		@main(params.Content, params.Aside)
 		@footer()
