@@ -16,7 +16,7 @@ import (
 
 const datastarTag = "v1.0.5"
 const datastarSHA256 = "7380e0344b7f937d80ad70ededa1c28578173157ee4748be1850991491d911fd"
-const datastarPath = "js/datastar." + datastarTag + ".js"
+const datastarPath = "js/datastar." + datastarTag + "." + datastarSHA256 + ".js"
 
 func main() {
 	if err := generate(); err != nil {

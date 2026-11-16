@@ -9,7 +9,11 @@ OTP verification. Ordinary login does not load Datastar.
 Home and automatic session restoration load Datastar as an external ES module
 in the head. Modules are deferred by default. `templates/datastar.go` pins v1.0.5,
 verifies download SHA-256 and generates the static path and SRI integrity value.
-The browser verifies SRI too. The binary embeds the file and license; no runtime
+The browser verifies SRI too. The module URL includes its content SHA-256.
+Successful GET/HEAD responses for that exact public asset use `public, max-age=31536000, immutable`, avoiding module
+network round trips on warm restoration. Login/home and errors do not inherit
+this policy. Changed bytes produce a new URL; SRI still verifies the content.
+The binary embeds the file and license; no runtime
 CDN or custom inline script bundle is involved. Each reactive document gets a
 fresh nonce for Datastar CSP mode; arbitrary inline scripts and eval stay blocked.
 
