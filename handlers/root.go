@@ -29,7 +29,8 @@ func (h *Handler) Root(w http.ResponseWriter, r *http.Request) {
 			Links: h.links,
 			Head: base.HeadParams{
 				Title:       meta.AppTitle,
-				Subtitle:    L("root.greeting"),
+				Subtitle:    L("root.title"),
+				Description: L("root.description"),
 				RobotsIndex: true,
 			},
 			Body: base.BodyParams{
