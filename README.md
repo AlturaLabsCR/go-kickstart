@@ -31,13 +31,27 @@ For focused edits, use `go generate ./docs`, `go generate ./database` or
 `go generate ./templates`. CI and Docker follow the same install → generate →
 build sequence, without an npm installation hook that builds files implicitly.
 
+For automatic rebuilds after the initial generation, run:
+
+```sh
+go tool air
+```
+
+Air is pinned in `go.mod` and runs the app with `--dev`. `.air.toml` watches Go,
+templ, SQL, API docs and runtime configuration. It regenerates only the affected
+outputs before rebuilding, and ignores its temporary binary and database files.
+Install npm dependencies and run `go generate ./...` once before starting it.
+Extra application flags can be passed with `go tool air -- --port 3081`.
+
 Browser login, protected home and session listing are described in
 [the browser authentication guide](docs/browser.md).
 
 `--dev` defaults to debug-level text logs with source locations, logs OTP values,
 permits all CORS origins and bypasses browser form CSRF checks. It also allows
 empty/short signing secrets with warnings and uses browser cookies suitable for
-local HTTP. An empty OTP secret becomes a temporary per-process key. Explicit
+local HTTP. Development skips the readiness drain delay on shutdown while
+still allowing active requests to finish. Production keeps the configured
+`http.drain-delay`. An empty OTP secret becomes a temporary per-process key. Explicit
 log settings in flags, environment or configuration override the dev defaults.
 
 ## Configuration
