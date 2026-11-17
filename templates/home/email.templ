@@ -4,7 +4,7 @@ import "app/templates"
 
 templ emailChange(action, home string, verify bool, tr func(string) string) {
 	<section id="email-change">
-		<form id="email-change-request" hidden?={ verify } data-attr:hidden="$emailVerify" method="post" action={ action } data-on:submit={ templates.Submit } data-attr:aria-busy="$busy ? 'true' : 'false'">
+		<form id="email-change-request" hidden?={ verify } data-attr:hidden="$emailVerify" method="post" action={ action } data-on:submit={ templates.Submit }>
 			<hgroup><strong>{ tr("web.change_email") }</strong><p>{ tr("web.change_email_help") }</p></hgroup>
 			<input type="hidden" name="action" value="email_change"/>
 			<label for="new-email">{ tr("web.new_email") }</label>
@@ -12,7 +12,7 @@ templ emailChange(action, home string, verify bool, tr func(string) string) {
 			@templates.FormError("email-change-request")
 			<footer><a { templates.Link()... } href={ home + "?email=verify" } data-on:click__prevent="$emailVerify = true; $error = ''">{ tr("web.have_code") }</a><button type="submit" { templates.Button()... }>{ tr("web.send_code") }</button></footer>
 		</form>
-		<form id="email-change-confirm" hidden?={ !verify } data-attr:hidden="!$emailVerify" method="post" action={ action } data-on:submit={ templates.Submit } data-attr:aria-busy="$busy ? 'true' : 'false'">
+		<form id="email-change-confirm" hidden?={ !verify } data-attr:hidden="!$emailVerify" method="post" action={ action } data-on:submit={ templates.Submit }>
 			<input type="hidden" name="action" value="email_confirm"/>
 			<label for="email-change-otp">{ tr("web.code") }</label>
 			<input id="email-change-otp" name="otp" inputmode="numeric" autocomplete="one-time-code" pattern="[0-9]{6}" minlength="6" maxlength="6" required/>

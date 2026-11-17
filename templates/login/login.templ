@@ -6,7 +6,7 @@ templ Login(action, email, message string, verify, resume bool, tr func(string) 
 	<section>
 		if resume {
 			<div class="card" aria-busy="true" role="status">{ tr("web.resuming") }</div>
-			<form hidden method="post" action={ action } data-auto-resume data-signals="{busy:false,error:'',notice:'',failure:'restore failed',errorForm:'',refreshSessions:false}" data-init={ "(async () => { if (document.prerendering) {document.addEventListener('prerenderingchange',()=>location.reload(),{once:true});} else if (!navigator.locks) {location.replace(el.getAttribute('action')+'?resume=0');} else { await " + templates.Submit + "; if ($error) location.replace(el.getAttribute('action')+'?resume=0'); } })()" }>
+			<form id="session-restore" hidden method="post" action={ action } data-auto-resume data-signals="{pending:'',error:'',notice:'',failure:'restore failed',errorForm:'',refreshSessions:false}" data-init={ "(async () => { if (document.prerendering) {document.addEventListener('prerenderingchange',()=>location.reload(),{once:true});} else if (!navigator.locks) {location.replace(el.getAttribute('action')+'?resume=0');} else { await " + templates.Submit + "; if ($error) location.replace(el.getAttribute('action')+'?resume=0'); } })()" }>
 				<input type="hidden" name="action" value="resume"/>
 			</form>
 			<noscript><a href={ action + "?resume=0" }>{ tr("web.login") }</a></noscript>

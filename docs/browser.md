@@ -19,7 +19,9 @@ fresh nonce for Datastar CSP mode; arbitrary inline scripts and eval stay blocke
 
 `templates/interactions.go` shares form submission, refresh and control attributes.
 Buttons start disabled and enhanced links inert until Datastar initializes their
-bindings. Async actions set `aria-busy`, prevent concurrent submissions, enforce
+bindings. A pending action ID limits `aria-busy` to its initiating control, while a shared
+guard still prevents overlapping actions. The refresh SVG hides while Semantic
+displays its spinner. Async actions enforce
 same-origin requests and use a 30-second timeout. Errors clear busy state and
 allow retry. Local modal open/close actions finish immediately and need no loading
 indicator. Cancel and close use native `commandfor` controls.

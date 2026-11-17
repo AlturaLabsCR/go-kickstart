@@ -16,8 +16,8 @@ var NativeBusyHash = func() string {
 
 // Shared by native dashboard forms and automatic restoration. Keep the lock
 // until response cookies are applied; never retry an ambiguous mutation.
-const Submit = `(async () => { if (!$busy && el.reportValidity()) {
- $busy = true; $error = ''; $notice = ''; $errorForm = el.id;
+const Submit = `(async () => { if (!$pending && el.reportValidity()) {
+ $pending = el.id; $error = ''; $notice = ''; $errorForm = el.id;
  try {
   const url = new URL(el.getAttribute('action'), location.href);
   if (url.origin !== location.origin) throw new Error();
@@ -35,22 +35,22 @@ const Submit = `(async () => { if (!$busy && el.reportValidity()) {
   $refreshSessions = !!result.refreshSessions;
   if (!result.error) el.reset();
  } catch { $error = $failure; }
- finally { $busy = false; }
+ finally { $pending = ''; }
 } })()`
 
-const Refresh = `(async () => { if (!$busy) {
- $busy = true; $error = ''; $errorForm = '';
+const Refresh = `(async () => { if (!$pending) {
+ $pending = el.dataset.busy || el.id; $error = ''; $errorForm = '';
  const controller = new AbortController();
  const timer = setTimeout(() => { $error = $failure; controller.abort(); },30000);
  try { await @get(el.dataset.refresh, {filterSignals:{include:/^$/}, retry:'never', openWhenHidden:true, requestCancellation:controller}); }
  catch { $error = $failure; }
- finally { clearTimeout(timer); $busy = false; }
+ finally { clearTimeout(timer); $pending = ''; }
 } })()`
 
 // Real disabled/inert attributes protect controls before the module initializes.
 func Button() templ.Attributes {
-	return templ.Attributes{"disabled": true, "data-attr:disabled": "$busy", "data-attr:aria-busy": "$busy ? 'true' : 'false'"}
+	return templ.Attributes{"disabled": true, "data-attr:disabled": "!!$pending", "data-attr:aria-busy": "$pending && $pending === (el.form?.id || el.id) ? 'true' : 'false'"}
 }
 func Link() templ.Attributes {
-	return templ.Attributes{"inert": true, "aria-disabled": "true", "data-attr:inert": "$busy", "data-attr:aria-disabled": "$busy ? 'true' : 'false'", "data-attr:aria-busy": "$busy ? 'true' : 'false'"}
+	return templ.Attributes{"inert": true, "aria-disabled": "true", "data-attr:inert": "!!$pending", "data-attr:aria-disabled": "$pending ? 'true' : 'false'", "data-attr:aria-busy": "$pending && $pending === el.id ? 'true' : 'false'"}
 }

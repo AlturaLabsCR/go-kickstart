@@ -19,7 +19,7 @@ type View struct {
 }
 
 templ Home(action, home, next string, sessions []Session, language string, view View, tr func(string) string) {
-	{{ signals, _ := json.Marshal(map[string]any{"email": view.Email, "emailVerify": view.VerifyEmail, "error": "", "errorForm": "", "notice": "", "busy": false, "refreshSessions": false, "redirect": "", "failure": tr("web.update_error")}) }}
+	{{ signals, _ := json.Marshal(map[string]any{"email": view.Email, "emailVerify": view.VerifyEmail, "error": "", "errorForm": "", "notice": "", "pending": "", "refreshSessions": false, "redirect": "", "failure": tr("web.update_error")}) }}
 	<section data-signals={ string(signals) } data-on:datastar-fetch="if (evt.detail.type === 'error') $error = $failure" data-effect="if ($redirect && new URL($redirect, location.href).origin === location.origin) location.assign($redirect)">
 		<header>
 			<hgroup><p class="primary">{ tr("web.workspace") }</p><h1>{ tr("web.account_overview") }</h1><p data-text="$email">{ view.Email }</p></hgroup>
