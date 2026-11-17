@@ -28,7 +28,7 @@ func registerSettings(cmd *cobra.Command) {
 		key, flag, usage string
 		value            any
 	}{
-		{"http.drain-delay", "drain-delay", "serve while readiness withdrawal propagates on shutdown", 5 * time.Second},
+		{"http.drain-delay", "drain-delay", "serve while readiness withdrawal propagates on shutdown (ignored with --dev)", 5 * time.Second},
 		{"http.shutdown-timeout", "shutdown-timeout", "grace period for active HTTP requests after draining", 25 * time.Second},
 		{"dev", "dev", "enable debug text logs, allow all origins and development signing secrets", false},
 		{"host", "host", "bind host", ""},

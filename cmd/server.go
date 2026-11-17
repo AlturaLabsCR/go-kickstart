@@ -53,6 +53,9 @@ type serverConfig struct {
 }
 
 func runServer(cfg serverConfig) error {
+	if cfg.Dev {
+		cfg.DrainDelay = 0
+	}
 	if cfg.DrainDelay < 0 || cfg.ShutdownTimeout <= 0 || cfg.MaxConnections < 1 {
 		return errors.New("drain delay must be nonnegative; shutdown timeout and database connections must be positive")
 	}

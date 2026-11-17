@@ -13,7 +13,7 @@ SQLite remains supported for a single-instance installation.
 | `database.auto-migrate` / `--auto-migrate` | `true` | Keep local startup convenient; set false for replicas. |
 | `database.max-connections` / `--db-max-connections` | `10` | Per-process PostgreSQL/MySQL pool ceiling; SQLite uses one. |
 | `cache.enabled` / `--cache` | `false` | Optional local profile cache with no cross-process invalidation. |
-| `http.drain-delay` / `--drain-delay` | `5s` | Continue serving after readiness withdrawal so routing can converge. |
+| `http.drain-delay` / `--drain-delay` | `5s` | Continue serving after readiness withdrawal so routing can converge; skipped in `--dev`. |
 | `http.shutdown-timeout` / `--shutdown-timeout` | `25s` | Finish active requests after closing listeners. |
 | `mail.smtp.address` / `--smtp-address` | empty | SMTP host:port; empty means discard mail with a startup warning. |
 | `mail.smtp.user` / `--smtp-user` | empty | SMTP username. |
